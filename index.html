@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="2.6-download-safe-public">
+    <meta name="videostory-build" content="2.7-mp4-speechify-server-proxy">
     <title>Vidéos Plus — Créateur de vidéos animées</title>
-    <meta name="description" content="Vidéos Plus transforme tes histoires en vidéos animées avec personnage, voix Speechify et export vidéo pour les réseaux sociaux.">
+    <meta name="description" content="Vidéos Plus transforme tes histoires en vidéos animées avec personnage, voix Speechify et export MP4 pour les réseaux sociaux.">
     <meta name="keywords" content="Vidéos Plus, vidéo animée, création vidéo, TikTok, WhatsApp, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -18,7 +18,7 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Vidéos Plus — Créateur de vidéos animées">
     <meta name="twitter:description" content="Crée des vidéos animées à partir de tes histoires.">
-    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","description":"Application web pour créer des vidéos animées avec narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","description":"Application web pour créer des vidéos animées avec narration et export MP4.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -120,6 +120,10 @@
         .editor-section { margin-bottom: 24px; }
         .editor-section h4 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         .element-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .acting-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+        .acting-row select { flex: 1; min-width: 0; padding: 8px 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: inherit; font-size: 12px; }
+        .acting-lab { font-size: 12px; min-width: 52px; color: var(--text-muted); }
+        .acting-x { border: 1px solid var(--border); background: var(--bg-input); color: inherit; border-radius: 10px; padding: 7px 9px; font-size: 12px; cursor: pointer; }
         .element-chip { padding: 8px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; }
         .element-chip:hover { border-color: var(--primary); }
         .element-chip.selected { background: var(--primary); border-color: var(--primary); }
@@ -195,7 +199,7 @@
     <!-- HOME SCREEN -->
     <div id="homeScreen" class="screen active">
         <header class="header">
-            <div class="logo"><div class="logo-icon">🎬</div><h1>Vidéos Plus</h1></div>
+            <div class="logo"><div class="logo-icon">🎬</div><h1>VideoStory</h1></div>
             <button class="header-btn" onclick="showScreen('settingsScreen')">⚙️</button>
         </header>
         <main>
@@ -258,7 +262,7 @@
                     <button class="header-btn" onclick="showScreen('homeScreen')">←</button>
                     <h1 id="editorTitle" style="font-size: 16px;">Projet</h1>
                 </div>
-                <button class="btn-primary" onclick="exportVideoRemote()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter sur Render</button>
+                <button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter</button>
             </header>
             <div class="editor-main">
                 <div class="preview-area">
@@ -302,6 +306,7 @@
                 <div class="editor-section"><h4>Narration</h4><textarea id="editNarration" rows="3" style="width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text); resize: none;"></textarea></div>
                 <div class="editor-section"><h4>Durée</h4><div class="slider-group"><input type="range" id="editDuration" min="1" max="15" step="0.5" value="4"><span id="editDurationVal">4s</span></div></div>
                 <div class="editor-section"><h4>Personnage (toucher pour afficher / masquer)</h4><div class="element-list" id="characterList"></div></div>
+                <div class="editor-section"><h4>🎭 Jeu du personnage</h4><div id="actingList"></div><div class="element-list" style="margin-top:6px"><div class="element-chip" onclick="actingAdd()">+ Ajouter</div><div class="element-chip" onclick="actingAuto()">↺ Automatique</div><div class="element-chip" onclick="runDirector(false)">🎬 Réalisateur IA</div></div><p class="speechify-note" id="actingNote"></p></div>
                 <div class="editor-section"><h4>Objets</h4><div class="element-list" id="objectList"></div></div>
                 <div class="editor-section"><h4>Texte à l'écran</h4><input type="text" id="editText" placeholder="Texte principal..." style="width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text);"></div>
                 <div class="editor-section"><h4>Arrière-plan</h4><div class="element-list" id="backgroundList"></div></div>
@@ -343,16 +348,16 @@
             <div class="form-group"><label>Clé API Gemini</label><input type="password" id="settingKey" placeholder="Colle ta clé ici (optionnel)" autocomplete="off" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <div class="form-group"><label>Modèle Gemini</label><input type="text" id="settingModel" placeholder="gemini-3.6-flash" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">Sans carte bancaire : crée une clé gratuite sur aistudio.google.com. Avec l'offre gratuite, Google peut réutiliser les textes envoyés. Si le modèle change de nom ou si le réseau échoue, le cerveau local prend le relais automatiquement.</p>
-            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="1080" selected>1080p · TikTok / WhatsApp</option><option value="720">720p · rapide et léger</option></select></div>
+            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · rapide et fluide</option><option value="1080">1080p · plus net, plus lourd</option></select></div>
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
             <div class="form-group"><label>Personnage : peau</label><select id="settingCharSkin"><option value="#4a2c1a">Ébène</option><option value="#6b4226">Brun foncé</option><option value="#8d5524">Brun</option><option value="#c68642">Caramel</option><option value="#f1c27d">Clair</option></select></div>
             <div class="form-group"><label>Personnage : couleur de la tenue</label><input type="color" id="settingCharColor" value="#1f3a5f"></div>
             <div class="form-group"><label>Personnage : effets</label><select id="settingCharFx"><option value="on">Pro : contours, lumière, ombre</option><option value="off">Léger : pour téléphone lent</option></select></div>
             <div class="form-group"><label>Personnage : bruitages</label><select id="settingCharSfx"><option value="on">Activés (applaudissements, ding…)</option><option value="off">Coupés</option></select></div>
-            <div class="form-group"><label>Speechify sécurisé</label><input type="hidden" id="settingSpeechifyKey" value=""><input type="hidden" id="settingSpeechifyProxy" value=""><p class="speechify-note" id="settingVoiceStatus">La clé Speechify est protégée côté serveur Vercel. Elle ne quitte jamais le serveur et n’est pas enregistrée dans GitHub.</p></div>
+            <div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
             <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
-            <div class="form-group"><label>Voix</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="george" value="george" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Appuie sur « Charger mes voix » pour choisir une voix française dans la liste de ton compte, ou tape son identifiant.</p></div>
+            <div class="form-group"><label>Voix</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="adeline" value="adeline" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Appuie sur « Charger mes voix » pour choisir une voix française dans la liste de ton compte, ou tape son identifiant.</p></div>
             <div class="form-group"><button type="button" class="btn-secondary" onclick="testSpeechifyVoice()">▶ Tester la voix Speechify</button><p class="speechify-note" id="settingVoiceStatus"></p></div>
 
             <button class="btn-primary" onclick="saveSettings()" style="width: 100%; justify-content: center;">Enregistrer</button>
@@ -476,9 +481,6 @@ function showScreen(screenId) {
 }
 
 // ===== UI HELPERS =====
-const SERVER_RENDER_PARAMS = new URLSearchParams(window.location.search);
-const SERVER_RENDER_MODE = SERVER_RENDER_PARAMS.get('serverRender') === '1';
-const SERVER_RENDER_CALLBACK = SERVER_RENDER_PARAMS.get('serverCallback') || '';
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -488,11 +490,6 @@ function showToast(message, type = 'success') {
 
 async function saveBlobToDevice(blob, filename) {
     if (!blob || !blob.size) throw new Error('Fichier vidéo vide');
-    if (SERVER_RENDER_MODE && SERVER_RENDER_CALLBACK) {
-        const callback = await fetch(SERVER_RENDER_CALLBACK, { method: 'POST', headers: { 'Content-Type': blob.type || 'video/mp4' }, body: blob });
-        if (!callback.ok) throw new Error('Le serveur Render n’a pas accepté le MP4 final');
-        return true;
-    }
     // Les navigateurs modernes peuvent écrire directement sur disque sans créer une seconde copie.
     if (typeof window.showSaveFilePicker === 'function') {
         try {
@@ -513,17 +510,21 @@ async function saveBlobToDevice(blob, filename) {
             console.warn('Écriture directe indisponible, fallback téléchargement', e);
         }
     }
-    // Android/WebView : écriture native en morceaux de 48 Ko, sans seconde copie vidéo complète.
+    // Android/WebView : écriture native en morceaux de 96 Ko, conversion base64 faite par le navigateur (rapide, peu de mémoire).
     if (window.AndroidBridge && typeof window.AndroidBridge.beginFile === 'function') {
         try {
             if (window.AndroidBridge.beginFile(filename, blob.type || 'application/octet-stream')) {
-                const step = 0xC000;
-                for (let i = 0; i < blob.size; i += step) {
-                    const bytes = new Uint8Array(await blob.slice(i, Math.min(i + step, blob.size)).arrayBuffer());
-                    let binary = '';
-                    for (let j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
-                    if (!window.AndroidBridge.writeFileChunk(btoa(binary))) { window.AndroidBridge.cancelFile(); throw new Error('écriture interrompue'); }
-                    if (i % (step * 16) === 0) await new Promise(requestAnimationFrame);
+                const step = 0x18000; // multiple de 3 : base64 sans remplissage au milieu du fichier
+                const toB64 = part => new Promise((res, rej) => {
+                    const fr = new FileReader();
+                    fr.onload = () => { const r = String(fr.result); res(r.slice(r.indexOf(',') + 1)); };
+                    fr.onerror = () => rej(fr.error || new Error('lecture impossible'));
+                    fr.readAsDataURL(part);
+                });
+                for (let i = 0, k = 0; i < blob.size; i += step, k++) {
+                    const b64 = await toB64(blob.slice(i, Math.min(i + step, blob.size)));
+                    if (!window.AndroidBridge.writeFileChunk(b64)) { window.AndroidBridge.cancelFile(); throw new Error('écriture interrompue'); }
+                    if (k % 16 === 0) await new Promise(r => setTimeout(r, 0));
                 }
                 if (window.AndroidBridge.finishFile()) return true;
                 window.AndroidBridge.cancelFile();
@@ -581,12 +582,20 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '2.6', channel: 'debug', publicBuildId: 'videos-plus-provided-v1' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '2.7', channel: 'web', publicBuildId: 'videos-plus-2.7-speechify-proxy' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
     save(o) { try { localStorage.setItem('vs_settings', JSON.stringify({ ...this.get(), ...o })); } catch (e) { /* ignore */ } },
 };
+// Migration de sécurité : efface une ancienne clé API locale des builds précédents.
+try {
+    const saved = JSON.parse(localStorage.getItem('vs_settings') || '{}');
+    if (saved.speechifyKey || saved.speechifyProxy) {
+        delete saved.speechifyKey; delete saved.speechifyProxy;
+        localStorage.setItem('vs_settings', JSON.stringify(saved));
+    }
+} catch (_) {}
 
 
 // ===== LIPSYNC partagé : forme de bouche + ouverture, synchronisées sur la voix =====
@@ -742,10 +751,11 @@ const ActingBrain = (() => {
         return base;
     }
     function plan(scene) {
-        const key = LipSync.info(scene).key + '|' + (scene.role || '') + (scene.mood || '') + (scene.brain && scene.brain.pose || '') + '|' + (scene.elements || []).filter(e => e.type === 'object').map(e => e.assetId + ':' + ((e.entrance && e.entrance.delay) || 0) + ':' + (e.position ? e.position.x : 0)).join(',');
+        const key = LipSync.info(scene).key + '|' + (scene.role || '') + (scene.mood || '') + (scene.brain && scene.brain.pose || '') + '|' + (scene.acting ? JSON.stringify(scene.acting) : '') + '|' + (scene.elements || []).filter(e => e.type === 'object').map(e => e.assetId + ':' + ((e.entrance && e.entrance.delay) || 0) + ':' + (e.position ? e.position.x : 0)).join(',');
         const hit = cache.get(scene);
         if (hit && hit.key === key) return hit.p;
         const c = LipSync.info(scene), dur = scene.duration || 5;
+        const A = scene.acting && Array.isArray(scene.acting.events) ? scene.acting : null;
         const P = { start: {}, base: baseOf(scene), spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null };
         EMOS.forEach(k => P.start[k] = 0);
         // scène d'avant : on part de son émotion finale, pour que l'enchaînement soit naturel
@@ -757,6 +767,7 @@ const ActingBrain = (() => {
         const cand = [], lastByType = {};
         c.ws.forEach((w, i) => {
             const t = c.starts[i] || 0, ps = parts(w);
+            if (!A) {
             // émotions ponctuelles sur le mot
             EMOS.forEach(k => {
                 const hit = hasAny(ps, EMO[k]) && (k !== 'joy' || ps.some(p => p.length > 4)); if (!hit) return;
@@ -779,6 +790,7 @@ const ActingBrain = (() => {
             if (hasAny(ps, MEMORY)) P.looks.push({ t0: t - 0.1, t1: t + 1.4, x: 0.8, y: -0.7 });
             if (hasAny(ps, EMO.think)) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: -0.7, y: -0.8 });
             if (hasAny(ps, EMO.sad)) P.looks.push({ t0: t, t1: t + 1.6, x: 0.2, y: 0.8 });
+            }
             // coups d'accent : mots longs ou fin de groupe
             if (ps.some(p => p.length >= 7) || /[,;:]$/.test(w)) P.beats.push({ t, s: 0.7 });
         });
@@ -793,7 +805,7 @@ const ActingBrain = (() => {
         // on retire les accessoires qui font doublon avec un objet déjà affiché
         for (let q = cand.length - 1; q >= 0; q--) if (cand[q].name === 'hold' && objs.some(o => o.assetId === PROPS[cand[q].prop].obj)) cand.splice(q, 1);
         // expressions de plusieurs mots
-        {
+        if (!A) {
             const nw = c.ws.map(w => parts(w).join('')), flat = [], offs = [];
             let pos = 0; nw.forEach((w, i) => { offs.push(pos); flat.push(w); pos += w.length + 1; });
             const textN = flat.join(' ');
@@ -807,6 +819,25 @@ const ActingBrain = (() => {
                 if (ph.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ph.look[0], y: ph.look[1] });
             });
         }
+        // partition de jeu écrite par le réalisateur IA ou réglée à la main : mot de départ + émotion / geste / accessoire / plan / tête / regard
+        const autoShotsOff = !!A;
+        if (A) {
+            if (EMOS.includes(A.base)) { EMOS.forEach(k => { P.base[k] = 0; }); P.base[A.base] = clamp(+A.strength || 0.6, 0.3, 1); }
+            const nW = Math.max(1, c.ws.length);
+            A.events.forEach(ev => {
+                if (!ev) return;
+                const wi = clamp(Math.round(+ev.w || 0), 0, nW - 1), t = c.starts[wi] || 0, side = ev.side === 'left' ? -1 : 1;
+                if (EMOS.includes(ev.emo)) P.spikes.push({ emo: ev.emo, t0: t - 0.1, dur: 1.5, s: 0.9, sym: SPIKE_SYM[ev.emo] || null });
+                if (ev.sym === 'bulb' || ev.sym === 'excl' || ev.sym === 'ques' || ev.sym === 'heart' || ev.sym === 'vein' || ev.sym === 'sweat') P.spikes.push({ emo: EMOS.includes(ev.emo) ? ev.emo : 'excited', t0: t - 0.1, dur: 1.5, s: 0.4, sym: ev.sym });
+                const prop = PROPS[ev.prop] ? ev.prop : null;
+                if (ev.gesture === 'hold' || (!ev.gesture && prop)) { if (prop) cand.push({ name: 'hold', prop, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 9, force: true }); }
+                else if (ev.gesture === 'count') cand.push({ name: 'count', n: clamp(Math.round(+ev.n || 1), 1, 5), t0: t - 0.2, t1: t + 1.2, pri: 9, force: true });
+                else if (GES[ev.gesture]) cand.push({ name: ev.gesture, n: 0, side, t0: t - 0.2, t1: t - 0.2 + GES[ev.gesture].dur, pri: 9, force: true });
+                if (ev.head === 'nod' || ev.head === 'shake') P.heads.push({ kind: ev.head, t0: t, t1: t + 0.9 });
+                if (ev.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ev.look === 'left' ? -0.9 : ev.look === 'right' ? 0.9 : 0, y: ev.look === 'up' ? -0.8 : ev.look === 'down' ? 0.8 : 0 });
+                if (ev.shot === 'close' || ev.shot === 'wide') (P.forcedShots = P.forcedShots || []).push({ t0: t - 0.05, t1: t + 1.8, z: ev.shot === 'close' ? 1.5 : 0.94 });
+            });
+        }
         // on garde les gestes les plus importants, sans chevauchement ni répétition
         cand.sort((a, b) => a.t0 - b.t0);
         const out = [];
@@ -815,7 +846,9 @@ const ActingBrain = (() => {
             if (g.t0 > dur - 0.5) return;
             if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 2.5 && g.name !== 'count') return;
             if (prev && g.t0 < prev.t1 - 0.15) {
-                if (g.pri > prev.pri && g.t0 - prev.t0 > 0.45) { prev.t1 = g.t0 + 0.1; }
+                // un geste voulu (écrit par le réalisateur ou réglé à la main) coupe le précédent ; sinon le plus important gagne
+                if (g.force && g.t0 - prev.t0 <= 0.3) out.pop();
+                else if (g.force || (g.pri > prev.pri && g.t0 - prev.t0 > 0.45)) { prev.t1 = g.t0 + 0.1; }
                 else return;
             }
             out.push(g); lastByType[g.name] = g.t0;
@@ -826,8 +859,9 @@ const ActingBrain = (() => {
         P.gestures = out;
         // plans de caméra : gros plan sur les émotions fortes, léger recul sur les grands gestes
         P.shots = [];
-        P.spikes.forEach(sp => { if (['sad', 'love', 'fear', 'surprise', 'angry'].includes(sp.emo) && sp.t0 > 0.2) P.shots.push({ t0: sp.t0, t1: sp.t0 + 1.7, z: 1.5 }); });
-        out.forEach(g => {
+        if (!autoShotsOff) P.spikes.forEach(sp => { if (['sad', 'love', 'fear', 'surprise', 'angry'].includes(sp.emo) && sp.t0 > 0.2) P.shots.push({ t0: sp.t0, t1: sp.t0 + 1.7, z: 1.5 }); });
+        if (autoShotsOff) P.shots = (P.forcedShots || []).slice();
+        else out.forEach(g => {
             if (g.name === 'headhands' || g.name === 'facepalm') P.shots.push({ t0: g.t0, t1: g.t1, z: 1.45 });
             else if (g.name === 'wide' || g.name === 'hips' || g.name === 'money') P.shots.push({ t0: g.t0, t1: g.t1, z: 0.94 });
         });
@@ -887,7 +921,23 @@ const ActingBrain = (() => {
         camZ += zUp + zDown;
         return { e, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, sway, ant, push, jolt, camZ, gside, prop };
     }
-    return { at, plan, EMOS };
+    // partition actuelle de la scène sous forme d'événements (pour la frise éditable)
+    function describe(scene) {
+        if (scene.acting && Array.isArray(scene.acting.events)) return JSON.parse(JSON.stringify(scene.acting));
+        const P = plan(scene), c = LipSync.info(scene);
+        const wi = t => { let k = 0; for (let i = 0; i < c.starts.length; i++) if (c.starts[i] <= t + 0.05) k = i; return k; };
+        let base = 'joy'; EMOS.forEach(k => { if ((P.base[k] || 0) > (P.base[base] || 0)) base = k; });
+        const ev = [];
+        P.spikes.forEach(sp => { if (sp.s >= 0.5) ev.push({ w: wi(sp.t0 + 0.1), emo: sp.emo }); });
+        P.gestures.forEach(g => { if (g.force) return; const w = wi(g.t0 + 0.2); ev.push(g.name === 'hold' ? { w, gesture: 'hold', prop: g.prop } : g.name === 'count' ? { w, gesture: 'count', n: g.n } : { w, gesture: g.name }); });
+        (P.shots || []).forEach(sh => ev.push({ w: wi(sh.t0 + 0.05), shot: sh.z > 1 ? 'close' : 'wide' }));
+        P.heads.forEach(h => ev.push({ w: wi(h.t0), head: h.kind }));
+        const seen = new Set(), out = [];
+        ev.sort((a, b) => a.w - b.w).forEach(e => { const k = JSON.stringify(e); if (!seen.has(k)) { seen.add(k); out.push(e); } });
+        return { base, strength: +(P.base[base] || 0.5).toFixed(2), events: out, src: 'auto' };
+    }
+    const LISTS = { emos: EMOS, gestures: Object.keys(GES), props: Object.keys(PROPS) };
+    return { at, plan, describe, LISTS, EMOS };
 })();
 
 // ===== PERSONNAGE INTÉGRÉ : présentateur dessiné en code (aucun fichier à télécharger) =====
@@ -1025,6 +1075,53 @@ const BuiltinCharacter = (() => {
             default: return null;
         }
     }
+    // ---- mains : silhouette en deux passes (encre puis peau) pour que paume et doigts ne forment qu'une seule forme propre
+    // le dessin est fait « doigts vers le haut » ; render() le tourne ensuite dans l'axe de l'avant-bras
+    const HAND_UPRIGHT = { thumbs: 1, hold: 1 };
+    function handSpec(mode, n, sd, t) {
+        const base = [-0.165, -0.055, 0.055, 0.165];                     // position des 4 doigts sur le haut de la paume
+        const mkF = (spread, lens, wd, raised, bend) => base.map((ox, i) => ({
+            ox, oy: -0.17 + Math.abs(i - 1.5) * 0.02, ang: spread * (i - 1.5) / 1.5, len: (raised ? raised[i] : 1) ? lens[i] : 0.06, wd: wd || 0.14, bend: (bend || 0) * (i - 1.5)
+        }));
+        const L4 = [0.23, 0.29, 0.27, 0.2], thSide = -sd;                // pouce côté intérieur
+        const thumb = (ang, len, wd) => ({ ox: thSide * 0.19, oy: 0.06, ang: thSide * ang, len: len || 0.2, wd: wd || 0.16, bend: -thSide * 0.25 });
+        const S = { palm: { rx: 0.25, ry: 0.25, cy: 0 }, fingers: [], thumb: null, detail: 'palm' };
+        switch (mode) {
+            case 'palm': S.fingers = mkF(0.42, L4, 0.14, null, 0.1); S.thumb = thumb(0.95, 0.21); break;
+            case 'open': { const wv = Math.sin(t * 9) * 0.08; S.fingers = mkF(0.85 + wv, [0.29, 0.35, 0.33, 0.25], 0.14, null, 0.15); S.thumb = thumb(1.1, 0.23); S.detail = 'spread'; break; }
+            case 'flat': S.fingers = mkF(0.1, [0.3, 0.36, 0.34, 0.27], 0.14, null, 0); S.thumb = thumb(0.65, 0.2); S.detail = 'tight'; break;
+            case 'fingers': { const m = clamp(n || 1, 1, 5), up = [0, 1, 2, 3].map(i => i < Math.min(m, 4)); S.fingers = mkF(0.16, [0.34, 0.4, 0.38, 0.3], 0.14, up, 0.05); S.thumb = m >= 5 ? thumb(0.9, 0.22) : thumb(0.25, 0.1); S.detail = 'tight'; break; }
+            case 'point': case 'pointup': case 'pointdown': case 'shush': S.fingers = mkF(0.0, [0.42, 0.2, 0.2, 0.2], 0.14, [1, 0, 0, 0], 0); S.thumb = thumb(0.35, 0.12); S.detail = 'fist'; break;
+            case 'thumbs': S.fingers = mkF(0.0, [0.2, 0.2, 0.2, 0.2], 0.14, [0, 0, 0, 0], 0); S.thumb = { ox: -0.15, oy: -0.1, ang: 0, len: 0.34, wd: 0.17, bend: 0 }; S.detail = 'fist'; break;
+            case 'fist': case 'hold': S.fingers = mkF(0.0, [0.2, 0.2, 0.2, 0.2], 0.14, [0, 0, 0, 0], 0); S.thumb = { ox: thSide * 0.17, oy: 0.0, ang: thSide * 1.25, len: 0.14, wd: 0.15, bend: 0 }; S.detail = 'fist'; break;
+            default: S.fingers = mkF(0.14, [0.22, 0.27, 0.25, 0.19], 0.14, null, 0.25); S.thumb = thumb(0.5, 0.19); S.detail = 'relax';   // main détendue
+        }
+        return S;
+    }
+    function paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, t) {
+        const S = handSpec(mode, n, 1, t), pw = 0.07;
+        const stroke = (f, color, width) => {
+            ctx.save(); ctx.translate(f.ox, f.oy); ctx.rotate(f.ang); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(f.bend * 0.1, -f.len * 0.5, f.bend * 0.17, -f.len); ctx.stroke(); ctx.restore();
+        };
+        ctx.save(); ctx.lineJoin = 'round'; if (sd < 0) ctx.scale(-1, 1);
+        const all = S.thumb ? S.fingers.concat([S.thumb]) : S.fingers;
+        all.forEach(f => stroke(f, INK, f.wd + pw));                                     // passe 1 : encre
+        ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, S.palm.cy, S.palm.rx + pw / 2, S.palm.ry + pw / 2, 0, 0, TAU); ctx.fill();
+        all.forEach(f => stroke(f, skin, f.wd));                                          // passe 2 : peau
+        ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(0, S.palm.cy, S.palm.rx, S.palm.ry, 0, 0, TAU); ctx.fill();
+        // détails : creux de la paume, séparations entre doigts collés, articulations du poing
+        if (S.detail === 'palm' || S.detail === 'spread' || S.detail === 'tight') { ctx.globalAlpha = 0.35; ctx.fillStyle = skinLt; ctx.beginPath(); ctx.ellipse(-0.03, -0.03, 0.11, 0.1, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.strokeStyle = INK; ctx.lineWidth = 0.028; ctx.lineCap = 'round';
+        if (S.detail === 'tight' || S.detail === 'relax' || S.detail === 'palm') {
+            for (let i = 0; i < 3; i++) { const a = S.fingers[i], b = S.fingers[i + 1], len = Math.min(a.len, b.len); if (len < 0.15) continue; ctx.beginPath(); ctx.moveTo((a.ox + b.ox) / 2, (a.oy + b.oy) / 2 - 0.02); ctx.lineTo((a.ox + b.ox) / 2 + (a.ang + b.ang) * 0.5 * len * 0.8, (a.oy + b.oy) / 2 - len * 0.8); ctx.stroke(); }
+        }
+        if (S.detail === 'fist') {                                        // doigts repliés : 4 articulations
+            S.fingers.forEach(f => { if (f.len > 0.25) return; ctx.beginPath(); ctx.arc(f.ox, -0.19, 0.045, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); });
+        }
+        ctx.restore();
+    }
+
     function render(ctx, w, h, time, a, open, vow, pose, opts) {
         opts = opts || {};
         const c = cfg(), t = time, E = a.e;
@@ -1214,28 +1311,13 @@ const BuiltinCharacter = (() => {
         const sleeve = c.outfit === 'tee' || c.outfit === 'dress' ? c.color : (c.outfit === 'suit' ? outfitDk : outfitLt);
         const longSleeve = c.outfit === 'suit' || c.outfit === 'boubou';
         const T = ambientTargets(g, t, a.beat, open > 0.02 ? 1 : 0);
-        const drawHand = (x, y, mode, n, sc, sd) => {
-            ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
-            // doigt = trait d'encre puis trait de peau (les doigts se détachent les uns des autres)
-            const fing = (ang, len, wd, bend) => {
-                ctx.save(); ctx.rotate(ang); ctx.lineCap = 'round';
-                const path = () => { ctx.beginPath(); ctx.moveTo(0, -0.1); ctx.quadraticCurveTo((bend || 0) * 0.12, -0.1 - len * 0.55, (bend || 0) * 0.2, -0.1 - len); };
-                ctx.strokeStyle = INK; ctx.lineWidth = wd + 0.07; path(); ctx.stroke();
-                ctx.strokeStyle = skin; ctx.lineWidth = wd; path(); ctx.stroke(); ctx.restore();
-            };
-            const disc = (rx, ry) => { ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke(); };
-            const thumb = (sx2, len) => fing(sx2 * 1.0, len, 0.14, -sx2 * 0.6);
-            if (mode === 'palm') { for (let k = -1.5; k <= 1.5; k++) fing(k * 0.22, 0.34, 0.12, k * 0.3); disc(0.32, 0.34); ctx.fillStyle = skinLt; ctx.beginPath(); ctx.ellipse(0, -0.02, 0.18, 0.18, 0, 0, TAU); ctx.fill(); ctx.save(); ctx.translate(sd * -0.22, 0.12); thumb(sd * -0.9, 0.24); ctx.restore(); }
-            else if (mode === 'open') { const wv = Math.sin(t * 9) * 0.1; for (let k = -2; k <= 2; k++) fing(k * 0.34 + wv, 0.42, 0.12, k * 0.3); disc(0.3, 0.32); }
-            else if (mode === 'flat') { for (let k = -1.5; k <= 1.5; k++) fing(k * 0.1, 0.5, 0.14, 0); disc(0.36, 0.4); ctx.save(); ctx.translate(sd * -0.28, 0.1); thumb(sd * -0.7, 0.26); ctx.restore(); }
-            else if (mode === 'fingers') { const m = clamp(n || 1, 1, 5); for (let k = 0; k < m; k++) fing((k - (m - 1) / 2) * 0.28, 0.46, 0.12, (k - (m - 1) / 2) * 0.3); disc(0.3, 0.3); }
-            else if (mode === 'point') { fing(sd * 0.9, 0.52, 0.15, 0); disc(0.3, 0.3); ctx.strokeStyle = INK; ctx.lineWidth = 0.03; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(-0.06 + k * 0.1, 0.1, 0.05, 0.3, Math.PI - 0.3); ctx.stroke(); } }
-            else if (mode === 'pointup' || mode === 'shush') { fing(0, 0.55, 0.15, 0); disc(0.3, 0.3); ctx.strokeStyle = INK; ctx.lineWidth = 0.03; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(-0.1 + k * 0.1, 0.08, 0.05, 0.3, Math.PI - 0.3); ctx.stroke(); } }
-            else if (mode === 'pointdown') { fing(Math.PI, 0.5, 0.15, 0); disc(0.3, 0.3); }
-            else if (mode === 'thumbs') { disc(0.3, 0.3); fing(0.05, 0.4, 0.15, 0); ctx.strokeStyle = INK; ctx.lineWidth = 0.03; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(-0.1 + k * 0.1, 0.1, 0.05, 0.3, Math.PI - 0.3); ctx.stroke(); } }
-            else { disc(0.3, 0.3); ctx.strokeStyle = INK; ctx.lineWidth = 0.035; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-0.15 + k * 0.1 + 0.05, -0.2); ctx.lineTo(-0.15 + k * 0.1 + 0.05, 0.02); ctx.stroke(); } ctx.save(); ctx.translate(sd * -0.18, -0.02); ctx.rotate(sd * 0.6); fing(0, 0.16, 0.13, 0); ctx.restore(); }
+        const drawHand = (x, y, mode, n, sc, sd, rot) => {
+            ctx.save(); ctx.translate(x, y); ctx.scale(sc * 1.2, sc * 1.2);
+            if (!HAND_UPRIGHT[mode]) ctx.rotate(rot || 0);          // la main prolonge l'avant-bras
+            paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, t);
             ctx.restore();
         };
+
         const drawProp = (kind, x, y, k) => {
             ctx.save(); ctx.translate(x, y); const pop = clamp(k, 0, 1.12) * 1.3; ctx.scale(pop, pop); ctx.rotate(-0.12); ctx.lineJoin = 'round';
             const box = (x0, y0, w0, h0, r, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(x0, y0, w0, h0, r); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke(); };
@@ -1278,7 +1360,7 @@ const BuiltinCharacter = (() => {
             ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 0.08; ctx.beginPath(); ctx.moveTo(arm.ex + 0.1, arm.ey); ctx.lineTo(arm.hx + 0.05, arm.hy); ctx.stroke();
             if (c.outfit === 'suit') { ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 0.52; const dx = arm.hx - arm.ex, dy = arm.hy - arm.ey, L = Math.hypot(dx, dy) || 1; ctx.beginPath(); ctx.moveTo(arm.hx - dx / L * 0.42, arm.hy - dy / L * 0.42); ctx.lineTo(arm.hx - dx / L * 0.3, arm.hy - dy / L * 0.3); ctx.stroke(); }
             if (tg.mode === 'hold' && gt && gt.prop) drawProp(gt.prop, arm.hx, arm.hy - 0.05, gk);
-            drawHand(arm.hx, arm.hy, tg.mode, tg.n, tg.s, sd);
+            drawHand(arm.hx, arm.hy, tg.mode, tg.n, tg.s, sd, Math.atan2(arm.hx - arm.ex, -(arm.hy - arm.ey)));
         });
         ctx.restore();
         ctx.restore();
@@ -1286,7 +1368,7 @@ const BuiltinCharacter = (() => {
     }
     function reset() { lite = false; slow = 0; if (LY) LY.key = ''; }
     async function prepare() { return true; }
-    return { draw, render, reset, prepare, noteFrame, isLite: () => lite, init: () => Promise.resolve(true), SKINS };
+    return { draw, render, paintHand, reset, prepare, noteFrame, isLite: () => lite, init: () => Promise.resolve(true), SKINS };
 })();
 
 // ===== BRUITAGES DU PERSONNAGE : sons synthétisés, calés sur ses gestes et ses icônes =====
@@ -1815,31 +1897,31 @@ const VoiceStudio = (() => {
     let exportSources = [];
     let queue = Promise.resolve();
     const cfg = () => Settings.get();
-    // On accepte la clé collée avec « Bearer », des espaces, des guillemets ou un retour à la ligne
-    const cleanKey = k => String(k || '').replace(/^\s*(?:authorization:?\s*)?bearer\s+/i, '').replace(/["'\s]/g, '');
-    const apiKey = () => '';
-    const voiceFor = () => String(cfg().speechifyVoice || 'george').trim() || 'george';
+    const voiceFor = () => String(cfg().speechifyVoice || 'adeline').trim() || 'adeline';
     // Speechify ne propose plus que simba-3.0 (multilingue, français inclus) et simba-3.2 (anglais seulement)
     const modelFor = () => cfg().speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0';
     const LANGS = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', de: 'de-DE', it: 'it-IT', pt: 'pt-BR' };
     const langFor = () => { const l = (typeof state !== 'undefined' && state.project && state.project.language) || 'fr'; return LANGS[String(l).slice(0, 2).toLowerCase()] || null; };
-    const BASES = ['https://api.speechify.ai', 'https://api.sws.speechify.com'];
-    let baseIdx = 0;
     async function apiError(res) {
         let code = '', msg = '';
-        try { const j = await res.json(); const e = j.error || j; code = String(e.code || ''); msg = e.message || j.detail || j.message || ''; if (typeof msg !== 'string') msg = JSON.stringify(msg); } catch (_) {}
+        try { const j = await res.json(); const e = j && j.error && typeof j.error === 'object' ? j.error : (j || {}); code = String(e.code || ''); msg = (j && typeof j.error === 'string' ? j.error : (e.message || j.detail || j.message || '')); if (typeof msg !== 'string') msg = JSON.stringify(msg); } catch (_) {}
         const S = res.status; let t;
-        if (S === 401) t = 'clé API refusée : colle-la en entier, sans espace (platform.speechify.ai → API Keys).';
-        else if (S === 402) t = 'crédit épuisé ou forfait non activé sur ton compte.';
-        else if (S === 403) t = 'accès refusé (clé ou forfait).';
+        if (S === 401) t = 'clé API Speechify refusée côté serveur : vérifie SPEECHIFY_API_KEY dans les variables d’environnement Vercel.';
+        else if (S === 402) t = 'crédit épuisé ou forfait Speechify non activé.';
+        else if (S === 403) t = 'accès Speechify refusé (clé ou forfait côté serveur).';
         else if (S === 429) t = 'trop de demandes : attends un instant et réessaie.';
         else if (/model_retired/.test(code)) t = 'ce modèle n’existe plus : choisis simba-3.0.';
-        else if (/voice/i.test(code + ' ' + msg)) t = 'voix introuvable ou incompatible : appuie sur « Charger mes voix » et choisis-en une.';
-        else t = (msg || ('erreur ' + S)) + (S === 400 && modelFor() === 'simba-3.2' ? ' (simba-3.2 ne parle qu’anglais : utilise simba-3.0 pour le français)' : '');
+        else if (/voice/i.test(code + ' ' + msg)) t = 'voix introuvable ou incompatible : charge la liste et choisis une voix française.';
+        else t = msg || ('erreur ' + S);
         const err = new Error('Speechify : ' + t); err.status = S; return err;
     }
-    async function api(path, opt) {
-        const res = await fetch('/api/speechify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, method: opt.method || 'GET', body: opt.body || null }) });
+    async function api(path, opt = {}) {
+        let res;
+        try {
+            res = await fetch('/api/speechify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, method: opt.method || 'GET', body: opt.body || null }) });
+        } catch (_) {
+            throw new Error('Impossible de joindre le proxy Speechify. Vérifie que l’application est publiée sur Vercel.');
+        }
         if (!res.ok) throw await apiError(res);
         return res;
     }
@@ -1859,8 +1941,7 @@ const VoiceStudio = (() => {
         }
         return out;
     }
-    const proxy = () => { const v = String(cfg().speechifyProxy || '').trim().replace(/\/+$/, ''); return /^https?:\/\//i.test(v) ? v : ''; };
-    const engineOn = () => true;
+    const engineOn = () => true; // La clé est conservée côté serveur dans SPEECHIFY_API_KEY.
     const supported = () => !!(window.AudioContext || window.webkitAudioContext);
     const clean = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 2000);
     function b64ToArrayBuffer(b64) {
@@ -1913,7 +1994,7 @@ const VoiceStudio = (() => {
     function chip(text,action){const el=document.getElementById('voiceChip');if(!el)return;if(!text){el.style.display='none';el.onclick=null;return;}el.textContent=text;el.style.display='block';el.style.cursor=action?'pointer':'default';el.onclick=action||null;}
     function offerChip(project){if(!engineOn())chip('🎙️ Configure Speechify dans Paramètres',()=>showScreen('settingsScreen'));else chip(null);}
     async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Colle ta clé API Speechify puis réessaie.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
-    return {cleanKey,listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,LABEL};
+    return {listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,LABEL};
 })();
 
 // ===== CERVEAU DE SYNCHRO : regarde l'histoire et l'audio pour caler sous-titres, bouche et bras =====
@@ -3139,7 +3220,7 @@ function loadSettingsUI() {
     setVal('settingAI', c.ai || 'local');
     setVal('settingKey', c.key || '');
     setVal('settingModel', c.model || 'gemini-3.6-flash');
-    setVal('settingQuality', c.quality || '1080');
+    setVal('settingQuality', c.quality || '720');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
     setVal('settingCharHair', c.charHair || 'short');
     setVal('settingCharSkin', c.charSkin || '#6b4226');
@@ -3147,9 +3228,7 @@ function loadSettingsUI() {
     setVal('settingCharFx', c.charFx === 'off' ? 'off' : 'on');
     setVal('settingCharSfx', c.charSfx === 'off' ? 'off' : 'on');
     refreshVoiceStatus();
-    setVal('settingSpeechifyKey', c.speechifyKey || '');
-    setVal('settingSpeechifyProxy', c.speechifyProxy || '');
-    setVal('settingSpeechifyVoice', c.speechifyVoice || 'george');
+    setVal('settingSpeechifyVoice', c.speechifyVoice || 'adeline');
     setVal('settingSpeechifyModel', c.speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0');
 }
 
@@ -3172,22 +3251,12 @@ function saveSettings() {
     showScreen('homeScreen');
 }
 
-// Les 3 champs Speechify s'enregistrent tout seuls dès qu'on les quitte (coller la clé suffit)
-function fixProxy() {
-    let v = getVal('settingSpeechifyProxy').trim().replace(/\/+$/, '');
-    if (v && !/^https?:\/\//i.test(v)) {
-        if (/^[\w.-]+\.(workers\.dev|pages\.dev|netlify\.app|vercel\.app)$/i.test(v)) v = 'https://' + v;
-        else { showToast('L’adresse du proxy doit commencer par https:// (ce que tu as collé n’est pas une adresse web). Laisse le champ vide si tu n’as pas de proxy.', 'error'); setVal('settingSpeechifyProxy', ''); return ''; }
-    }
-    setVal('settingSpeechifyProxy', v);
-    return v;
-}
 function saveSpeechifyFields() {
     Settings.save({
-        speechifyKey: VoiceStudio.cleanKey(getVal('settingSpeechifyKey')),
-        speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'george',
+        speechifyKey: '',
+        speechifyProxy: '',
+        speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'adeline',
         speechifyModel: getVal('settingSpeechifyModel'),
-        speechifyProxy: fixProxy(),
     });
     refreshVoiceStatus();
 }
@@ -3212,7 +3281,7 @@ async function loadSpeechifyVoices() {
 function pickSpeechifyVoice(id) { document.getElementById('settingSpeechifyVoice').value = id; saveSpeechifyFields(); }
 
 function settingsProject() { return state.project || { language: 'fr', voice: 'female' }; }
-function refreshVoiceStatus() { const el = document.getElementById('settingVoiceStatus'); if (el) el.textContent = '✅ Speechify passe par le proxy serveur sécurisé Vercel'; }
+function refreshVoiceStatus() { const el = document.getElementById('speechifyProxyStatus'); if (el) el.textContent = 'Speechify utilise le proxy sécurisé du serveur. Appuie sur « Charger mes voix » pour vérifier la connexion.'; }
 
 // ===== MUSIQUE GÉNÉRÉE (WebAudio, aucun fichier, aucune licence) =====
 const MUSIC_MOODS = {
@@ -3283,8 +3352,8 @@ const MusicEngine = {
         this.nodes.push(src);
     },
 
-    start(moodId, fromSec, totalSec, destination) {
-        const ctx = getAudioCtx();
+    start(moodId, fromSec, totalSec, destination, ctxOverride) {
+        const ctx = ctxOverride || getAudioCtx();
         if (!ctx) return false;
         this.stop();
         this.ctx = ctx;
@@ -3427,6 +3496,121 @@ async function llmBrain({ idea, script, options, cfg }) {
     }
 }
 
+// ===== JEU DU PERSONNAGE : frise modifiable + réalisateur IA =====
+const ACT_LABELS = {
+    emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation' },
+    gesture: { wave: 'Saluer', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
+    prop: { phone: 'Téléphone', money: 'Billets', book: 'Livre', tablet: 'Tablette', mic: 'Micro' },
+    count: { 1: '1 doigt', 2: '2 doigts', 3: '3 doigts', 4: '4 doigts', 5: '5 doigts' },
+    shot: { close: 'Gros plan', wide: 'Plan large' },
+    head: { nod: 'Oui (hocher)', shake: 'Non (secouer)' },
+    look: { left: 'Regarde à gauche', right: 'Regarde à droite', up: 'Regarde en haut', down: 'Regarde en bas', cam: 'Regarde la caméra' },
+};
+const ACT_KINDS = { emo: 'Émotion', gesture: 'Geste', prop: 'Accessoire', count: 'Doigts', shot: 'Plan', head: 'Tête', look: 'Regard' };
+const actEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const actKind = ev => ev.emo ? 'emo' : ev.gesture === 'count' ? 'count' : (ev.gesture === 'hold' || (ev.prop && !ev.gesture)) ? 'prop' : ev.gesture ? 'gesture' : ev.shot ? 'shot' : ev.head ? 'head' : ev.look ? 'look' : 'emo';
+const actVal = (ev, k) => k === 'emo' ? ev.emo : k === 'count' ? String(ev.n || 1) : k === 'prop' ? ev.prop : k === 'gesture' ? ev.gesture : k === 'shot' ? ev.shot : k === 'head' ? ev.head : ev.look;
+function actSetKindVal(ev, k, v) {
+    Object.keys(ev).forEach(x => { if (x !== 'w') delete ev[x]; });
+    if (k === 'emo') ev.emo = v; else if (k === 'count') { ev.gesture = 'count'; ev.n = +v; } else if (k === 'prop') { ev.gesture = 'hold'; ev.prop = v; }
+    else if (k === 'gesture') ev.gesture = v; else if (k === 'shot') ev.shot = v; else if (k === 'head') ev.head = v; else ev.look = v;
+}
+function actingScene() { return state.project && state.project.scenes.find(s => s.id === editingSceneId); }
+function actingEnsure(scene) {
+    if (!(scene.acting && Array.isArray(scene.acting.events))) { const d = ActingBrain.describe(scene); scene.acting = { base: d.base, strength: d.strength, events: d.events }; }
+    scene.acting.src = 'manual'; return scene.acting;
+}
+function actingRefresh(scene) { saveProject(); renderCurrentFrame(); actingRender(scene); }
+function actingRender(scene) {
+    const el = document.getElementById('actingList'); if (!el || !scene) return;
+    const A = ActingBrain.describe(scene), words = LipSync.info(scene).ws;
+    const opt = (map, cur) => Object.keys(map).map(k => '<option value="' + k + '"' + (String(cur) === k ? ' selected' : '') + '>' + map[k] + '</option>').join('');
+    const wopt = cur => words.map((w, i) => '<option value="' + i + '"' + (cur === i ? ' selected' : '') + '>' + (i + 1) + '. ' + actEsc(w) + '</option>').join('');
+    const rows = A.events.map((ev, i) => {
+        const k = actKind(ev);
+        return '<div class="acting-row"><select onchange="actingSetWord(' + i + ',this.value)">' + wopt(ev.w) + '</select><select onchange="actingSetKind(' + i + ',this.value)">' + opt(ACT_KINDS, k) + '</select><select onchange="actingSetVal(' + i + ',this.value)">' + opt(ACT_LABELS[k], actVal(ev, k)) + '</select><button type="button" class="acting-x" onclick="actingPlay(' + i + ')">▶</button><button type="button" class="acting-x" onclick="actingDel(' + i + ')">✕</button></div>';
+    }).join('');
+    el.innerHTML = '<div class="acting-row"><span class="acting-lab">Humeur</span><select onchange="actingSetBase(this.value)">' + opt(ACT_LABELS.emo, A.base) + '</select></div>' + (rows || '<p class="speechify-note">Aucun jeu sur cette scène : appuie sur « + Ajouter ».</p>');
+    const n = document.getElementById('actingNote');
+    if (n) n.textContent = A.src === 'ia' ? '🎬 Écrit par le réalisateur IA : tu peux le modifier.' : A.src === 'manual' ? '✋ Réglé à la main.' : '⚙️ Détecté automatiquement : modifie une ligne pour le régler à la main.';
+}
+function actingSetWord(i, v) { const sc = actingScene(); if (!sc) return; actingEnsure(sc).events[i].w = +v; actingRefresh(sc); }
+function actingSetKind(i, k) { const sc = actingScene(); if (!sc) return; const ev = actingEnsure(sc).events[i]; actSetKindVal(ev, k, Object.keys(ACT_LABELS[k])[0]); actingRefresh(sc); }
+function actingSetVal(i, v) { const sc = actingScene(); if (!sc) return; const ev = actingEnsure(sc).events[i]; actSetKindVal(ev, actKind(ev), v); actingRefresh(sc); }
+function actingSetBase(v) { const sc = actingScene(); if (!sc) return; actingEnsure(sc).base = v; actingRefresh(sc); }
+function actingDel(i) { const sc = actingScene(); if (!sc) return; actingEnsure(sc).events.splice(i, 1); actingRefresh(sc); }
+function actingAdd() { const sc = actingScene(); if (!sc) return; actingEnsure(sc).events.push({ w: 0, emo: 'surprise' }); actingRefresh(sc); }
+function actingAuto() { const sc = actingScene(); if (!sc) return; delete sc.acting; actingRefresh(sc); showToast('Jeu automatique rétabli'); }
+function actingPlay(i) {
+    const sc = actingScene(); if (!sc) return;
+    const ev = ActingBrain.describe(sc).events[i]; if (!ev) return;
+    let t0 = 0; for (const s2 of state.project.scenes) { if (s2.id === sc.id) break; t0 += s2.duration; }
+    const st = LipSync.info(sc).starts[ev.w] || 0;
+    closeSceneEditor(); seekTo(t0 + Math.max(0, st - 0.2)); showToast('Aperçu placé sur le mot « ' + (LipSync.info(sc).ws[ev.w] || '') + ' »');
+}
+// Le réalisateur IA lit toute l'histoire et écrit la partition de jeu de chaque scène (mot par mot)
+async function directorBrain(scenes, cfg) {
+    const list = scenes.map((s, i) => '[' + i + '] ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
+    const prompt = 'You are the acting director of an animated film. ONE animated presenter character tells the story below. For each scene decide how the character acts, word by word. The words of each scene are numbered (index:word). Understand the whole story: negation (\"not sad\" means relieved), irony, contrast (\"but\"), the emotional arc across scenes, and what is physically described.\n' +
+        'Return ONLY valid JSON, no markdown: {\"scenes\":[{\"i\": scene number, \"base\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"strength\": number 0.4-1, \"events\":[{\"w\": word index, and exactly ONE of: \"emo\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"gesture\": one of [' + ActingBrain.LISTS.gestures.join(', ') + ', count, hold], \"n\": 1-5 (only with gesture count), \"prop\": one of [' + ActingBrain.LISTS.props.join(', ') + '] (only with gesture hold), \"shot\": close or wide, \"head\": nod or shake, \"look\": left, right, up, down or cam}]}]}\n' +
+        'Rules: 2 to 6 events per scene, only where the acting is meaningful. Put an emotion event on the word that triggers the feeling. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, shrug for uncertainty, heart for affection). Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
+    const model = (cfg.model || 'gemini-3.6-flash').trim();
+    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 45000);
+    try {
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.key },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.4 } }), signal: ctrl.signal,
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const txt = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').replace(/```json|```/g, '').trim();
+        return JSON.parse(txt);
+    } finally { clearTimeout(timer); }
+}
+function cleanActing(raw, scene) {
+    const nW = splitWords(scene.narration).length, L = ActingBrain.LISTS, ok = (v, arr) => arr.includes(v);
+    const events = [];
+    (Array.isArray(raw.events) ? raw.events : []).slice(0, 10).forEach(e => {
+        if (!e || typeof e !== 'object') return;
+        const w = Math.max(0, Math.min(nW - 1, Math.round(+e.w || 0))), ev = { w };
+        if (ok(e.emo, L.emos)) ev.emo = e.emo;
+        else if (e.gesture === 'count') { ev.gesture = 'count'; ev.n = Math.max(1, Math.min(5, Math.round(+e.n || 1))); }
+        else if (e.gesture === 'hold' && ok(e.prop, L.props)) { ev.gesture = 'hold'; ev.prop = e.prop; }
+        else if (ok(e.gesture, L.gestures)) ev.gesture = e.gesture;
+        else if (e.shot === 'close' || e.shot === 'wide') ev.shot = e.shot;
+        else if (e.head === 'nod' || e.head === 'shake') ev.head = e.head;
+        else if (['left', 'right', 'up', 'down', 'cam'].includes(e.look)) ev.look = e.look;
+        else return;
+        events.push(ev);
+    });
+    events.sort((a, b) => a.w - b.w);
+    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events };
+}
+let directorBusy = false;
+async function runDirector(silent) {
+    const cfg = Settings.get();
+    if (!(cfg.ai === 'gemini' && cfg.key)) { if (!silent) showToast('Active Gemini et ta clé dans Paramètres pour le réalisateur IA', 'error'); return; }
+    if (!state.project || directorBusy) return;
+    directorBusy = true;
+    if (!silent) showToast('🎬 Le réalisateur IA lit ton histoire…');
+    try {
+        const out = await directorBrain(state.project.scenes, cfg);
+        let n = 0;
+        (out.scenes || []).forEach(r => {
+            const sc = state.project.scenes[+r.i];
+            if (!sc || !r || (sc.acting && sc.acting.src === 'manual')) return;      // ce que tu as réglé à la main n'est jamais écrasé
+            sc.acting = cleanActing(r, sc); n++;
+        });
+        if (!n) throw new Error('réponse vide');
+        saveProject(); renderCurrentFrame();
+        const sc = actingScene(); if (sc) actingRender(sc);
+        showToast('🎬 Jeu du personnage écrit pour ' + n + ' scène' + (n > 1 ? 's' : ''), 'success');
+    } catch (e) {
+        console.warn('Réalisateur IA', e);
+        if (!silent) showToast('Réalisateur IA indisponible : ' + (e.message || e) + '. Le jeu automatique reste en place.', 'error');
+    } finally { directorBusy = false; }
+}
+
 async function runBrain(auto) {
     unlockAudio(); // doit se faire pendant le clic, avant les attentes réseau
     const idea = (document.getElementById('ideaInput')?.value || '').trim();
@@ -3483,6 +3667,7 @@ async function runBrain(auto) {
         showScreen('editorScreen');
         initEditor();
         showToast(note || 'Scènes générées avec succès !', note ? 'error' : 'success');
+        if (useLLM) setTimeout(() => runDirector(true), 500);
     } catch (e) {
         console.error(e);
         hideLoading();
@@ -3491,7 +3676,7 @@ async function runBrain(auto) {
     }
     if (auto && document.getElementById('optAutoExport')?.checked) {
         await new Promise(r => setTimeout(r, 600));
-        await exportVideoRemote();
+        await exportVideo();
     }
 }
 
@@ -3785,6 +3970,7 @@ function openSceneEditor(sceneId) {
         <div class="element-chip ${currentAnim === a.id ? 'selected' : ''}"
              onclick="selectAnimation('${a.id}')">${a.icon} ${a.name}</div>
     `).join('');
+    actingRender(scene);
     document.getElementById('sceneEditorModal').classList.add('active');
 }
 
@@ -3938,28 +4124,250 @@ function socialQualityReport(project) {
     return { total, issues };
 }
 
-const RENDER_CONVERTER_URL = 'https://videos-plus-converter-live.onrender.com/convert';
-async function convertSocialMp4(blob) {
-    if (!blob || !(blob.type || '').includes('webm')) throw new Error('Le flux source doit être WebM avant son envoi à Render');
-    showLoading('Conversion MP4 sur Render pour TikTok / WhatsApp…', true);
-    try {
-        const form = new FormData();
-        form.append('video', blob, 'videos-plus.webm');
-        const remote = await fetch(RENDER_CONVERTER_URL, { method: 'POST', body: form });
-        if (!remote.ok) throw new Error('Render a répondu HTTP ' + remote.status);
-        const result = await remote.blob();
-        if (!(result.type || '').includes('mp4')) throw new Error('Render n’a pas retourné un fichier MP4');
-        return result;
-    } catch (e) {
-        console.error('Conversion Render impossible', e);
-        throw new Error('Le moteur Render est indisponible. La vidéo n’a pas été encodée sur le téléphone.');
+// ===== MUXER MP4 INTÉGRÉ (H.264 + AAC, moov en tête = lecture/partage immédiats) =====
+const Mp4Mux = (() => {
+    const TE = new TextEncoder();
+    const cat = list => { let n = 0; list.forEach(a => { n += a.length; }); const o = new Uint8Array(n); let p = 0; list.forEach(a => { o.set(a, p); p += a.length; }); return o; };
+    const b32 = n => Uint8Array.of((n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255);
+    const b16 = n => Uint8Array.of((n >> 8) & 255, n & 255);
+    const by = (...a) => Uint8Array.from(a);
+    const zeros = n => new Uint8Array(n);
+    const box = (type, ...parts) => { const body = cat(parts); return cat([b32(body.length + 8), TE.encode(type), body]); };
+    const full = (type, ver, flags, ...parts) => box(type, by(ver, (flags >> 16) & 255, (flags >> 8) & 255, flags & 255), ...parts);
+    const table = arr => { const o = new Uint8Array(arr.length * 4), dv = new DataView(o.buffer); for (let i = 0; i < arr.length; i++) dv.setUint32(i * 4, arr[i] >>> 0); return o; };
+    const desc = (tag, ...parts) => { const body = cat(parts); return cat([by(tag, 0x80, 0x80, 0x80, body.length), body]); };
+    const MATRIX = cat([b32(0x00010000), b32(0), b32(0), b32(0), b32(0x00010000), b32(0), b32(0), b32(0), b32(0x40000000)]);
+    const AAC_FRAME = 1024;
+
+    function create(o) {
+        const st = { blobs: [], parts: [], pb: 0, pos: 0, v: { sizes: [], offs: [], keys: [] }, a: { sizes: [], offs: [] }, pend: [], pi: 0, avcC: null, asc: null };
+        const withAudio = !!o.withAudio;
+        const vTs = o.fps * 1000, vDur = 1000;
+
+        const put = d => {
+            st.parts.push(d); st.pb += d.length; st.pos += d.length;
+            if (st.pb > 4 * 1048576) { st.blobs.push(new Blob(st.parts)); st.parts = []; st.pb = 0; } // le navigateur peut garder ces blocs sur disque
+        };
+        const flushAudio = upto => {
+            while (st.pi < st.pend.length && st.pend[st.pi].ts <= upto) {
+                const s = st.pend[st.pi]; st.pend[st.pi] = null; st.pi++;
+                st.a.offs.push(st.pos); st.a.sizes.push(s.d.length); put(s.d);
+            }
+        };
+
+        function trak(id, kind, base) {
+            const isV = kind === 'vide', t = isV ? st.v : st.a;
+            const n = t.sizes.length;
+            const ts = isV ? vTs : o.sampleRate;
+            const dur = isV ? n * vDur : n * AAC_FRAME;
+            const trackMs = Math.round(dur / ts * 1000);
+            const tkhd = full('tkhd', 0, 3, b32(0), b32(0), b32(id), b32(0), b32(trackMs), zeros(8), b16(0), b16(0), b16(isV ? 0 : 0x0100), b16(0), MATRIX, b32(isV ? o.width * 65536 : 0), b32(isV ? o.height * 65536 : 0));
+            const mdhd = full('mdhd', 0, 0, b32(0), b32(0), b32(ts), b32(dur), b16(0x55c4), b16(0));
+            const hdlr = full('hdlr', 0, 0, b32(0), TE.encode(kind), zeros(12), TE.encode(isV ? 'VideoHandler\0' : 'SoundHandler\0'));
+            const mhd = isV ? full('vmhd', 0, 1, zeros(8)) : full('smhd', 0, 0, zeros(4));
+            const dinf = box('dinf', full('dref', 0, 0, b32(1), full('url ', 0, 1)));
+            let entry;
+            if (isV) {
+                entry = box('avc1', zeros(6), b16(1), zeros(16), b16(o.width), b16(o.height), b32(0x00480000), b32(0x00480000), b32(0), b16(1), zeros(32), b16(0x18), b16(0xffff), box('avcC', st.avcC));
+            } else {
+                const esds = full('esds', 0, 0, desc(0x03, b16(1), by(0), desc(0x04, by(0x40, 0x15), by(0, 6, 0), b32(128000), b32(128000), desc(0x05, st.asc)), desc(0x06, by(0x02))));
+                entry = box('mp4a', zeros(6), b16(1), zeros(8), b16(o.channels), b16(16), b16(0), b16(0), b32((o.sampleRate * 65536) >>> 0), esds);
+            }
+            const stbl = box('stbl',
+                full('stsd', 0, 0, b32(1), entry),
+                full('stts', 0, 0, b32(1), b32(n), b32(isV ? vDur : AAC_FRAME)),
+                isV ? full('stss', 0, 0, b32(t.keys.length), table(t.keys)) : new Uint8Array(0),
+                full('stsc', 0, 0, b32(1), b32(1), b32(1), b32(1)),
+                full('stsz', 0, 0, b32(0), b32(n), table(t.sizes)),
+                full('stco', 0, 0, b32(n), table(t.offs.map(x => x + base))));
+            return box('trak', tkhd, box('mdia', mdhd, hdlr, box('minf', mhd, dinf, stbl)));
+        }
+        function movieMs() {
+            const v = st.v.sizes.length * vDur / vTs * 1000;
+            const a = withAudio ? st.a.sizes.length * AAC_FRAME / o.sampleRate * 1000 : 0;
+            return Math.max(v, a);
+        }
+        function moov(base) {
+            const mvhd = full('mvhd', 0, 0, b32(0), b32(0), b32(1000), b32(Math.round(movieMs())), b32(0x00010000), b16(0x0100), zeros(10), MATRIX, zeros(24), b32(withAudio ? 3 : 2));
+            return box('moov', mvhd, trak(1, 'vide', base), withAudio ? trak(2, 'soun', base) : new Uint8Array(0));
+        }
+
+        return {
+            setAvcC(d) { st.avcC = d; },
+            setAsc(d) { st.asc = d; },
+            queueAudio(d, ts) { st.pend.push({ d, ts }); },
+            addVideo(d, key, ts) {
+                flushAudio(ts);
+                st.v.offs.push(st.pos); st.v.sizes.push(d.length);
+                if (key) st.v.keys.push(st.v.sizes.length);
+                put(d);
+            },
+            videoCount() { return st.v.sizes.length; },
+            finish() {
+                if (!st.avcC) throw new Error('Configuration H.264 absente');
+                if (!st.v.sizes.length) throw new Error('Aucune image encodée');
+                if (withAudio && !st.asc) throw new Error('Configuration AAC absente');
+                flushAudio(Infinity);
+                const ftyp = box('ftyp', TE.encode('isom'), b32(512), TE.encode('isom'), TE.encode('iso2'), TE.encode('avc1'), TE.encode('mp41'));
+                const moovLen = moov(0).length;
+                const base = ftyp.length + moovLen + 8;
+                if (base + st.pos > 0xFFFFFFF0) throw new Error('Vidéo trop longue pour un seul MP4');
+                const moovBox = moov(base);
+                const mdatHead = cat([b32(st.pos + 8), TE.encode('mdat')]);
+                return new Blob([ftyp, moovBox, mdatHead, ...st.blobs, ...st.parts], { type: 'video/mp4' });
+            },
+        };
     }
-}
+    return { create };
+})();
+
+// ===== EXPORT MP4 MODERNE : WebCodecs (H.264 + AAC), rendu image par image =====
+// Pas d'enregistrement en direct : chaque image est dessinée puis encodée, 30 i/s constantes,
+// l'audio est calculé à part (OfflineAudioContext). Résultat : vrai MP4 avec durée correcte.
+const WCExport = (() => {
+    const FPS = 30, SR = 44100;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const yieldNow = () => new Promise(res => { const c = new MessageChannel(); c.port1.onmessage = () => { c.port1.close(); res(); }; c.port2.postMessage(0); });
+    const toU8 = d => d instanceof ArrayBuffer ? new Uint8Array(d.slice(0)) : new Uint8Array(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength));
+
+    function dims(project) {
+        const cfg = Settings.get();
+        const base = RESOLUTIONS[project.format] || RESOLUTIONS['9:16'];
+        const sc = cfg.quality === '1080' ? 1 : 2 / 3;
+        const W = Math.round(base.width * sc / 2) * 2, H = Math.round(base.height * sc / 2) * 2;
+        return { W, H, bitrate: W * H > 1200000 ? 5000000 : 3000000 };
+    }
+
+    // Renvoie { codec, aacOK } si l'appareil sait encoder du H.264, sinon null (=> ancien mode).
+    async function plan(project) {
+        try {
+            if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof MessageChannel === 'undefined') return null;
+            const { W, H, bitrate } = dims(project);
+            let codec = '';
+            for (const c of ['avc1.640028', 'avc1.4d0028', 'avc1.42E028']) {
+                try {
+                    const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
+                    if (r && r.supported) { codec = c; break; }
+                } catch (_) { /* codec suivant */ }
+            }
+            if (!codec) return null;
+            let aacOK = false;
+            try {
+                if (typeof AudioEncoder !== 'undefined' && typeof AudioData !== 'undefined' && (window.OfflineAudioContext || window.webkitOfflineAudioContext)) {
+                    const r = await AudioEncoder.isConfigSupported({ codec: 'mp4a.40.2', sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
+                    aacOK = !!(r && r.supported);
+                }
+            } catch (_) { aacOK = false; }
+            return { codec, aacOK };
+        } catch (e) { return null; }
+    }
+
+    // Tout le son de la vidéo (musique + voix + bruitages) calculé hors temps réel, mono 44,1 kHz.
+    async function renderAudio(project, total, useVoice, hasAudio) {
+        const len = Math.ceil((total + 0.3) * SR);
+        if (!hasAudio) return new Float32Array(len);
+        const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        const oc = new OC(1, len, SR);
+        if (project.music) MusicEngine.start(project.music, 0, total, oc.destination, oc);
+        if (useVoice) VoiceStudio.scheduleExport(project, oc, oc.destination, 0.05);
+        ActingSfx.schedule(project, oc, oc.destination, 0.05, 0);
+        const buf = await oc.startRendering();
+        MusicEngine.stop(); VoiceStudio.stopExport(); ActingSfx.stop();
+        return buf.getChannelData(0);
+    }
+
+    async function encodeAudio(pcm, mux, encRef) {
+        let err = null, asc = null;
+        const enc = new AudioEncoder({
+            output: (c, m) => {
+                if (!asc && m && m.decoderConfig && m.decoderConfig.description) asc = toU8(m.decoderConfig.description);
+                const d = new Uint8Array(c.byteLength); c.copyTo(d); mux.queueAudio(d, c.timestamp);
+            },
+            error: e => { err = e; },
+        });
+        encRef.a = enc;
+        enc.configure({ codec: 'mp4a.40.2', sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
+        const step = 4096;
+        for (let i = 0, k = 0; i < pcm.length; i += step, k++) {
+            const n = Math.min(step, pcm.length - i);
+            const part = pcm.slice(i, i + n);
+            for (let j = 0; j < n; j++) { const v = part[j]; if (v > 1) part[j] = 1; else if (v < -1) part[j] = -1; }
+            const ad = new AudioData({ format: 'f32-planar', sampleRate: SR, numberOfFrames: n, numberOfChannels: 1, timestamp: Math.round(i * 1e6 / SR), data: part });
+            enc.encode(ad); ad.close();
+            if (err) throw err;
+            if (enc.encodeQueueSize > 8) await sleep(2); else if (k % 64 === 0) await yieldNow();
+        }
+        await enc.flush();
+        if (err) throw err;
+        try { enc.close(); } catch (_) { /* déjà fermé */ }
+        mux.setAsc(asc || Uint8Array.of(0x12, 0x08)); // AAC-LC, 44,1 kHz, mono
+    }
+
+    async function run(project, pl, useVoice, hasAudio, onStatus) {
+        const { W, H, bitrate } = dims(project);
+        const timeline = new TimelineEngine(project.scenes);
+        const total = timeline.getTotalDuration();
+        const frames = Math.max(1, Math.round(total * FPS));
+        const withAudio = !!pl.aacOK;
+        const mux = Mp4Mux.create({ width: W, height: H, fps: FPS, sampleRate: SR, channels: 1, withAudio });
+        const enc = { v: null, a: null };
+        let fatal = null, lock = null;
+        try { if (navigator.wakeLock) lock = await navigator.wakeLock.request('screen'); } catch (_) { lock = null; }
+        try {
+            if (withAudio) {
+                onStatus('Préparation du son…');
+                const pcm = await renderAudio(project, total, useVoice, hasAudio);
+                await encodeAudio(pcm, mux, enc);
+            }
+            onStatus('Création de la vidéo…');
+            updateProgress(0);
+            const renderer = new CanvasRenderer(W, H);
+            let gotCfg = false, lastTs = -1;
+            enc.v = new VideoEncoder({
+                output: (c, m) => {
+                    if (c.timestamp < lastTs) { fatal = new Error('Ordre des images inattendu'); return; }
+                    lastTs = c.timestamp;
+                    if (!gotCfg && m && m.decoderConfig && m.decoderConfig.description) { mux.setAvcC(toU8(m.decoderConfig.description)); gotCfg = true; }
+                    const d = new Uint8Array(c.byteLength); c.copyTo(d);
+                    mux.addVideo(d, c.type === 'key', c.timestamp);
+                },
+                error: e => { fatal = e; },
+            });
+            enc.v.configure({ codec: pl.codec, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
+            const frameUs = Math.round(1e6 / FPS);
+            for (let i = 0; i < frames; i++) {
+                if (fatal) throw fatal;
+                const t = Math.min(i / FPS, Math.max(0, total - 0.001));
+                const r = timeline.getSceneAtTime(t);
+                if (r) await renderer.renderScene(r.scene, r.timeInScene);
+                const vf = new VideoFrame(renderer.canvas, { timestamp: Math.round(i * 1e6 / FPS), duration: frameUs });
+                enc.v.encode(vf, { keyFrame: i % (FPS * 2) === 0 });
+                vf.close();
+                while (enc.v.encodeQueueSize > 4) { if (fatal) throw fatal; await sleep(4); }
+                if (i % 5 === 0) updateProgress(i / frames);
+                if (i % 2 === 0) await yieldNow();
+            }
+            await enc.v.flush();
+            if (fatal) throw fatal;
+            try { enc.v.close(); } catch (_) { /* déjà fermé */ }
+            updateProgress(1);
+            return { blob: mux.finish(), W, H, withAudio, frames };
+        } catch (e) {
+            try { if (enc.v && enc.v.state !== 'closed') enc.v.close(); } catch (_) {}
+            try { if (enc.a && enc.a.state !== 'closed') enc.a.close(); } catch (_) {}
+            MusicEngine.stop(); ActingSfx.stop(); VoiceStudio.stopExport();
+            throw e;
+        } finally {
+            try { if (lock) await lock.release(); } catch (_) {}
+        }
+    }
+
+    return { plan, run };
+})();
 
 // ===== EXPORT VIDEO =====
 function pickRecorderMime() {
-    // Le navigateur ne doit produire qu’un flux intermédiaire léger ; Render fabrique le MP4 final.
-    const list = ['video/webm;codecs=vp8,opus', 'video/webm'];
+    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
@@ -3978,81 +4386,29 @@ async function chooseLongExportWriter(filename, mime) {
     }
 }
 
-const RENDER_JOB_URL = '/api/render';
-async function exportVideoRemote() {
-    if (!state.project || !state.project.scenes?.length) { showToast('Aucune scène à exporter', 'error'); return; }
-    normalizeSocialProject(state.project);
-    const total = totalPreviewSeconds(state.project);
-    if (total > 45) { showToast('Le moteur gratuit Render accepte au maximum 45 secondes par export.', 'error'); return; }
-    showLoading('Envoi du projet à Render…', true); updateProgress(0);
-    try {
-        let start, job, lastStartError;
-        for (let attempt = 0; attempt < 18; attempt++) {
-            try {
-                start = await fetch(RENDER_JOB_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.project) });
-                job = await start.json();
-                if (start.ok) break;
-                if (start.status === 429) throw new Error(job.error || 'Un rendu est déjà en cours sur Render');
-                lastStartError = new Error(job.error || 'Le moteur Render se réveille…');
-            } catch (error) {
-                lastStartError = error;
-            }
-            showLoading('Réveil du moteur Render… nouvelle tentative ' + (attempt + 1) + '/18', true);
-            await new Promise(resolve => setTimeout(resolve, 4000));
-        }
-        if (!start?.ok || !job?.jobId) throw lastStartError || new Error('Impossible de démarrer le rendu Render');
-        let status;
-        for (let attempt = 0; attempt < 240; attempt++) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            let response;
-            try {
-                response = await fetch(RENDER_JOB_URL + '?jobId=' + encodeURIComponent(job.jobId));
-                status = await response.json();
-            } catch (error) {
-                showLoading('Reconnexion au moteur Render…', true);
-                continue;
-            }
-            if (!response.ok) { showLoading('Render redémarre…', true); continue; }
-            updateProgress(Number(status.progress || 0));
-            showLoading('Render : ' + ({ queued: 'file d’attente', 'starting-chromium': 'démarrage du moteur', 'loading-renderer': 'chargement du projet', 'rendering-canvas': 'rendu Canvas serveur', completed: 'préparation du MP4' }[status.stage] || status.stage || 'traitement') + '…', true);
-            if (status.status === 'completed') break;
-            if (status.status === 'failed') throw new Error(status.error || 'Rendu Render échoué');
-        }
-        if (!status || status.status !== 'completed') throw new Error('Le rendu Render a dépassé le délai gratuit autorisé');
-        const filename = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
-        const link = document.createElement('a');
-        link.href = RENDER_JOB_URL + '?jobId=' + encodeURIComponent(job.jobId) + '&download=1';
-        link.download = filename;
-        link.rel = 'noopener';
-        document.body.appendChild(link); link.click(); link.remove();
-        hideLoading(); updateProgress(1); showToast('MP4 rendue sur Render, prête pour TikTok et WhatsApp');
-    } catch (error) {
-        console.error('Render export error:', error); hideLoading(); showToast(error.message || 'Rendu Render impossible', 'error');
-    }
-}
-
 async function exportVideo() {
-    if (!SERVER_RENDER_MODE) {
-        showToast('Le rendu vidéo est délégué à Render. Utilise « Exporter sur Render ».', 'error');
-        return;
-    }
     if (!state.project || state.project.scenes.length === 0) {
         showToast('Aucune scène à exporter', 'error');
         return;
     }
     normalizeSocialProject(state.project);
-    // Tous les exports restent en mémoire jusqu’à leur envoi à Render : aucun fichier final
-    // n’est écrit directement par le navigateur avant l’encodage MP4 distant.
+    const wcPlan = await WCExport.plan(state.project); // null = appareil sans encodeur H.264 -> ancien mode
     const requestedLongExport = totalPreviewSeconds(state.project) > 300;
-    const directWriter = null;
-    const directWriterCancelled = false;
+    let directWriter = null;
+    let directWriterCancelled = false;
+    if (requestedLongExport && !wcPlan) {
+        const titleBase = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video');
+        const earlyMime = pickRecorderMime() || 'video/webm';
+        directWriter = await chooseLongExportWriter(titleBase + (earlyMime.includes('mp4') ? '.mp4' : '.webm'), earlyMime);
+        if (directWriter === false) { directWriterCancelled = true; directWriter = null; }
+    }
     if (typeof timeline !== 'undefined' && timeline) { timeline = new TimelineEngine(state.project.scenes); renderSceneList(); renderTimeline(); renderCurrentFrame(); }
     const quality = socialQualityReport(state.project);
     if (directWriterCancelled) showToast('Téléchargement direct annulé : export conservé en téléchargement classique.', 'error');
     if (quality.issues.length) {
         showToast('Conseil réseaux : ' + quality.issues.join(', ') + ' (' + Math.round(quality.total) + ' s)', 'error');
     }
-    if (typeof MediaRecorder === 'undefined') {
+    if (typeof MediaRecorder === 'undefined' && !wcPlan) {
         showToast('Export non supporté sur cet appareil', 'error');
         return;
     }
@@ -4074,6 +4430,38 @@ async function exportVideo() {
         }
     }
     try { await Character.prepare(state.project); } catch (e) { console.warn('Personnage', e); }
+    // --- Export MP4 moderne (WebCodecs) : vrai MP4 H.264/AAC, 30 i/s constantes, durée correcte ---
+    if (wcPlan) {
+        const hasAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
+        if (hasAudio && !wcPlan.aacOK) {
+            console.warn('Encodeur AAC absent : mode compatible');
+        } else {
+            let res = null;
+            try {
+                res = await WCExport.run(state.project, wcPlan, useVoice, hasAudio, txt => showLoading(txt, true));
+            } catch (e) {
+                console.warn('Export MP4 moderne échoué, mode compatible', e);
+                showToast('MP4 moderne indisponible sur cet appareil : mode compatible…', 'error');
+                showLoading('Export en cours... garde l\'écran allumé', true);
+                updateProgress(0);
+            }
+            if (res) {
+                try {
+                    showLoading('Enregistrement de la vidéo…', true);
+                    updateProgress(1);
+                    const fname = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
+                    const saved = await saveBlobToDevice(res.blob, fname);
+                    hideLoading();
+                    if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 30 i/s' + (hasAudio ? ', avec son' : ', sans son') + ')');
+                } catch (e) {
+                    console.error('Enregistrement', e);
+                    hideLoading();
+                    showToast('Enregistrement impossible. Vérifie l’espace disponible puis réessaie.', 'error');
+                }
+                return;
+            }
+        }
+    }
     let stream = null;
     let activeRecorder = null;
     let nativeStream = false;
@@ -4114,8 +4502,7 @@ async function exportVideo() {
         const longFileName = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + (actualMime.includes('mp4') ? '.mp4' : '.webm');
         let nativeWriteQueue = Promise.resolve(), nativeWriteError = null;
         let directWriteQueue = Promise.resolve(), directWriteError = null;
-        // Ne pas utiliser AndroidBridge ici : il contournerait l’encodage MP4 Render.
-        nativeStream = false;
+        try { nativeStream = !directWriter && !!(total > 60 && window.AndroidBridge && window.AndroidBridge.beginFile && window.AndroidBridge.beginFile(longFileName, actualMime)); } catch (_) { nativeStream = false; }
         const chunks = [];
         let recordedBytes = 0;
         let recorderError = null;
@@ -4187,18 +4574,16 @@ async function exportVideo() {
             if (directWriteError) { try { await directWriter.abort(); } catch (_) {} throw directWriteError; }
             await directWriter.close();
         }
-        // Render est obligatoire pour fabriquer le MP4 final ; aucun fallback FFmpeg local.
-        const finalBlob = await convertSocialMp4(blob);
-        const type = finalBlob ? (finalBlob.type || mime || 'video/webm') : actualMime;
+        const type = blob ? (blob.type || mime || 'video/webm') : actualMime;
         const ext = type.includes('mp4') ? 'mp4' : 'webm';
         const filename = nativeStream ? longFileName : (((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.' + ext);
         if (!nativeStream && !directWriter) {
             showLoading('Enregistrement de la vidéo…', true);
             updateProgress(1);
-            await saveBlobToDevice(finalBlob, filename);
+            await saveBlobToDevice(blob, filename);
         }
         hideLoading();
-        showToast((ext === 'mp4' ? 'MP4 prête pour TikTok et WhatsApp' : 'WebM prête — conversion MP4 impossible sur cet appareil') + ' (' + ext + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec musique') : ', sans audio') + ')');
+        showToast((ext === 'mp4' ? 'MP4 prête' : 'Vidéo WebM prête — cet appareil ne propose pas l’encodeur MP4') + ' (' + ext + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec musique') : ', sans audio') + ')');
     } catch (error) {
         console.error('Export error:', error);
         try { if (activeRecorder && activeRecorder.state !== 'inactive') activeRecorder.stop(); } catch (_) {}
