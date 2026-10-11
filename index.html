@@ -4011,6 +4011,10 @@ async function exportVideoRemote() {
 }
 
 async function exportVideo() {
+    if (!SERVER_RENDER_MODE) {
+        showToast('Le rendu vidéo est délégué à Render. Utilise « Exporter sur Render ».', 'error');
+        return;
+    }
     if (!state.project || state.project.scenes.length === 0) {
         showToast('Aucune scène à exporter', 'error');
         return;
