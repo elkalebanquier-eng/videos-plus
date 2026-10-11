@@ -3978,7 +3978,7 @@ async function chooseLongExportWriter(filename, mime) {
     }
 }
 
-const RENDER_JOB_URL = 'https://videos-plus-converter-live.onrender.com/render';
+const RENDER_JOB_URL = '/api/render';
 async function exportVideoRemote() {
     if (!state.project || !state.project.scenes?.length) { showToast('Aucune scène à exporter', 'error'); return; }
     normalizeSocialProject(state.project);
@@ -3986,24 +3986,45 @@ async function exportVideoRemote() {
     if (total > 45) { showToast('Le moteur gratuit Render accepte au maximum 45 secondes par export.', 'error'); return; }
     showLoading('Envoi du projet à Render…', true); updateProgress(0);
     try {
-        const start = await fetch(RENDER_JOB_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.project) });
-        const job = await start.json();
-        if (!start.ok) throw new Error(job.error || 'Impossible de démarrer le rendu Render');
+        let start, job, lastStartError;
+        for (let attempt = 0; attempt < 18; attempt++) {
+            try {
+                start = await fetch(RENDER_JOB_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.project) });
+                job = await start.json();
+                if (start.ok) break;
+                if (start.status === 429) throw new Error(job.error || 'Un rendu est déjà en cours sur Render');
+                lastStartError = new Error(job.error || 'Le moteur Render se réveille…');
+            } catch (error) {
+                lastStartError = error;
+            }
+            showLoading('Réveil du moteur Render… nouvelle tentative ' + (attempt + 1) + '/18', true);
+            await new Promise(resolve => setTimeout(resolve, 4000));
+        }
+        if (!start?.ok || !job?.jobId) throw lastStartError || new Error('Impossible de démarrer le rendu Render');
         let status;
         for (let attempt = 0; attempt < 240; attempt++) {
             await new Promise(resolve => setTimeout(resolve, 1500));
-            const response = await fetch(RENDER_JOB_URL + '/' + encodeURIComponent(job.jobId));
-            status = await response.json();
-            if (!response.ok) throw new Error(status.error || 'Statut Render indisponible');
+            let response;
+            try {
+                response = await fetch(RENDER_JOB_URL + '?jobId=' + encodeURIComponent(job.jobId));
+                status = await response.json();
+            } catch (error) {
+                showLoading('Reconnexion au moteur Render…', true);
+                continue;
+            }
+            if (!response.ok) { showLoading('Render redémarre…', true); continue; }
             updateProgress(Number(status.progress || 0));
             showLoading('Render : ' + ({ queued: 'file d’attente', 'starting-chromium': 'démarrage du moteur', 'loading-renderer': 'chargement du projet', 'rendering-canvas': 'rendu Canvas serveur', completed: 'préparation du MP4' }[status.stage] || status.stage || 'traitement') + '…', true);
             if (status.status === 'completed') break;
             if (status.status === 'failed') throw new Error(status.error || 'Rendu Render échoué');
         }
         if (!status || status.status !== 'completed') throw new Error('Le rendu Render a dépassé le délai gratuit autorisé');
-        const video = await fetch(status.downloadUrl);
-        if (!video.ok) throw new Error('MP4 Render indisponible au téléchargement');
-        await saveBlobToDevice(await video.blob(), ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4');
+        const filename = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
+        const link = document.createElement('a');
+        link.href = RENDER_JOB_URL + '?jobId=' + encodeURIComponent(job.jobId) + '&download=1';
+        link.download = filename;
+        link.rel = 'noopener';
+        document.body.appendChild(link); link.click(); link.remove();
         hideLoading(); updateProgress(1); showToast('MP4 rendue sur Render, prête pour TikTok et WhatsApp');
     } catch (error) {
         console.error('Render export error:', error); hideLoading(); showToast(error.message || 'Rendu Render impossible', 'error');

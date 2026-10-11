@@ -68,5 +68,8 @@ Variables Render à configurer dans le service `video-converter` :
 - `ALLOWED_ORIGIN=https://videos-plus-elkalebanquier-engs-projects.vercel.app`
 - `MAX_RENDER_SECONDS=45`
 - `CHROMIUM_PATH=/usr/bin/chromium` (image Debian Slim)
+- `RENDER_RENDER_URL=https://videos-plus-converter-live.onrender.com/render` (optionnel, valeur par défaut intégrée)
 
 Le service conserve aussi `/convert` pour compatibilité, mais le bouton **Exporter sur Render** utilise désormais le nouveau flux asynchrone `/render` → `/render/:id` → `/render/:id/download`.
+
+Le navigateur n’appelle plus directement Render. Il passe par `/api/render` sur Vercel, qui masque CORS, absorbe les démarrages à froid et réessaie automatiquement le démarrage jusqu’à 18 fois. Le téléchargement final utilise une redirection serveur vers le MP4 Render, sans `fetch` cross-origin.
