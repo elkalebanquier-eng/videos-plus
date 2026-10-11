@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://videos-plus-elkalebanquier-engs-projects.vercel.app/sitemap.xml
+Sitemap: https://elka-jobnet.vercel.app/sitemap.xml

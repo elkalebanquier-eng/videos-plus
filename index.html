@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="2.7-mp4-speechify-server-proxy">
+    <meta name="videostory-build" content="2.8-vivant-speechify-server-proxy">
     <title>Vidéos Plus — Créateur de vidéos animées</title>
-    <meta name="description" content="Vidéos Plus transforme tes histoires en vidéos animées avec personnage, voix Speechify et export MP4 pour les réseaux sociaux.">
-    <meta name="keywords" content="Vidéos Plus, vidéo animée, création vidéo, TikTok, WhatsApp, Speechify">
+    <meta name="description" content="Vidéos Plus 2.8 transforme tes histoires en vidéos animées expressives avec personnage vivant, voix Speechify et export MP4.">
+    <meta name="keywords" content="Vidéos Plus, vidéo animée, création vidéo, personnage animé, TikTok, WhatsApp, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
-    <link rel="canonical" href="https://videos-plus-elkalebanquier-engs-projects.vercel.app/">
+    <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
     <meta property="og:title" content="Vidéos Plus — Créateur de vidéos animées">
-    <meta property="og:description" content="Crée des vidéos animées à partir de tes histoires avec personnage et narration.">
-    <meta property="og:url" content="https://videos-plus-elkalebanquier-engs-projects.vercel.app/">
+    <meta property="og:description" content="Crée des vidéos animées expressives à partir de tes histoires, avec personnage vivant, narration et export MP4.">
+    <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Vidéos Plus — Créateur de vidéos animées">
-    <meta name="twitter:description" content="Crée des vidéos animées à partir de tes histoires.">
-    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","description":"Application web pour créer des vidéos animées avec narration et export MP4.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
+    <meta name="twitter:description" content="Crée des vidéos animées expressives à partir de tes histoires.">
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec narration et export MP4.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -355,9 +355,9 @@
             <div class="form-group"><label>Personnage : couleur de la tenue</label><input type="color" id="settingCharColor" value="#1f3a5f"></div>
             <div class="form-group"><label>Personnage : effets</label><select id="settingCharFx"><option value="on">Pro : contours, lumière, ombre</option><option value="off">Léger : pour téléphone lent</option></select></div>
             <div class="form-group"><label>Personnage : bruitages</label><select id="settingCharSfx"><option value="on">Activés (applaudissements, ding…)</option><option value="off">Coupés</option></select></div>
-            <div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
-            <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
-            <div class="form-group"><label>Voix</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="adeline" value="adeline" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Appuie sur « Charger mes voix » pour choisir une voix française dans la liste de ton compte, ou tape son identifiant.</p></div>
+<div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
+                        <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
+            <div class="form-group"><label>Voix Speechify</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="adeline" value="adeline" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Charge les voix disponibles avec le proxy sécurisé, choisis une voix française ou saisis son identifiant.</p></div>
             <div class="form-group"><button type="button" class="btn-secondary" onclick="testSpeechifyVoice()">▶ Tester la voix Speechify</button><p class="speechify-note" id="settingVoiceStatus"></p></div>
 
             <button class="btn-primary" onclick="saveSettings()" style="width: 100%; justify-content: center;">Enregistrer</button>
@@ -493,7 +493,7 @@ async function saveBlobToDevice(blob, filename) {
     // Les navigateurs modernes peuvent écrire directement sur disque sans créer une seconde copie.
     if (typeof window.showSaveFilePicker === 'function') {
         try {
-            const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'Vidéo', accept: { [blob.type || 'video/webm']: ['.' + (filename.split('.').pop() || 'webm')] } }] });
+            const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'Vidéo', accept: { [(blob.type || 'video/webm').split(';')[0]]: ['.' + (filename.split('.').pop() || 'webm')] } }] });
             const writable = await handle.createWritable();
             const reader = blob.stream().getReader();
             try {
@@ -582,13 +582,13 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '2.7', channel: 'web', publicBuildId: 'videos-plus-2.7-speechify-proxy' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '2.8', channel: 'web', publicBuildId: 'videos-plus-2.8-vivant-speechify-proxy' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
     save(o) { try { localStorage.setItem('vs_settings', JSON.stringify({ ...this.get(), ...o })); } catch (e) { /* ignore */ } },
 };
-// Migration de sécurité : efface une ancienne clé API locale des builds précédents.
+// Migration de sécurité : efface les anciennes clés Speechify stockées dans ce navigateur.
 try {
     const saved = JSON.parse(localStorage.getItem('vs_settings') || '{}');
     if (saved.speechifyKey || saved.speechifyProxy) {
@@ -642,6 +642,33 @@ const ActingBrain = (() => {
     const EMOS = ['joy', 'sad', 'angry', 'surprise', 'fear', 'think', 'proud', 'love', 'doubt', 'excited'];
     const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
     const backOut = x => { x = clamp(x, 0, 1); const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+    // ---- vie du visage : tout dépend seulement du temps et de la scène => même résultat à l'aperçu et à l'export
+    const hash01 = k => { let x = Math.imul((k | 0) ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
+    const strHash = str => { let h = 2166136261; str = String(str || ''); for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+    // un clignement : la paupière se ferme vite (0,07 s), reste fermée un instant, puis s'ouvre plus lentement (0,13 s)
+    const blinkShape = x => x < 0 || x > 0.23 ? 0 : x < 0.07 ? smooth(x / 0.07) : x < 0.10 ? 1 : smooth(1 - (x - 0.10) / 0.13);
+    // clignements naturels : rythme irrégulier propre à chaque scène, parfois doubles, plus rares quand il fixe (colère, réflexion), plus fréquents quand il est inquiet
+    function blinkAt(t, seed, ctxB, E) {
+        let b = 0;
+        ctxB.forEach(tb => { const v = blinkShape(t - tb); if (v > b) b = v; });   // clignements placés par le texte (fin de phrase, changement d'émotion)
+        const W = 4.0, k0 = Math.floor(t / W);
+        const stare = clamp(0.1 + 0.3 * (E.angry + E.proud + E.think) - 0.5 * (E.fear + E.doubt + E.excited), 0, 0.6);
+        for (let k = k0 - 1; k <= k0; k++) {
+            if (hash01(seed + k * 13 + 5) < stare) continue;
+            const c = k * W + 0.3 + hash01(seed + k * 7) * 3.0;
+            if (ctxB.some(tb => Math.abs(tb - c) < 0.8 || Math.abs(tb - c - 0.27) < 0.5)) continue;
+            b = Math.max(b, blinkShape(t - c));
+            if (hash01(seed + k * 29 + 3) < 0.2 + 0.2 * (E.fear + E.doubt)) b = Math.max(b, blinkShape(t - c - 0.27));
+        }
+        return b;
+    }
+    // regard : de vraies fixations suivies de petits sauts rapides (saccades), le plus souvent vers la caméra
+    function eyeSaccade(t, seed, strength) {
+        const F = 1.1, k = Math.floor(t / F);
+        const tgt = j => hash01(seed + j * 3 + 3) < 0.45 ? { x: 0, y: 0 } : { x: (hash01(seed + j * 3 + 1) - 0.5) * 1.5, y: (hash01(seed + j * 3 + 2) - 0.5) * 0.8 };
+        const a = tgt(k - 1), b = tgt(k), u = smooth((t - k * F - hash01(seed + k * 5 + 9) * 0.5) / 0.07);
+        return { x: (a.x + (b.x - a.x) * u) * strength, y: (a.y + (b.y - a.y) * u) * strength };
+    }
     const parts = w => String(w).split(/[’'\-]/).map(p => p.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean);
     // « =mot » = mot exact ; sinon = début de mot (racine)
     const compile = str => {
@@ -792,7 +819,7 @@ const ActingBrain = (() => {
             if (hasAny(ps, EMO.sad)) P.looks.push({ t0: t, t1: t + 1.6, x: 0.2, y: 0.8 });
             }
             // coups d'accent : mots longs ou fin de groupe
-            if (ps.some(p => p.length >= 7) || /[,;:]$/.test(w)) P.beats.push({ t, s: 0.7 });
+            if (ps.some(p => p.length >= 7) || /[,;:!?]$/.test(w)) P.beats.push({ t, s: /[!?]$/.test(w) ? 0.95 : 0.7 });
         });
         // objets affichés à l'écran : le personnage les regarde et les montre quand ils apparaissent
         const objs = (scene.elements || []).filter(e => e.type === 'object' && e.visible !== false);
@@ -838,12 +865,16 @@ const ActingBrain = (() => {
                 if (ev.shot === 'close' || ev.shot === 'wide') (P.forcedShots = P.forcedShots || []).push({ t0: t - 0.05, t1: t + 1.8, z: ev.shot === 'close' ? 1.5 : 0.94 });
             });
         }
+        // dernier geste de la scène d'avant : on ne le rejoue pas tout de suite
+        let prevLast = null;
+        try { const list = (state.project && state.project.scenes) || [], pi = list.indexOf(scene); if (pi > 0 && list[pi - 1].narration) { const pg = plan(list[pi - 1]).gestures; if (pg.length) prevLast = pg[pg.length - 1].name; } } catch (_) {}
         // on garde les gestes les plus importants, sans chevauchement ni répétition
         cand.sort((a, b) => a.t0 - b.t0);
         const out = [];
         cand.forEach(g => {
             const prev = out[out.length - 1];
             if (g.t0 > dur - 0.5) return;
+            if (!g.force && prevLast && g.name === prevLast && g.t0 < 2.2 && g.name !== 'count' && g.name !== 'hold') return;
             if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 2.5 && g.name !== 'count') return;
             if (prev && g.t0 < prev.t1 - 0.15) {
                 // un geste voulu (écrit par le réalisateur ou réglé à la main) coupe le précédent ; sinon le plus important gagne
@@ -857,6 +888,16 @@ const ActingBrain = (() => {
         if (!out.length && scene.role === 'cta') out.push({ name: 'beckon', n: 0, t0: dur * 0.35, t1: Math.min(dur - 0.3, dur * 0.35 + 1.5), pri: 5 });
         if (!out.length && scene.role === 'hook') out.push({ name: 'present', n: 0, t0: Math.min(1.0, dur * 0.3), t1: Math.min(dur - 0.3, 2.6), pri: 3 });
         P.gestures = out;
+        // clignements au bon moment (pause entre deux phrases, changement d'émotion) et regard qui s'échappe quand la phrase reste en suspens (« … »)
+        P.blinks = [];
+        c.ws.forEach((w, i) => {
+            const tn = c.starts[i + 1]; if (tn === undefined) return;
+            if (/[.!?…]$/.test(w)) P.blinks.push(tn - 0.2);
+            if (/(\.\.\.|…)$/.test(w)) P.looks.push({ t0: tn - 0.75, t1: tn + 0.35, x: 0.55, y: 0.65 });
+        });
+        P.spikes.forEach(sp => { if (sp.t0 > 0.3) P.blinks.push(sp.t0 + 0.08); });
+        P.blinks.sort((x, y) => x - y);
+        { const keep = []; P.blinks.forEach(x => { if (!keep.length || x - keep[keep.length - 1] >= 1.0) keep.push(x); }); P.blinks = keep; }   // jamais deux clignements « de texte » collés
         // plans de caméra : gros plan sur les émotions fortes, léger recul sur les grands gestes
         P.shots = [];
         if (!autoShotsOff) P.spikes.forEach(sp => { if (['sad', 'love', 'fear', 'surprise', 'angry'].includes(sp.emo) && sp.t0 > 0.2) P.shots.push({ t0: sp.t0, t1: sp.t0 + 1.7, z: 1.5 }); });
@@ -897,8 +938,18 @@ const ActingBrain = (() => {
             break;
         }
         let beat = 0; P.beats.forEach(b => { const x = t - b.t; if (x >= 0 && x < 0.6) beat = Math.max(beat, b.s * Math.exp(-x / 0.14)); });
-        const look = { x: Math.sin(t * 1.7) * 0.18 + Math.sin(t * 5.3) * 0.06, y: Math.sin(t * 1.1) * 0.12 };
-        P.looks.forEach(l => { if (t >= l.t0 && t <= l.t1) { const k = smooth((t - l.t0) / 0.25) * smooth((l.t1 - t) / 0.3); look.x = look.x * (1 - k) + l.x * k; look.y = look.y * (1 - k) + l.y * k; } });
+        const wx = Math.sin(t * 1.7) * 0.18 + Math.sin(t * 5.3) * 0.06, wy = Math.sin(t * 1.1) * 0.12;
+        const look = { x: wx, y: wy };
+        let evK = 0;
+        P.looks.forEach(l => { if (t >= l.t0 && t <= l.t1) { const k = smooth((t - l.t0) / 0.25) * smooth((l.t1 - t) / 0.3); look.x = look.x * (1 - k) + l.x * k; look.y = look.y * (1 - k) + l.y * k; evK = Math.max(evK, k); } });
+        // la tête suit le regard doucement ; les yeux, eux, font de petits sauts (sauf quand un regard est demandé par le texte)
+        const seed = strHash(scene && scene.id) + ((scene && scene.narration && scene.narration.length) || 0);
+        const sac = eyeSaccade(t, seed, 1 - evK);
+        const eye = { x: look.x - wx * (1 - evK) + sac.x, y: look.y - wy * (1 - evK) + sac.y };
+        const blink = blinkAt(t, seed, P.blinks || [], e);
+        // respiration : inspire plus court que l'expire, plus ample quand il est excité, inquiet, en colère ou triste
+        const bph = (t / 3.4 + hash01(seed + 77)) % 1, bw = bph < 0.4 ? smooth(bph / 0.4) : smooth(1 - (bph - 0.4) / 0.6);
+        const breath = (bw - 0.5) * 0.07 * (1 + 0.8 * (e.excited + e.fear + e.angry) + 0.4 * e.sad);
         let nod = 0, shake = 0;
         P.heads.forEach(h => { if (t >= h.t0 && t <= h.t1) { const x = (t - h.t0) / (h.t1 - h.t0), env = Math.sin(Math.PI * x); if (h.kind === 'nod') nod = Math.sin(x * Math.PI * 4) * env; else shake = Math.sin(x * Math.PI * 4) * env; } });
         const amb = P.ambient || (['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(pose) ? pose : null);
@@ -919,7 +970,7 @@ const ActingBrain = (() => {
         let zUp = 0, zDown = 0;
         (P.shots || []).forEach(sh => { if (t >= sh.t0 - 0.2 && t <= sh.t1 + 0.25) { const k = smooth((t - (sh.t0 - 0.18)) / 0.18) * smooth((sh.t1 + 0.22 - t) / 0.22), v = (sh.z - 1) * k; if (v > 0) zUp = Math.max(zUp, v); else zDown = Math.min(zDown, v); } });
         camZ += zUp + zDown;
-        return { e, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, sway, ant, push, jolt, camZ, gside, prop };
+        return { e, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, eye, blink, breath, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, sway, ant, push, jolt, camZ, gside, prop };
     }
     // partition actuelle de la scène sous forme d'événements (pour la frise éditable)
     function describe(scene) {
@@ -1141,7 +1192,7 @@ const BuiltinCharacter = (() => {
         const asym = clamp(E.doubt + 0.5 * E.think, 0, 1);
         const sad = E.sad > 0.45, happy = E.joy + E.excited + E.love > 0.7;
         const bounce = E.excited * Math.abs(Math.sin(t * 7)) * 0.1;
-        const bob = (walk ? Math.abs(Math.sin(walk)) * 0.12 : Math.sin(t * 1.6) * 0.035) + E.sad * 0.08 - bounce + a.beat * 0.03;
+        const bob = (walk ? Math.abs(Math.sin(walk)) * 0.12 : (a.breath !== undefined ? a.breath : Math.sin(t * 1.6) * 0.035)) + E.sad * 0.08 - bounce + a.beat * 0.03;
         const shrug = gh && gh.shrug ? gk * 0.3 : 0;
         const tilt = E.sad * 0.1 + Math.sin(t * 0.7) * 0.025 - E.think * 0.07 + E.doubt * 0.06 - E.proud * 0.03 + (gh && gh.tilt ? gh.tilt * gk : 0) + a.shake * 0.05 + a.nod * 0.0 + (open > 0.05 ? Math.sin(t * 7) * 0.015 * open : 0);
         const nodY = a.nod * 0.1 + a.beat * 0.05 + E.sad * 0.05;
@@ -1233,8 +1284,8 @@ const BuiltinCharacter = (() => {
         }
         // visage (les traits glissent un peu quand la tête se tourne)
         ctx.save(); ctx.translate(yaw * 0.16, 0);
-        const bl = (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
-        const look = a.look;
+        const bl = a.blink !== undefined ? a.blink : (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
+        const look = a.eye || a.look;
         [-0.38, 0.38].forEach(x => {
             const ey = hy + 0.02, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen), ry = Math.min(0.24, 0.17 * lid);
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, 0.2, ry, 0, 0, TAU); ctx.fill();
@@ -1909,6 +1960,7 @@ const VoiceStudio = (() => {
         if (S === 401) t = 'clé API Speechify refusée côté serveur : vérifie SPEECHIFY_API_KEY dans les variables d’environnement Vercel.';
         else if (S === 402) t = 'crédit épuisé ou forfait Speechify non activé.';
         else if (S === 403) t = 'accès Speechify refusé (clé ou forfait côté serveur).';
+        else if (S === 503) t = 'Speechify n’est pas configuré côté serveur : vérifie SPEECHIFY_API_KEY dans les variables Vercel.';
         else if (S === 429) t = 'trop de demandes : attends un instant et réessaie.';
         else if (/model_retired/.test(code)) t = 'ce modèle n’existe plus : choisis simba-3.0.';
         else if (/voice/i.test(code + ' ' + msg)) t = 'voix introuvable ou incompatible : charge la liste et choisis une voix française.';
@@ -1941,7 +1993,7 @@ const VoiceStudio = (() => {
         }
         return out;
     }
-    const engineOn = () => true; // La clé est conservée côté serveur dans SPEECHIFY_API_KEY.
+    const engineOn = () => true; // La clé reste uniquement côté serveur dans SPEECHIFY_API_KEY.
     const supported = () => !!(window.AudioContext || window.webkitAudioContext);
     const clean = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 2000);
     function b64ToArrayBuffer(b64) {
@@ -1977,7 +2029,7 @@ const VoiceStudio = (() => {
         src.onended=()=>{if(current===src)current=null;};
     }
     function speakScene(scene, offset, project, stillCurrent) {
-        if (!engineOn()) { chip('🎙️ Ajoute ta clé Speechify dans Paramètres'); return true; }
+        if (!engineOn()) { chip('🎙️ Speechify est momentanément indisponible'); return true; }
         const key=modelFor()+'|'+voiceFor()+'|'+clean(scene.narration), hit=cache.get(key);
         if(hit){playBuffer(scene,hit,offset);return true;}
         chip('🎙️ Création de la voix Speechify…'); synth(scene.narration).then(b=>{chip(null);const off=stillCurrent();if(b&&off!==null)playBuffer(scene,b,off);}).catch(e=>{chip(null);showToast(e.message,'error');});
@@ -1993,7 +2045,7 @@ const VoiceStudio = (() => {
     function stopExport(){exportSources.forEach(s=>{try{s.stop();}catch(_){}});exportSources=[];}
     function chip(text,action){const el=document.getElementById('voiceChip');if(!el)return;if(!text){el.style.display='none';el.onclick=null;return;}el.textContent=text;el.style.display='block';el.style.cursor=action?'pointer':'default';el.onclick=action||null;}
     function offerChip(project){if(!engineOn())chip('🎙️ Configure Speechify dans Paramètres',()=>showScreen('settingsScreen'));else chip(null);}
-    async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Colle ta clé API Speechify puis réessaie.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
+    async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Speechify est momentanément indisponible côté serveur. Réessaie plus tard.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
     return {listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,LABEL};
 })();
 
@@ -4367,7 +4419,8 @@ const WCExport = (() => {
 
 // ===== EXPORT VIDEO =====
 function pickRecorderMime() {
-    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
+    // « video/mp4 » seul est retiré : sur certains appareils il produit du VP9/AV1 dans un MP4, que les réseaux sociaux refusent
+    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=h264,aac', 'video/webm;codecs=vp8,opus', 'video/webm'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
@@ -4378,7 +4431,7 @@ async function chooseLongExportWriter(filename, mime) {
     if (typeof window.showSaveFilePicker !== 'function') return null;
     try {
         const ext = filename.split('.').pop() || 'webm';
-        const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'Vidéo', accept: { [mime || 'video/webm']: ['.' + ext] } }] });
+        const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'Vidéo', accept: { [(mime || 'video/webm').split(';')[0]]: ['.' + ext] } }] });
         return await handle.createWritable();
     } catch (e) {
         if (e && e.name === 'AbortError') return false;
