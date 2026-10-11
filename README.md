@@ -67,6 +67,6 @@ Variables Render à configurer dans le service `video-converter` :
 - `PUBLIC_APP_URL=https://videos-plus-elkalebanquier-engs-projects.vercel.app`
 - `ALLOWED_ORIGIN=https://videos-plus-elkalebanquier-engs-projects.vercel.app`
 - `MAX_RENDER_SECONDS=45`
-- `CHROMIUM_PATH=/usr/bin/chromium-browser`
+- `CHROMIUM_PATH=/usr/bin/chromium`
 
 Le service conserve aussi `/convert` pour compatibilité, mais le bouton **Exporter sur Render** utilise désormais le nouveau flux asynchrone `/render` → `/render/:id` → `/render/:id/download`.

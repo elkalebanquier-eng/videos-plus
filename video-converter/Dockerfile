@@ -5,7 +5,7 @@ COPY package.json ./
 RUN npm install --omit=dev
 COPY server.js ./
 ENV NODE_ENV=production
-ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+ENV CHROMIUM_PATH=/usr/bin/chromium
 ENV MAX_RENDER_SECONDS=45
 EXPOSE 10000
 CMD ["npm", "start"]

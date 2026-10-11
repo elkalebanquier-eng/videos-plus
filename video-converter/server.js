@@ -22,6 +22,14 @@ function publicBase(req) {
   return `${protocol}://${req.get('host')}`;
 }
 
+async function findChromium() {
+  const candidates = [process.env.CHROMIUM_PATH, '/usr/bin/chromium', '/usr/bin/chromium-browser'].filter(Boolean);
+  for (const candidate of candidates) {
+    try { await fs.access(candidate); return candidate; } catch (_) {}
+  }
+  throw new Error('Chromium introuvable dans le conteneur Render');
+}
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.has(origin)) {
@@ -98,7 +106,7 @@ async function runRenderJob(job, baseUrl) {
   let browser;
   job.status = 'rendering'; job.stage = 'starting-chromium';
   try {
-    browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process'] });
+    browser = await chromium.launch({ headless: true, executablePath: await findChromium(), args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process'] });
     const page = await browser.newPage({ viewport: { width: 720, height: 1280 }, deviceScaleFactor: 1 });
     page.on('console', message => { if (message.type() === 'error') console.error('[renderer]', message.text()); });
     const callback = `${baseUrl}/render/${job.id}/result`;
