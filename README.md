@@ -4,7 +4,7 @@ Vidéos Plus est l'application mobile-first fournie dans `onevo-explainer-rive-s
 
 Le site contient maintenant les métadonnées SEO, Open Graph, Twitter Card, données structurées, URL canonique, sitemap et robots.txt associés à **Vidéos Plus**. Google doit encore recrawler la page : le changement de nom dans les résultats peut prendre de quelques jours à plusieurs semaines.
 
-L’export social utilise le format vertical 9:16 en 1080×1920 par défaut. Quand le navigateur produit du WebM, le moteur FFmpeg déployé sur Render (`videos-plus-converter-live.onrender.com`) le convertit en MP4 H.264/AAC avec pixels `yuv420p`, audio AAC et `faststart`, pour une publication fiable sur TikTok, WhatsApp et les autres réseaux sociaux. Si Render est momentanément indisponible, FFmpeg WebAssembly dans le navigateur sert de secours ; si la mémoire du téléphone est insuffisante, le fichier WebM est conservé.
+L’export social utilise le format vertical 9:16 en 1080×1920 par défaut. Le navigateur produit uniquement un flux intermédiaire WebM, puis le moteur FFmpeg déployé sur Render (`videos-plus-converter-live.onrender.com`) fabrique obligatoirement le MP4 H.264/AAC avec pixels `yuv420p`, audio AAC et `faststart`, pour une publication fiable sur TikTok, WhatsApp et les autres réseaux sociaux. Le téléphone ne charge donc pas FFmpeg et ne fabrique jamais le MP4 final ; si Render est indisponible, l’export est interrompu avec un message clair plutôt que de surcharger l’appareil.
 
 Le parcours de création fonctionne en mode local sans clé IA. La narration Speechify passe par `/api/speechify` : la clé reste dans les variables d'environnement Vercel et n'est jamais enregistrée dans le navigateur, le HTML ou GitHub.
 
@@ -18,7 +18,7 @@ Le parcours de création fonctionne en mode local sans clé IA. La narration Spe
 - Rig 2D articulé avec os virtuels, épaules, coudes, hanches, genoux et interpolation de poses.
 - Clignement, expressions, bouche rythmée et gestes indépendants du corps.
 - Lecture, navigation scène par scène et export vidéo vertical pour les réseaux sociaux.
-- Export vidéo robuste par capture image par image, conversion Render en MP4 H.264/AAC et repli WebM si nécessaire.
+- Export vidéo robuste par capture image par image, envoi du WebM intermédiaire à Render et conversion obligatoire en MP4 H.264/AAC.
 - Voix locale avec `SpeechSynthesis` en secours.
 - Route serverless Speechify optionnelle : la clé reste côté serveur.
 - Interface responsive pensée comme une application mobile.

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="videostory-build" content="2.6-download-safe-public">
     <title>Vidéos Plus — Créateur de vidéos animées</title>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <meta name="description" content="Vidéos Plus transforme tes histoires en vidéos animées avec personnage, voix Speechify et export vidéo pour les réseaux sociaux.">
     <meta name="keywords" content="Vidéos Plus, vidéo animée, création vidéo, TikTok, WhatsApp, Speechify">
     <meta name="author" content="Vidéos Plus">
@@ -3931,36 +3930,28 @@ function socialQualityReport(project) {
     return { total, issues };
 }
 
-let ffmpegSocial = null;
 const RENDER_CONVERTER_URL = 'https://videos-plus-converter-live.onrender.com/convert';
 async function convertSocialMp4(blob) {
-    if (!blob || !(blob.type || '').includes('webm')) return null;
+    if (!blob || !(blob.type || '').includes('webm')) throw new Error('Le flux source doit être WebM avant son envoi à Render');
     showLoading('Conversion MP4 sur Render pour TikTok / WhatsApp…', true);
     try {
         const form = new FormData();
         form.append('video', blob, 'videos-plus.webm');
         const remote = await fetch(RENDER_CONVERTER_URL, { method: 'POST', body: form });
-        if (remote.ok) return await remote.blob();
-        console.warn('Render conversion HTTP', remote.status);
-    } catch (e) { console.warn('Render indisponible, fallback navigateur', e); }
-    if (!window.FFmpeg || !window.crossOriginIsolated) return null;
-    try {
-        if (!ffmpegSocial) {
-            ffmpegSocial = window.FFmpeg.createFFmpeg({ log: false, corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' });
-            await ffmpegSocial.load();
-        }
-        const input = 'videos-plus-input.webm', output = 'videos-plus-social.mp4';
-        ffmpegSocial.FS('writeFile', input, await window.FFmpeg.fetchFile(blob));
-        await ffmpegSocial.run('-i', input, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output);
-        const data = ffmpegSocial.FS('readFile', output);
-        try { ffmpegSocial.FS('unlink', input); ffmpegSocial.FS('unlink', output); } catch (_) {}
-        return new Blob([data.buffer], { type: 'video/mp4' });
-    } catch (e) { console.warn('Conversion MP4 indisponible', e); return null; }
+        if (!remote.ok) throw new Error('Render a répondu HTTP ' + remote.status);
+        const result = await remote.blob();
+        if (!(result.type || '').includes('mp4')) throw new Error('Render n’a pas retourné un fichier MP4');
+        return result;
+    } catch (e) {
+        console.error('Conversion Render impossible', e);
+        throw new Error('Le moteur Render est indisponible. La vidéo n’a pas été encodée sur le téléphone.');
+    }
 }
 
 // ===== EXPORT VIDEO =====
 function pickRecorderMime() {
-    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
+    // Le navigateur ne doit produire qu’un flux intermédiaire léger ; Render fabrique le MP4 final.
+    const list = ['video/webm;codecs=vp8,opus', 'video/webm'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
@@ -3985,15 +3976,11 @@ async function exportVideo() {
         return;
     }
     normalizeSocialProject(state.project);
+    // Tous les exports restent en mémoire jusqu’à leur envoi à Render : aucun fichier final
+    // n’est écrit directement par le navigateur avant l’encodage MP4 distant.
     const requestedLongExport = totalPreviewSeconds(state.project) > 300;
-    let directWriter = null;
-    let directWriterCancelled = false;
-    if (requestedLongExport) {
-        const titleBase = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video');
-        const earlyMime = pickRecorderMime() || 'video/webm';
-        directWriter = await chooseLongExportWriter(titleBase + (earlyMime.includes('mp4') ? '.mp4' : '.webm'), earlyMime);
-        if (directWriter === false) { directWriterCancelled = true; directWriter = null; }
-    }
+    const directWriter = null;
+    const directWriterCancelled = false;
     if (typeof timeline !== 'undefined' && timeline) { timeline = new TimelineEngine(state.project.scenes); renderSceneList(); renderTimeline(); renderCurrentFrame(); }
     const quality = socialQualityReport(state.project);
     if (directWriterCancelled) showToast('Téléchargement direct annulé : export conservé en téléchargement classique.', 'error');
@@ -4062,7 +4049,8 @@ async function exportVideo() {
         const longFileName = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + (actualMime.includes('mp4') ? '.mp4' : '.webm');
         let nativeWriteQueue = Promise.resolve(), nativeWriteError = null;
         let directWriteQueue = Promise.resolve(), directWriteError = null;
-        try { nativeStream = !directWriter && !!(total > 60 && window.AndroidBridge && window.AndroidBridge.beginFile && window.AndroidBridge.beginFile(longFileName, actualMime)); } catch (_) { nativeStream = false; }
+        // Ne pas utiliser AndroidBridge ici : il contournerait l’encodage MP4 Render.
+        nativeStream = false;
         const chunks = [];
         let recordedBytes = 0;
         let recorderError = null;
@@ -4134,11 +4122,8 @@ async function exportVideo() {
             if (directWriteError) { try { await directWriter.abort(); } catch (_) {} throw directWriteError; }
             await directWriter.close();
         }
-        let finalBlob = blob;
-        if (blob && (blob.type || mime || '').includes('webm')) {
-            const converted = await convertSocialMp4(blob);
-            if (converted) finalBlob = converted;
-        }
+        // Render est obligatoire pour fabriquer le MP4 final ; aucun fallback FFmpeg local.
+        const finalBlob = await convertSocialMp4(blob);
         const type = finalBlob ? (finalBlob.type || mime || 'video/webm') : actualMime;
         const ext = type.includes('mp4') ? 'mp4' : 'webm';
         const filename = nativeStream ? longFileName : (((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.' + ext);
