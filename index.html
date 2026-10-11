@@ -5,24 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="videostory-build" content="2.6-download-safe-public">
     <title>Vidéos Plus — Créateur de vidéos animées</title>
-    <meta name="description" content="Vidéos Plus transforme tes histoires en vidéos animées verticales avec personnage, voix Speechify et export pour TikTok et WhatsApp.">
-    <meta name="keywords" content="Vidéos Plus, création vidéo, vidéo animée, vidéo TikTok, vidéo WhatsApp, narration Speechify">
+    <meta name="description" content="Vidéos Plus transforme tes histoires en vidéos animées avec personnage, voix Speechify et export vidéo pour les réseaux sociaux.">
+    <meta name="keywords" content="Vidéos Plus, vidéo animée, création vidéo, TikTok, WhatsApp, Speechify">
     <meta name="author" content="Vidéos Plus">
+    <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://videos-plus-elkalebanquier-engs-projects.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
     <meta property="og:title" content="Vidéos Plus — Créateur de vidéos animées">
-    <meta property="og:description" content="Crée des vidéos animées à partir de tes histoires, avec personnage, narration et export social.">
+    <meta property="og:description" content="Crée des vidéos animées à partir de tes histoires avec personnage et narration.">
     <meta property="og:url" content="https://videos-plus-elkalebanquier-engs-projects.vercel.app/">
-    <meta property="og:image" content="https://videos-plus-elkalebanquier-engs-projects.vercel.app/icon.svg">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Vidéos Plus — Créateur de vidéos animées">
-    <meta name="twitter:description" content="Crée des vidéos animées à partir de tes histoires et partage-les sur TikTok et WhatsApp.">
-    <meta name="twitter:image" content="https://videos-plus-elkalebanquier-engs-projects.vercel.app/icon.svg">
-    <script type="application/ld+json">
-    {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","inLanguage":"fr"},{"@type":"Organization","name":"Vidéos Plus","url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","sameAs":["https://github.com/elkalebanquier-eng/videos-plus"]},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","description":"Application web pour créer des vidéos animées avec narration et export social.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}
-    </script>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <meta name="twitter:description" content="Crée des vidéos animées à partir de tes histoires.">
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://videos-plus-elkalebanquier-engs-projects.vercel.app/","description":"Application web pour créer des vidéos animées avec narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -262,7 +258,7 @@
                     <button class="header-btn" onclick="showScreen('homeScreen')">←</button>
                     <h1 id="editorTitle" style="font-size: 16px;">Projet</h1>
                 </div>
-                <button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Export social</button>
+                <button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter</button>
             </header>
             <div class="editor-main">
                 <div class="preview-area">
@@ -347,14 +343,14 @@
             <div class="form-group"><label>Clé API Gemini</label><input type="password" id="settingKey" placeholder="Colle ta clé ici (optionnel)" autocomplete="off" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <div class="form-group"><label>Modèle Gemini</label><input type="text" id="settingModel" placeholder="gemini-3.6-flash" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">Sans carte bancaire : crée une clé gratuite sur aistudio.google.com. Avec l'offre gratuite, Google peut réutiliser les textes envoyés. Si le modèle change de nom ou si le réseau échoue, le cerveau local prend le relais automatiquement.</p>
-            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="1080" selected>1080p · TikTok / WhatsApp</option><option value="720">720p · rapide et léger</option></select></div>
+            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · rapide et fluide</option><option value="1080">1080p · plus net, plus lourd</option></select></div>
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
             <div class="form-group"><label>Personnage : peau</label><select id="settingCharSkin"><option value="#4a2c1a">Ébène</option><option value="#6b4226">Brun foncé</option><option value="#8d5524">Brun</option><option value="#c68642">Caramel</option><option value="#f1c27d">Clair</option></select></div>
             <div class="form-group"><label>Personnage : couleur de la tenue</label><input type="color" id="settingCharColor" value="#1f3a5f"></div>
             <div class="form-group"><label>Personnage : effets</label><select id="settingCharFx"><option value="on">Pro : contours, lumière, ombre</option><option value="off">Léger : pour téléphone lent</option></select></div>
             <div class="form-group"><label>Personnage : bruitages</label><select id="settingCharSfx"><option value="on">Activés (applaudissements, ding…)</option><option value="off">Coupés</option></select></div>
-            <div class="form-group"><label>Speechify sécurisé</label><input type="hidden" id="settingSpeechifyKey" value=""><input type="hidden" id="settingSpeechifyProxy" value=""><p class="speechify-note" id="settingVoiceStatus">La clé est protégée côté serveur Vercel. Elle n’est jamais enregistrée dans ce navigateur ni dans GitHub.</p></div>
+            <div class="form-group"><label>Speechify sécurisé</label><input type="hidden" id="settingSpeechifyKey" value=""><input type="hidden" id="settingSpeechifyProxy" value=""><p class="speechify-note" id="settingVoiceStatus">La clé Speechify est protégée côté serveur Vercel. Elle ne quitte jamais le serveur et n’est pas enregistrée dans GitHub.</p></div>
             <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
             <div class="form-group"><label>Voix</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="george" value="george" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Appuie sur « Charger mes voix » pour choisir une voix française dans la liste de ton compte, ou tape son identifiant.</p></div>
             <div class="form-group"><button type="button" class="btn-secondary" onclick="testSpeechifyVoice()">▶ Tester la voix Speechify</button><p class="speechify-note" id="settingVoiceStatus"></p></div>
@@ -577,7 +573,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '2.6', channel: 'debug', publicBuildId: 'videos-plus-2.6' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '2.6', channel: 'debug', publicBuildId: 'videos-plus-provided-v1' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -645,7 +641,7 @@ const ActingBrain = (() => {
         think: compile('pourquoi comment question reflech pens imagin idee hypothes mystere enigme comprend savoir cherch analys curieu apprend etudi strategie plan calcul decision choisir option alternative solution'),
         proud: compile('fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom'),
         love: compile('aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute'),
-        doubt: compile('peut-etre =peut probablement douteu doute hesit incertain suspect bizarre =vraiment croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment'),
+        doubt: compile('peut-etre =peut probablement douteu doute hesit incertain suspect bizarre croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment'),
         excited: compile('=vite maintenant =allons ensemble =pret lancez commencez abonne rejoin nouveau nouvelle revolution explos =boom decoll =go incroyable decouvrez imm\u00e9diat gratuitement bonus'),
     };
     const SPIKE_SYM = { surprise: 'excl', fear: 'sweat', angry: 'vein', love: 'heart', think: 'ques', doubt: 'ques' };
@@ -696,6 +692,25 @@ const ActingBrain = (() => {
         { re: /pour la premiere fois|jamais vu|record du monde/, emo: 'surprise', gesture: 'wide' },
         { re: /mon (?:reve|but|objectif)|je veux|je vais/, emo: 'proud', gesture: 'hips' },
     ];
+    // « pas triste », « jamais content », « ne … plus » : l'émotion s'inverse au lieu d'être jouée telle quelle
+    const NEG = compile('=pas =jamais =sans =aucun =aucune =nullement =ni =non');
+    const NEG_OPP = { joy: 'sad', sad: 'joy', angry: null, fear: 'joy', surprise: null, think: null, proud: 'sad', love: 'sad', doubt: 'proud', excited: null };
+    const negAt = (c, i) => {
+        for (let k = Math.max(0, i - 3); k < i; k++) {
+            const ps = parts(c.ws[k]);
+            if (hasAny(ps, NEG)) return true;
+            if (ps.includes('plus') && c.ws.slice(Math.max(0, k - 3), k).some(w => /^(ne|n['’])/i.test(w))) return true;
+        }
+        return false;
+    };
+    // accessoires tenus en main quand on les nomme (pas ajoutés si l'objet est déjà affiché à l'écran)
+    const PROPS = {
+        phone:  { obj: 'phone',    w: compile('telephone mobile smartphone appel sms whatsapp notification =appli application') },
+        money:  { obj: 'money',    w: compile('argent billet liasse cash salaire dollar euro cfa') },
+        book:   { obj: 'book',     w: compile('livre lire lecture etude apprendre formation cours ecole') },
+        tablet: { obj: 'computer', w: compile('ordinateur =pc site internet code programme logiciel plateforme =web youtube') },
+        mic:    { obj: 'mic',      w: compile('podcast interview micro =parole discours conference temoign') },
+    };
     const EMPTY = { start: {}, base: {}, spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null, level: 0 };
     const cache = new WeakMap();
 
@@ -703,7 +718,7 @@ const ActingBrain = (() => {
     function baseOf(scene) {
         const c = LipSync.info(scene), txt = String(scene.narration || '');
         const sc = {}; EMOS.forEach(k => sc[k] = 0);
-        c.ws.forEach(w => { const ps = parts(w); EMOS.forEach(k => { if (hasAny(ps, EMO[k])) sc[k] += 1; }); });
+        c.ws.forEach((w, i) => { const ps = parts(w); EMOS.forEach(k => { if (hasAny(ps, EMO[k])) { if (negAt(c, i)) { const o = NEG_OPP[k]; if (o) sc[o] += 0.8; } else sc[k] += 1; } }); });
         if (scene.mood === 'positive') sc.joy += 0.7;
         if (scene.mood === 'negative') { if (sc.angry + sc.fear < 1) sc.sad += 0.7; }
         if (/\?\s*$/.test(txt)) sc.think += 0.9;
@@ -719,7 +734,7 @@ const ActingBrain = (() => {
         return base;
     }
     function plan(scene) {
-        const key = LipSync.info(scene).key + '|' + (scene.role || '') + (scene.mood || '') + (scene.brain && scene.brain.pose || '');
+        const key = LipSync.info(scene).key + '|' + (scene.role || '') + (scene.mood || '') + (scene.brain && scene.brain.pose || '') + '|' + (scene.elements || []).filter(e => e.type === 'object').map(e => e.assetId + ':' + ((e.entrance && e.entrance.delay) || 0) + ':' + (e.position ? e.position.x : 0)).join(',');
         const hit = cache.get(scene);
         if (hit && hit.key === key) return hit.p;
         const c = LipSync.info(scene), dur = scene.duration || 5;
@@ -735,7 +750,14 @@ const ActingBrain = (() => {
         c.ws.forEach((w, i) => {
             const t = c.starts[i] || 0, ps = parts(w);
             // émotions ponctuelles sur le mot
-            EMOS.forEach(k => { if (hasAny(ps, EMO[k]) && k !== 'joy' || (k === 'joy' && hasAny(ps, EMO.joy) && ps.some(p => p.length > 4))) P.spikes.push({ emo: k, t0: t - 0.1, dur: 1.5, s: 0.85, sym: SPIKE_SYM[k] || null }); });
+            EMOS.forEach(k => {
+                const hit = hasAny(ps, EMO[k]) && (k !== 'joy' || ps.some(p => p.length > 4)); if (!hit) return;
+                let emo = k;
+                if (negAt(c, i)) { emo = NEG_OPP[k]; if (!emo) return; }
+                P.spikes.push({ emo, t0: t - 0.1, dur: 1.5, s: 0.85, sym: SPIKE_SYM[emo] || null });
+            });
+            // accessoires
+            Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w)) cand.push({ name: 'hold', prop: name, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
             if (hasAny(ps, IDEA)) P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: 1.5, s: 0.7, sym: 'bulb' });
             // gestes
             let n = 0; ps.forEach(p => { if (COUNT_WORDS[p]) n = COUNT_WORDS[p]; if (/^[1-5]$/.test(p)) n = +p; });
@@ -752,6 +774,16 @@ const ActingBrain = (() => {
             // coups d'accent : mots longs ou fin de groupe
             if (ps.some(p => p.length >= 7) || /[,;:]$/.test(w)) P.beats.push({ t, s: 0.7 });
         });
+        // objets affichés à l'écran : le personnage les regarde et les montre quand ils apparaissent
+        const objs = (scene.elements || []).filter(e => e.type === 'object' && e.visible !== false);
+        objs.forEach(o => {
+            const d = (o.entrance && o.entrance.delay) || 0.8, ox = o.position ? o.position.x : 0.5, side = ox < 0.42 ? -1 : ox > 0.58 ? 1 : 0;
+            if (d > dur - 0.6) return;
+            P.looks.push({ t0: d - 0.1, t1: d + 1.6, x: side ? side * 0.9 : 0.1, y: -0.55 });
+            cand.push({ name: side ? 'side' : 'up', side: side || 1, n: 0, t0: d + 0.05, t1: d + 1.6, pri: 5, force: true });
+        });
+        // on retire les accessoires qui font doublon avec un objet déjà affiché
+        for (let q = cand.length - 1; q >= 0; q--) if (cand[q].name === 'hold' && objs.some(o => o.assetId === PROPS[cand[q].prop].obj)) cand.splice(q, 1);
         // expressions de plusieurs mots
         {
             const nw = c.ws.map(w => parts(w).join('')), flat = [], offs = [];
@@ -773,7 +805,7 @@ const ActingBrain = (() => {
         cand.forEach(g => {
             const prev = out[out.length - 1];
             if (g.t0 > dur - 0.5) return;
-            if (lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 2.5 && g.name !== 'count') return;
+            if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 2.5 && g.name !== 'count') return;
             if (prev && g.t0 < prev.t1 - 0.15) {
                 if (g.pri > prev.pri && g.t0 - prev.t0 > 0.45) { prev.t1 = g.t0 + 0.1; }
                 else return;
@@ -784,6 +816,20 @@ const ActingBrain = (() => {
         if (!out.length && scene.role === 'cta') out.push({ name: 'beckon', n: 0, t0: dur * 0.35, t1: Math.min(dur - 0.3, dur * 0.35 + 1.5), pri: 5 });
         if (!out.length && scene.role === 'hook') out.push({ name: 'present', n: 0, t0: Math.min(1.0, dur * 0.3), t1: Math.min(dur - 0.3, 2.6), pri: 3 });
         P.gestures = out;
+        // plans de caméra : gros plan sur les émotions fortes, léger recul sur les grands gestes
+        P.shots = [];
+        P.spikes.forEach(sp => { if (['sad', 'love', 'fear', 'surprise', 'angry'].includes(sp.emo) && sp.t0 > 0.2) P.shots.push({ t0: sp.t0, t1: sp.t0 + 1.7, z: 1.5 }); });
+        out.forEach(g => {
+            if (g.name === 'headhands' || g.name === 'facepalm') P.shots.push({ t0: g.t0, t1: g.t1, z: 1.45 });
+            else if (g.name === 'wide' || g.name === 'hips' || g.name === 'money') P.shots.push({ t0: g.t0, t1: g.t1, z: 0.94 });
+        });
+        P.shots.sort((a, b) => a.t0 - b.t0);
+        {
+            const merged = [];
+            P.shots.forEach(sh => { const m = merged[merged.length - 1]; if (m && m.z === sh.z && sh.t0 < m.t1 + 0.6) m.t1 = Math.max(m.t1, sh.t1); else merged.push(Object.assign({}, sh)); });
+            merged.forEach(sh => { sh.t1 = Math.min(sh.t1, sh.t0 + 3.2); });
+            let closes = 0; P.shots = merged.filter(sh => sh.z < 1 || (closes++ < 2));
+        }
         P.ambient = (scene.brain && ['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(scene.brain.pose)) ? scene.brain.pose : null;
         cache.set(scene, { key, p: P });
         return P;
@@ -801,9 +847,9 @@ const ActingBrain = (() => {
             e[sp.emo] = Math.min(1, e[sp.emo] + sp.s * env);
             if (sp.sym && env > 0.05 && (!sym || sp.t0 >= symP)) { sym = sp.sym; symP = sp.t0; }
         });
-        let name = null, n = 0, w = 0, p = 0;
+        let name = null, n = 0, w = 0, p = 0, gside = 1, prop = null;
         for (const g of P.gestures) if (t >= g.t0 - 0.05 && t <= g.t1 + 0.05) {
-            name = g.name; n = g.n;
+            name = g.name; n = g.n; gside = g.side || 1; prop = g.prop || null;
             w = backOut((t - g.t0) / 0.3) * smooth((g.t1 - t) / 0.35);
             p = clamp((t - g.t0) / Math.max(0.1, g.t1 - g.t0), 0, 1);
             break;
@@ -825,7 +871,13 @@ const ActingBrain = (() => {
         P.beats.forEach(b => { const x = t - b.t; if (x >= 0 && x < 1.0) sway += 0.25 * Math.exp(-x * 4) * Math.sin(x * 15); });
         P.spikes.forEach(sp => { const x = t - sp.t0; if ((sp.emo === 'surprise' || sp.emo === 'excited') && x >= 0 && x < 0.8) { push = Math.max(push, 0.06 * Math.sin(Math.PI * x / 0.8)); if (x < 0.3) jolt = Math.sin(x * 70) * (1 - x / 0.3); } });
         sway = clamp(sway, -1.2, 1.2);
-        return { e, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, sway, ant, push, jolt };
+        // caméra : lent travelling avant + plans serrés ou larges avec des coupes rapides
+        const dur = scene && scene.duration || 5;
+        let camZ = 1 + 0.035 * clamp(t / dur, 0, 1);
+        let zUp = 0, zDown = 0;
+        (P.shots || []).forEach(sh => { if (t >= sh.t0 - 0.2 && t <= sh.t1 + 0.25) { const k = smooth((t - (sh.t0 - 0.18)) / 0.18) * smooth((sh.t1 + 0.22 - t) / 0.22), v = (sh.z - 1) * k; if (v > 0) zUp = Math.max(zUp, v); else zDown = Math.min(zDown, v); } });
+        camZ += zUp + zDown;
+        return { e, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, sway, ant, push, jolt, camZ, gside, prop };
     }
     return { at, plan, EMOS };
 })();
@@ -894,9 +946,10 @@ const BuiltinCharacter = (() => {
         const u = unit(w, h);
         ctx.save();
         // coup de caméra léger sur les moments forts
-        const zoom = 1 + (a.push || 0);
+        const zoom = 1 + (a.push || 0), hc = -8.6 * u + h * 0.04, cz = a.camZ || 1;
         ctx.translate((a.jolt || 0) * h * 0.004, 0);
         ctx.translate(0, -h * 0.45); ctx.scale(zoom, zoom); ctx.translate(0, h * 0.45);
+        ctx.translate(0, hc); ctx.scale(cz, cz); ctx.translate(0, -hc);
         // lueur derrière le personnage + ombre au sol qui suit ses mouvements
         const halo = ctx.createRadialGradient(0, -h * 0.45, h * 0.05, 0, -h * 0.45, h * 0.5);
         halo.addColorStop(0, 'rgba(255,255,255,0.13)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
@@ -905,14 +958,15 @@ const BuiltinCharacter = (() => {
         ctx.fillStyle = 'rgba(0,0,0,' + (0.32 - lift * 0.15).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(0, h * 0.045, 1.9 * u * (1 - lift * 0.3), 0.3 * u, 0, 0, TAU); ctx.fill();
         if (!fx) { render(ctx, w, h, time, a, LipSync.open(scene, time, pose), LipSync.vowel(scene, time), pose, { noShadow: true }); ctx.restore(); return true; }
         // mode « pro » : le personnage est dessiné dans un calque (contour encre + éclairage), à 15 images/s comme en animation « à deux »
-        const Wo = Math.ceil(h * 0.86), Ho = Math.ceil(h * 1.08), ax = Wo / 2, ay = Math.round(Ho * 0.9);
-        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + (scene && scene.narration ? scene.narration.length : 0);
+        const S = zoom * cz > 1.25 ? 1.5 : 1;          // en gros plan, le calque est dessiné plus fin pour rester net
+        const Wo = Math.ceil(h * 0.86 * S), Ho = Math.ceil(h * 1.08 * S), ax = Wo / 2, ay = Math.round(Ho * 0.9);
+        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0);
         if (L.key !== key) {
             L.key = key;
             const tq = twos / 15, aq = ActingBrain.at(scene, tq, pose);
-            const o = L.off.getContext('2d'), d = Math.max(2, Math.round(h * 0.0055));
+            const o = L.off.getContext('2d'), d = Math.max(2, Math.round(h * 0.0055 * S));
             o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, Wo, Ho);
-            o.save(); o.translate(ax, ay); render(o, w, h, tq, aq, LipSync.open(scene, tq, pose), LipSync.vowel(scene, tq), pose, { noShadow: true }); o.restore();
+            o.save(); o.translate(ax, ay); o.scale(S, S); render(o, w, h, tq, aq, LipSync.open(scene, tq, pose), LipSync.vowel(scene, tq), pose, { noShadow: true }); o.restore();
             // éclairage : lumière à gauche, ombre douce à droite, uniquement sur le personnage
             o.globalCompositeOperation = 'source-atop';
             const lg = o.createLinearGradient(Wo * 0.12, 0, Wo * 0.88, 0);
@@ -924,14 +978,20 @@ const BuiltinCharacter = (() => {
             l.globalCompositeOperation = 'source-in'; l.fillStyle = INK; l.fillRect(0, 0, Wo, Ho);
             const f = L.fin.getContext('2d'); f.setTransform(1, 0, 0, 1, 0, 0); f.clearRect(0, 0, Wo, Ho); f.drawImage(L.ol, 0, 0); f.drawImage(L.off, 0, 0);
         }
-        ctx.drawImage(L.fin, -ax, -ay);
+        ctx.drawImage(L.fin, -ax / S, -ay / S, Wo / S, Ho / S);
         ctx.restore();
         return true;
     }
     // gestes des mains pilotés par le texte : chaque entrée donne la cible de la main gauche (L) / droite (R) à l'écran
-    function gestureHands(name, p, t, n) {
+    function gestureHands(name, p, t, n, side, prop) {
+        const r = gestureHands0(name, p, t, n, prop);
+        if (!r || !(side < 0) || !r.R || r.L) return r;      // geste vers la gauche : on utilise le bras gauche, en miroir
+        return { L: Object.assign({}, r.R, { x: -r.R.x }), tilt: r.tilt, shrug: r.shrug };
+    }
+    function gestureHands0(name, p, t, n, prop) {
         const wig = (f, k) => Math.sin(p * f) * k;
         switch (name) {
+            case 'hold': return { R: { x: 2.05, y: -6.1 + wig(6, 0.05), mode: 'hold', prop } };
             case 'wave': return { R: { x: 2.5 + wig(22, 0.4), y: -8.4 + wig(11, 0.12), mode: 'open' } };
             case 'beckon': return { R: { x: 2.7 - 0.45 * (0.5 + 0.5 * Math.sin(p * 16)), y: -6.4, mode: 'palm' } };
             case 'clap': { const k = Math.max(0, Math.sin(p * 28)) * 0.35; return { L: { x: -0.3 - k, y: -6.0, mode: 'palm' }, R: { x: 0.3 + k, y: -6.0, mode: 'palm' } }; }
@@ -963,7 +1023,7 @@ const BuiltinCharacter = (() => {
         const u = unit(w, h);
         const skin = c.skin, skinDk = mix(skin, -0.22), skinLt = mix(skin, 0.16);
         const amb = a.ambient || pose || 'standing';
-        const gh = a.gesture ? gestureHands(a.gesture, a.gp, t, a.n) : null;
+        const gh = a.gesture ? gestureHands(a.gesture, a.gp, t, a.n, a.gside, a.prop) : null;
         const gk = gh ? clamp(a.gw, 0, 1.12) : 0;
         const walk = amb === 'walking' ? t * 4.2 : 0;
         // visage : on mélange toutes les émotions actives
@@ -1168,6 +1228,34 @@ const BuiltinCharacter = (() => {
             else { disc(0.3, 0.3); ctx.strokeStyle = INK; ctx.lineWidth = 0.035; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-0.15 + k * 0.1 + 0.05, -0.2); ctx.lineTo(-0.15 + k * 0.1 + 0.05, 0.02); ctx.stroke(); } ctx.save(); ctx.translate(sd * -0.18, -0.02); ctx.rotate(sd * 0.6); fing(0, 0.16, 0.13, 0); ctx.restore(); }
             ctx.restore();
         };
+        const drawProp = (kind, x, y, k) => {
+            ctx.save(); ctx.translate(x, y); const pop = clamp(k, 0, 1.12) * 1.3; ctx.scale(pop, pop); ctx.rotate(-0.12); ctx.lineJoin = 'round';
+            const box = (x0, y0, w0, h0, r, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(x0, y0, w0, h0, r); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke(); };
+            if (kind === 'phone') {
+                box(-0.3, -1.05, 0.6, 1.05, 0.1, '#161a26');
+                const g = ctx.createLinearGradient(0, -0.95, 0, -0.15); g.addColorStop(0, '#6ee0ff'); g.addColorStop(1, '#3a7bd5');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-0.24, -0.97, 0.48, 0.82, 0.06); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(-0.15, -0.8, 0.3, 0.06); ctx.fillRect(-0.15, -0.66, 0.2, 0.05);
+                ctx.fillStyle = '#ff5d5d'; ctx.beginPath(); ctx.arc(0.19, -0.97, 0.07, 0, TAU); ctx.fill();
+            } else if (kind === 'money') {
+                for (let q = 2; q >= 0; q--) { ctx.save(); ctx.rotate((q - 1) * 0.16); box(-0.42, -0.72, 0.84, 0.42, 0.04, q === 0 ? '#58c46f' : '#3fae5a'); ctx.restore(); }
+                ctx.fillStyle = '#f7efb5'; ctx.fillRect(-0.06, -0.72, 0.12, 0.42);
+                ctx.font = 'bold 0.32px sans-serif'; ctx.fillStyle = '#1d6b34'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', -0.25, -0.51);
+            } else if (kind === 'book') {
+                box(-0.36, -0.95, 0.72, 0.95, 0.05, '#b5483a');
+                ctx.fillStyle = '#f6efe0'; ctx.fillRect(0.3, -0.9, 0.05, 0.85);
+                ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(-0.25, -0.75, 0.4, 0.07); ctx.fillRect(-0.25, -0.6, 0.28, 0.05);
+            } else if (kind === 'tablet') {
+                box(-0.52, -0.88, 1.04, 0.72, 0.07, '#1a1d29');
+                ctx.fillStyle = '#e8f1ff'; ctx.beginPath(); ctx.roundRect(-0.45, -0.81, 0.9, 0.58, 0.04); ctx.fill();
+                ctx.fillStyle = '#4da3ff'; [[-0.32, 0.18], [-0.12, 0.3], [0.08, 0.22], [0.28, 0.38]].forEach(([bx, bh]) => ctx.fillRect(bx, -0.27 - bh, 0.12, bh));
+            } else if (kind === 'mic') {
+                box(-0.07, -0.65, 0.14, 0.65, 0.05, '#2b2f3a');
+                ctx.fillStyle = '#6b7384'; ctx.beginPath(); ctx.arc(0, -0.82, 0.22, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
+                ctx.strokeStyle = '#ff5d5d'; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.arc(0, -0.82, 0.14, 0, TAU); ctx.stroke();
+            }
+            ctx.restore();
+        };
         [-1, 1].forEach((sd, i) => {
             const sx = sd * 1.2, sy = sh + 0.35 - shrug, b = T[i];
             const gt = gh ? (sd < 0 ? gh.L : gh.R) : null;
@@ -1181,6 +1269,7 @@ const BuiltinCharacter = (() => {
             ctx.beginPath(); ctx.moveTo(arm.ex, arm.ey); ctx.lineTo(arm.hx, arm.hy); ctx.stroke();
             ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 0.08; ctx.beginPath(); ctx.moveTo(arm.ex + 0.1, arm.ey); ctx.lineTo(arm.hx + 0.05, arm.hy); ctx.stroke();
             if (c.outfit === 'suit') { ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 0.52; const dx = arm.hx - arm.ex, dy = arm.hy - arm.ey, L = Math.hypot(dx, dy) || 1; ctx.beginPath(); ctx.moveTo(arm.hx - dx / L * 0.42, arm.hy - dy / L * 0.42); ctx.lineTo(arm.hx - dx / L * 0.3, arm.hy - dy / L * 0.3); ctx.stroke(); }
+            if (tg.mode === 'hold' && gt && gt.prop) drawProp(gt.prop, arm.hx, arm.hy - 0.05, gk);
             drawHand(arm.hx, arm.hy, tg.mode, tg.n, tg.s, sd);
         });
         ctx.restore();
@@ -1237,6 +1326,7 @@ const ActingSfx = (() => {
         facepalm: (a, o, t) => burst(a, o, t + 0.3, 0.12, 0.13, 1000, 0.6),
         shush: (a, o, t) => burst(a, o, t + 0.3, 0.55, 0.05, 5200, 1.5),
         thumbs: (a, o, t) => tone(a, o, 988, 1319, t + 0.2, 0.2, 0.05),
+        hold: (a, o, t) => tone(a, o, 520, 780, t + 0.2, 0.12, 0.05, 'triangle'),
         up: (a, o, t) => tone(a, o, 400, 900, t, 0.3, 0.045, 'triangle'),
         down: (a, o, t) => tone(a, o, 600, 220, t, 0.35, 0.045, 'triangle'),
         headhands: (a, o, t) => tone(a, o, 220, 110, t + 0.2, 0.4, 0.06, 'triangle'),
@@ -1761,7 +1851,7 @@ const VoiceStudio = (() => {
         }
         return out;
     }
-    const proxy = () => String(cfg().speechifyProxy || '').trim().replace(/\/+$/, '');
+    const proxy = () => { const v = String(cfg().speechifyProxy || '').trim().replace(/\/+$/, ''); return /^https?:\/\//i.test(v) ? v : ''; };
     const engineOn = () => true;
     const supported = () => !!(window.AudioContext || window.webkitAudioContext);
     const clean = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 2000);
@@ -1782,7 +1872,7 @@ const VoiceStudio = (() => {
             if (!j.audio_data) throw new Error('Speechify n’a pas renvoyé de données audio.');
             let buf;
             try { buf = await getAudioCtx().decodeAudioData(b64ToArrayBuffer(j.audio_data)); } catch (e) { throw new Error('Speechify : audio reçu mais illisible sur cet appareil.'); }
-            cache.set(key, buf); try { SyncBrain.register(input, buf); } catch (_) {}
+            cache.set(key, buf); try { SyncBrain.register(input, buf); SyncBrain.setMarks(input, j.speech_marks, buf.duration); } catch (_) {}
             return buf;
         });
         queue = job.catch(() => {});
@@ -1828,6 +1918,7 @@ const SyncBrain = (() => {
     const LEAD = 0.15;                     // délai avant le début de la voix dans la scène (comme VoiceStudio)
     const HOP = 0.01;                      // 10 ms
     const analyses = new Map();            // "mots de la narration" -> analyse du son
+    const marksMap = new Map();            // "mots de la narration" -> minutage exact fourni par Speechify
     const perScene = new WeakMap();        // scène -> infos texte en cache
     let seq = 0;
 
@@ -2002,13 +2093,35 @@ const SyncBrain = (() => {
     }
 
     // Minutage des mots en temps de scène (utilisé par les sous-titres ET par Kili)
+    // Minutage exact des mots renvoyé par Speechify (speech_marks) : plus précis que l'analyse du son
+    function setMarks(text, sm, audioDur) {
+        const top = sm && (sm.chunks || (Array.isArray(sm) ? sm : null));
+        if (!top || !top.length) return;
+        const ws = splitWords(text); if (!ws.length) return;
+        const flat = []; top.forEach(c => (c && c.chunks ? c.chunks : [c]).forEach(x => flat.push(x)));
+        const words = flat.filter(x => x && x.start_time !== undefined && (x.type === undefined || x.type === 'word'));
+        if (!words.length) return;
+        const lastEnd = Math.max.apply(null, words.map(x => +x.end_time || 0));
+        const unit = lastEnd > (audioDur || 1) * 1.6 ? 0.001 : 1;          // millisecondes (documentation) ou secondes
+        let pos = 0;
+        const offs = ws.map(w => { const i = text.indexOf(w, pos); const o = i >= 0 ? i : pos; pos = o + w.length; return o; });
+        const starts = offs.map((o, i) => {
+            let c = words.find(x => x.start !== undefined && x.end !== undefined && o >= x.start && o < x.end);
+            if (!c) c = words[Math.min(words.length - 1, Math.round(i * (words.length - 1) / Math.max(1, ws.length - 1)))];
+            return Math.max(0, (+c.start_time || 0) * unit);
+        });
+        for (let i = 1; i < starts.length; i++) if (starts[i] < starts[i - 1]) starts[i] = starts[i - 1];
+        marksMap.set(ws.join(' '), { starts, dur: audioDur || 0 });
+    }
     function starts(ws, duration) {
+        const mk = marksMap.get(ws.join(' '));
+        if (mk && mk.starts.length === ws.length && mk.dur > 0) { const rate = rateFor(duration, mk.dur); return mk.starts.map(s => LEAD + s / rate); }
         const e = analyses.get(ws.join(' '));
         if (!e || e.starts.length !== ws.length) return null;
         const rate = rateFor(duration, e.dur);
         return e.starts.map(s => LEAD + s / rate);
     }
-    const stamp = text => { const e = analyses.get(splitWords(text || '').join(' ')); return e ? e.id : 0; };
+    const stamp = text => { const k = splitWords(text || '').join(' '), e = analyses.get(k); return (e ? e.id : 0) + (marksMap.has(k) ? 0.5 : 0); };
 
     // ---------- 2. Gestes lus dans le texte ----------
     const LEX = {
@@ -2114,7 +2227,7 @@ const SyncBrain = (() => {
         return out;
     }
 
-    return { register, starts, stamp, frame, textInfo, rateFor, LEAD, _analyses: analyses };
+    return { register, setMarks, starts, stamp, frame, textInfo, rateFor, LEAD, _analyses: analyses };
 })();
 
 const TRANS_BY_ROLE = { hook: 'fade', context: 'push', conflict: 'zoom', turn: 'flash', result: 'iris', cta: 'reveal' };
@@ -3018,7 +3131,7 @@ function loadSettingsUI() {
     setVal('settingAI', c.ai || 'local');
     setVal('settingKey', c.key || '');
     setVal('settingModel', c.model || 'gemini-3.6-flash');
-    setVal('settingQuality', c.quality || '1080');
+    setVal('settingQuality', c.quality || '720');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
     setVal('settingCharHair', c.charHair || 'short');
     setVal('settingCharSkin', c.charSkin || '#6b4226');
@@ -3052,12 +3165,21 @@ function saveSettings() {
 }
 
 // Les 3 champs Speechify s'enregistrent tout seuls dès qu'on les quitte (coller la clé suffit)
+function fixProxy() {
+    let v = getVal('settingSpeechifyProxy').trim().replace(/\/+$/, '');
+    if (v && !/^https?:\/\//i.test(v)) {
+        if (/^[\w.-]+\.(workers\.dev|pages\.dev|netlify\.app|vercel\.app)$/i.test(v)) v = 'https://' + v;
+        else { showToast('L’adresse du proxy doit commencer par https:// (ce que tu as collé n’est pas une adresse web). Laisse le champ vide si tu n’as pas de proxy.', 'error'); setVal('settingSpeechifyProxy', ''); return ''; }
+    }
+    setVal('settingSpeechifyProxy', v);
+    return v;
+}
 function saveSpeechifyFields() {
     Settings.save({
         speechifyKey: VoiceStudio.cleanKey(getVal('settingSpeechifyKey')),
         speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'george',
         speechifyModel: getVal('settingSpeechifyModel'),
-        speechifyProxy: getVal('settingSpeechifyProxy').trim(),
+        speechifyProxy: fixProxy(),
     });
     refreshVoiceStatus();
 }
@@ -3815,19 +3937,6 @@ function pickRecorderMime() {
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
 
-let ffmpegSocial = null;
-async function convertSocialMp4(blob) {
-    if (!blob || !blob.type.includes('webm') || !window.FFmpeg || !window.crossOriginIsolated) return null;
-    showLoading('Conversion MP4 pour TikTok / WhatsApp…', true); updateProgress(0.05);
-    try {
-        if (!ffmpegSocial) { ffmpegSocial = window.FFmpeg.createFFmpeg({ log: false, corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' }); await ffmpegSocial.load(); }
-        const input='videostory-input.webm', output='videostory-social.mp4';
-        ffmpegSocial.FS('writeFile', input, await window.FFmpeg.fetchFile(blob));
-        await ffmpegSocial.run('-i', input, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output);
-        const data=ffmpegSocial.FS('readFile', output); try { ffmpegSocial.FS('unlink', input); ffmpegSocial.FS('unlink', output); } catch (_) {}
-        updateProgress(1); return new Blob([data.buffer], {type:'video/mp4'});
-    } catch (e) { console.warn('Conversion MP4 indisponible', e); return null; }
-}
 function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n, s) => n + Number(s.duration || 0), 0); }
 
 async function chooseLongExportWriter(filename, mime) {
@@ -3997,18 +4106,16 @@ async function exportVideo() {
             if (directWriteError) { try { await directWriter.abort(); } catch (_) {} throw directWriteError; }
             await directWriter.close();
         }
-        let finalBlob = blob;
-        if (blob && (blob.type || mime || '').includes('webm')) { const converted = await convertSocialMp4(blob); if (converted) finalBlob = converted; }
-        const type = finalBlob ? (finalBlob.type || mime || 'video/webm') : actualMime;
+        const type = blob ? (blob.type || mime || 'video/webm') : actualMime;
         const ext = type.includes('mp4') ? 'mp4' : 'webm';
         const filename = nativeStream ? longFileName : (((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.' + ext);
         if (!nativeStream && !directWriter) {
             showLoading('Enregistrement de la vidéo…', true);
             updateProgress(1);
-            await saveBlobToDevice(finalBlob, filename);
+            await saveBlobToDevice(blob, filename);
         }
         hideLoading();
-        showToast((ext === 'mp4' ? 'MP4 prête pour TikTok et WhatsApp' : 'WebM prête — conversion MP4 impossible sur cet appareil') + ' (' + ext + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec musique') : ', sans audio') + ')');
+        showToast((ext === 'mp4' ? 'MP4 prête' : 'Vidéo WebM prête — cet appareil ne propose pas l’encodeur MP4') + ' (' + ext + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec musique') : ', sans audio') + ')');
     } catch (error) {
         console.error('Export error:', error);
         try { if (activeRecorder && activeRecorder.state !== 'inactive') activeRecorder.stop(); } catch (_) {}
