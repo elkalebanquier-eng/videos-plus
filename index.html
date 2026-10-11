@@ -3932,10 +3932,18 @@ function socialQualityReport(project) {
 }
 
 let ffmpegSocial = null;
+const RENDER_CONVERTER_URL = 'https://videos-plus-converter-live.onrender.com/convert';
 async function convertSocialMp4(blob) {
     if (!blob || !(blob.type || '').includes('webm')) return null;
+    showLoading('Conversion MP4 sur Render pour TikTok / WhatsApp…', true);
+    try {
+        const form = new FormData();
+        form.append('video', blob, 'videos-plus.webm');
+        const remote = await fetch(RENDER_CONVERTER_URL, { method: 'POST', body: form });
+        if (remote.ok) return await remote.blob();
+        console.warn('Render conversion HTTP', remote.status);
+    } catch (e) { console.warn('Render indisponible, fallback navigateur', e); }
     if (!window.FFmpeg || !window.crossOriginIsolated) return null;
-    showLoading('Conversion MP4 pour TikTok / WhatsApp…', true);
     try {
         if (!ffmpegSocial) {
             ffmpegSocial = window.FFmpeg.createFFmpeg({ log: false, corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' });
@@ -3947,10 +3955,7 @@ async function convertSocialMp4(blob) {
         const data = ffmpegSocial.FS('readFile', output);
         try { ffmpegSocial.FS('unlink', input); ffmpegSocial.FS('unlink', output); } catch (_) {}
         return new Blob([data.buffer], { type: 'video/mp4' });
-    } catch (e) {
-        console.warn('Conversion MP4 indisponible', e);
-        return null;
-    }
+    } catch (e) { console.warn('Conversion MP4 indisponible', e); return null; }
 }
 
 // ===== EXPORT VIDEO =====
