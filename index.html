@@ -258,7 +258,7 @@
                     <button class="header-btn" onclick="showScreen('homeScreen')">←</button>
                     <h1 id="editorTitle" style="font-size: 16px;">Projet</h1>
                 </div>
-                <button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter</button>
+                <button class="btn-primary" onclick="exportVideoRemote()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter sur Render</button>
             </header>
             <div class="editor-main">
                 <div class="preview-area">
@@ -476,6 +476,9 @@ function showScreen(screenId) {
 }
 
 // ===== UI HELPERS =====
+const SERVER_RENDER_PARAMS = new URLSearchParams(window.location.search);
+const SERVER_RENDER_MODE = SERVER_RENDER_PARAMS.get('serverRender') === '1';
+const SERVER_RENDER_CALLBACK = SERVER_RENDER_PARAMS.get('serverCallback') || '';
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -485,6 +488,11 @@ function showToast(message, type = 'success') {
 
 async function saveBlobToDevice(blob, filename) {
     if (!blob || !blob.size) throw new Error('Fichier vidéo vide');
+    if (SERVER_RENDER_MODE && SERVER_RENDER_CALLBACK) {
+        const callback = await fetch(SERVER_RENDER_CALLBACK, { method: 'POST', headers: { 'Content-Type': blob.type || 'video/mp4' }, body: blob });
+        if (!callback.ok) throw new Error('Le serveur Render n’a pas accepté le MP4 final');
+        return true;
+    }
     // Les navigateurs modernes peuvent écrire directement sur disque sans créer une seconde copie.
     if (typeof window.showSaveFilePicker === 'function') {
         try {
@@ -3483,7 +3491,7 @@ async function runBrain(auto) {
     }
     if (auto && document.getElementById('optAutoExport')?.checked) {
         await new Promise(r => setTimeout(r, 600));
-        await exportVideo();
+        await exportVideoRemote();
     }
 }
 
@@ -3967,6 +3975,38 @@ async function chooseLongExportWriter(filename, mime) {
     } catch (e) {
         if (e && e.name === 'AbortError') return false;
         console.warn('Destination directe indisponible', e); return null;
+    }
+}
+
+const RENDER_JOB_URL = 'https://videos-plus-converter-live.onrender.com/render';
+async function exportVideoRemote() {
+    if (!state.project || !state.project.scenes?.length) { showToast('Aucune scène à exporter', 'error'); return; }
+    normalizeSocialProject(state.project);
+    const total = totalPreviewSeconds(state.project);
+    if (total > 45) { showToast('Le moteur gratuit Render accepte au maximum 45 secondes par export.', 'error'); return; }
+    showLoading('Envoi du projet à Render…', true); updateProgress(0);
+    try {
+        const start = await fetch(RENDER_JOB_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.project) });
+        const job = await start.json();
+        if (!start.ok) throw new Error(job.error || 'Impossible de démarrer le rendu Render');
+        let status;
+        for (let attempt = 0; attempt < 240; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const response = await fetch(RENDER_JOB_URL + '/' + encodeURIComponent(job.jobId));
+            status = await response.json();
+            if (!response.ok) throw new Error(status.error || 'Statut Render indisponible');
+            updateProgress(Number(status.progress || 0));
+            showLoading('Render : ' + ({ queued: 'file d’attente', 'starting-chromium': 'démarrage du moteur', 'loading-renderer': 'chargement du projet', 'rendering-canvas': 'rendu Canvas serveur', completed: 'préparation du MP4' }[status.stage] || status.stage || 'traitement') + '…', true);
+            if (status.status === 'completed') break;
+            if (status.status === 'failed') throw new Error(status.error || 'Rendu Render échoué');
+        }
+        if (!status || status.status !== 'completed') throw new Error('Le rendu Render a dépassé le délai gratuit autorisé');
+        const video = await fetch(status.downloadUrl);
+        if (!video.ok) throw new Error('MP4 Render indisponible au téléchargement');
+        await saveBlobToDevice(await video.blob(), ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4');
+        hideLoading(); updateProgress(1); showToast('MP4 rendue sur Render, prête pour TikTok et WhatsApp');
+    } catch (error) {
+        console.error('Render export error:', error); hideLoading(); showToast(error.message || 'Rendu Render impossible', 'error');
     }
 }
 
