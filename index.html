@@ -3362,18 +3362,130 @@ class TimelineEngine {
 }
 
 // ===== PROJECT MANAGEMENT =====
+const ProjectStorage = (() => {
+    const DB_NAME = 'videos-plus-browser-storage';
+    const DB_VERSION = 1;
+    const STORE = 'projects';
+    let db = null, loaded = false, initPromise = null, writeQueue = Promise.resolve();
+    let cache = [];
+    let lastWarning = 0;
+
+    function parseLegacyProjects() {
+        try {
+            const value = JSON.parse(localStorage.getItem('vse_projects') || '[]');
+            return Array.isArray(value) ? value.filter(p => p && p.id) : [];
+        } catch (e) {
+            console.warn('Ancien historique local illisible', e);
+            return [];
+        }
+    }
+    function warnStorageFailure() {
+        const now = Date.now();
+        if (now - lastWarning < 10000) return;
+        lastWarning = now;
+        showToast('Espace de stockage du navigateur insuffisant. Exportez vos vidéos et libérez de l’espace sur l’appareil.', 'error');
+    }
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            if (!('indexedDB' in window)) { reject(new Error('IndexedDB indisponible')); return; }
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = () => {
+                const database = request.result;
+                if (!database.objectStoreNames.contains(STORE)) database.createObjectStore(STORE, { keyPath: 'id' });
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error || new Error('Ouverture IndexedDB impossible'));
+            request.onblocked = () => reject(new Error('Ouverture IndexedDB bloquée'));
+        });
+    }
+    function readAll() {
+        return new Promise((resolve, reject) => {
+            const request = db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error || new Error('Lecture IndexedDB impossible'));
+        });
+    }
+    function putMany(projects) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, 'readwrite');
+            const store = tx.objectStore(STORE);
+            projects.forEach(project => store.put(project));
+            tx.oncomplete = () => resolve();
+            tx.onerror = tx.onabort = () => reject(tx.error || new Error('Migration IndexedDB impossible'));
+        });
+    }
+    async function initialize() {
+        try {
+            db = await openDatabase();
+            const saved = await readAll();
+            const byId = new Map(saved.filter(p => p && p.id).map(p => [p.id, p]));
+            const legacy = parseLegacyProjects();
+            const migration = legacy.filter(p => !byId.has(p.id));
+            if (migration.length) {
+                await putMany(migration);
+                migration.forEach(p => byId.set(p.id, p));
+            }
+            cache = Array.from(byId.values());
+            // Retirer l’ancienne copie seulement après migration confirmée dans IndexedDB.
+            if (legacy.length) { try { localStorage.removeItem('vse_projects'); } catch (e) { console.warn('Nettoyage de l’ancien stockage impossible', e); } }
+        } catch (e) {
+            console.warn('IndexedDB indisponible; repli vers le stockage navigateur classique', e);
+            db = null;
+            cache = parseLegacyProjects();
+        }
+        loaded = true;
+        try {
+            if (navigator.storage && navigator.storage.persist) {
+                const persistent = await navigator.storage.persist();
+                if (!persistent) console.info('Le navigateur n’a pas accordé le stockage persistant; IndexedDB reste disponible selon son quota.');
+            }
+        } catch (e) { console.info('Demande de stockage persistant ignorée', e); }
+        return cache;
+    }
+    function ready() {
+        if (!initPromise) initPromise = initialize();
+        return initPromise;
+    }
+    function snapshot(project) {
+        try { return structuredClone(project); }
+        catch (_) { return JSON.parse(JSON.stringify(project)); }
+    }
+    async function save(project) {
+        await ready();
+        const copy = snapshot(project);
+        const index = cache.findIndex(p => p.id === copy.id);
+        if (index >= 0) cache[index] = copy; else cache.push(copy);
+        if (!db) {
+            try { localStorage.setItem('vse_projects', JSON.stringify(cache)); }
+            catch (e) { console.warn('Sauvegarde locale impossible', e); warnStorageFailure(); }
+            return;
+        }
+        const write = writeQueue.then(() => new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, 'readwrite');
+            tx.objectStore(STORE).put(copy);
+            tx.oncomplete = () => resolve();
+            tx.onerror = tx.onabort = () => reject(tx.error || new Error('Sauvegarde IndexedDB impossible'));
+        }));
+        writeQueue = write.catch(() => {});
+        try { await write; }
+        catch (e) { console.warn('Sauvegarde IndexedDB impossible', e); warnStorageFailure(); }
+    }
+    return { ready, save, list: () => cache, isReady: () => loaded };
+})();
+function readSavedProjects() { return ProjectStorage.list(); }
 function saveProject() {
     if (!state.project) return;
-    const projects = JSON.parse(localStorage.getItem('vse_projects') || '[]');
-    const index = projects.findIndex(p => p.id === state.project.id);
     state.project.updatedAt = new Date().toISOString();
-    if (index >= 0) projects[index] = state.project;
-    else projects.push(state.project);
-    localStorage.setItem('vse_projects', JSON.stringify(projects));
+    ProjectStorage.save(state.project).catch(e => { console.warn('Sauvegarde du projet interrompue', e); });
 }
-
 function loadRecentProjects() {
-    const projects = JSON.parse(localStorage.getItem('vse_projects') || '[]');
+    if (!ProjectStorage.isReady()) {
+        const container = document.getElementById('recentProjectsList');
+        if (container) container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Chargement des projets…</p></div>';
+        ProjectStorage.ready().then(loadRecentProjects);
+        return;
+    }
+    const projects = readSavedProjects();
     const recent = projects.slice(-3).reverse();
     const container = document.getElementById('recentProjectsList');
     if (recent.length === 0) {
@@ -3391,7 +3503,12 @@ function loadRecentProjects() {
 function loadGoVideos() {
     const container = document.getElementById('goVideosList');
     if (!container) return;
-    const projects = JSON.parse(localStorage.getItem('vse_projects') || '[]').slice().reverse();
+    if (!ProjectStorage.isReady()) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Chargement des projets…</p></div>';
+        ProjectStorage.ready().then(loadGoVideos);
+        return;
+    }
+    const projects = readSavedProjects().slice().reverse();
     if (!projects.length) { container.innerHTML = '<div class="empty-state"><div class="icon">🚀</div><h3>Aucune vidéo pour le moment</h3><p>Crée ta première vidéo pour la retrouver ici.</p></div>'; return; }
     container.innerHTML = projects.map(p => `<div class="project-card" onclick="loadProject('${p.id}')" style="margin-bottom:12px;"><div class="project-thumb">▶</div><div class="project-info" style="flex:1"><h4>${esc(p.title)}</h4><p>${p.scenes.length} scènes · ${formatTime(p.scenes.reduce((n,sc)=>n+sc.duration,0))} · ${new Date(p.updatedAt).toLocaleDateString()}</p></div><span style="color:var(--primary);font-size:20px">›</span></div>`).join('');
 }
@@ -3437,8 +3554,9 @@ function forceUniqueRiveCharacter(project) {
     return project;
 }
 
-function loadProject(id) {
-    const projects = JSON.parse(localStorage.getItem('vse_projects') || '[]');
+async function loadProject(id) {
+    await ProjectStorage.ready();
+    const projects = readSavedProjects();
     const project = projects.find(p => p.id === id);
     if (project) {
         state.project = forceUniqueRiveCharacter(project);
