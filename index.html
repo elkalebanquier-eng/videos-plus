@@ -771,6 +771,7 @@ const ActingBrain = (() => {
         { re: /\b(?:l?aide\w*|entraide|ensemble|communaute)\b/, emo: 'love', gesture: 'wide' },
         { re: /\b(?:offre\w*|partage\w*|l?ombre)\b/, emo: 'love', gesture: 'wide' },
         { re: /\b(?:meme quand|meme si|malgre)\b.{0,70}\b(?:moqu\w*|critiqu\w*|ridicul\w*|dout\w*|rient de)\b/, emo: 'proud', gesture: 'hips' },
+        { re: /\b(?:petit geste|lecon a retenir|message a retenir)\b/, emo: 'proud', gesture: 'viewer', look: [0, 0] },
     ];
     // « pas triste », « jamais content », « ne … plus » : l'émotion s'inverse au lieu d'être jouée telle quelle
     const NEG = compile('=pas =jamais =sans =aucun =aucune =nullement =ni =non');
@@ -1032,7 +1033,19 @@ const ActingBrain = (() => {
             const merged = [];
             P.shots.forEach(sh => { const m = merged[merged.length - 1]; if (m && m.z === sh.z && sh.t0 < m.t1 + 0.6) m.t1 = Math.max(m.t1, sh.t1); else merged.push(Object.assign({}, sh)); });
             merged.forEach(sh => { sh.t1 = Math.min(sh.t1, sh.t0 + 3.2); });
-            let closes = 0; P.shots = merged.filter(sh => sh.z < 1 || (closes++ < 2));
+            // En automatique, un gros plan et un plan large ne peuvent pas se chevaucher : garder une caméra lisible.
+            if (!autoShotsOff) {
+                const resolved = [];
+                merged.forEach(source => {
+                    const sh = Object.assign({}, source), prev = resolved[resolved.length - 1];
+                    if (prev && sh.z !== prev.z && sh.t0 < prev.t1) {
+                        if (sh.z > 1 && prev.z < 1) prev.t1 = sh.t0;
+                        else if (sh.z < 1 && prev.z > 1) sh.t0 = Math.min(sh.t1, prev.t1);
+                    }
+                    if (sh.t1 > sh.t0) resolved.push(sh);
+                });
+                let closes = 0; P.shots = resolved.filter(sh => sh.z < 1 || (closes++ < 2));
+            } else P.shots = merged.filter(sh => sh.z < 1 || (P.shots.filter(q => q.z > 1).indexOf(sh) < 2));
         }
         P.ambient = scene.location ? null : ((scene.brain && ['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(scene.brain.pose)) ? scene.brain.pose : null);
         cache.set(scene, { key, p: P });
