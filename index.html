@@ -3416,8 +3416,8 @@ function forceUniqueRiveCharacter(project) {
         if (character) {
             character.assetId = 'rive-character';
             character.pose = character.pose || scene.brain?.pose || 'standing';
-            character.visible = true;
-            character.opacity = 1;
+            if (character.visible == null) character.visible = true;
+            if (character.opacity == null) character.opacity = 1;
         } else {
             const objects = scene.elements.filter(el => el.type === 'object' && el.visible !== false);
             const objectX = objects[0]?.position?.x;
@@ -3972,11 +3972,31 @@ const LITERAL_ACTION_RE = {
 };
 const BODY_ACTIONS = new Set(Object.keys(LITERAL_ACTION_RE));
 function actingContextWords(words, i) {
-    return words.slice(Math.max(0, i - 4), i).map(w => norm(w).replace(/[^a-z0-9]/g, ''));
+    const start = Math.max(0, i - 7);
+    const context = [];
+    for (let k = i - 1; k >= start; k--) {
+        const raw = String(words[k] || ''), w = norm(raw).replace(/[^a-z0-9']/g, '');
+        // Une ponctuation forte ou un contraste ouvre une nouvelle proposition :
+        // « il ne pleure pas, mais il rit » ne doit pas bloquer le rire.
+        if (/[.!?;:]/.test(raw) || ['mais', 'pourtant', 'cependant', 'toutefois', 'but', 'however'].includes(w)) break;
+        context.unshift(w);
+    }
+    return context;
 }
 function actingIsNegatedOrHypothetical(words, i) {
-    const ctx = actingContextWords(words, i);
-    return ctx.some(w => ['pas', 'jamais', 'sans', 'aucun', 'aucune', 'ni', 'si', 'peutetre', 'imagine', 'imaginons', 'supposons', 'comme'].includes(w));
+    const before = actingContextWords(words, i);
+    const boundary = w => ['mais', 'pourtant', 'cependant', 'toutefois', 'but', 'however'].includes(w);
+    const after = [];
+    for (let k = i + 1; k < Math.min(words.length, i + 4); k++) {
+        const raw = String(words[k] || ''), w = norm(raw).replace(/[^a-z0-9']/g, '');
+        if (/[.!?;:]/.test(raw) || boundary(w)) break;
+        after.push(w);
+    }
+    const near = before.slice(-6).concat(after);
+    const negated = near.some(w => ['pas', 'jamais', 'sans', 'aucun', 'aucune', 'nullement', 'ni', 'never', 'not', 'no'].includes(w));
+    const nePas = near.some(w => w === 'ne' || w === 'n') && near.some(w => ['pas', 'plus', 'jamais', 'aucun', 'aucune'].includes(w));
+    const hypothetical = before.slice(-6).some(w => ['si', 'peutetre', 'imagine', 'imaginons', 'supposons', 'suppose', 'supposing', 'if'].includes(w));
+    return negated || nePas || hypothetical;
 }
 function cleanActing(raw, scene) {
     const words = splitWords(scene.narration), text = norm(scene.narration), nW = words.length, L = ActingBrain.LISTS, ok = (v, arr) => arr.includes(v);
@@ -4405,14 +4425,28 @@ function closeSceneEditor() {
 function selectCharacter(charId) {
     const scene = state.project.scenes.find(s => s.id === editingSceneId);
     if (!scene) return;
-    const at = scene.elements.findIndex(e => e.type === 'character');
-    if (at >= 0) scene.elements.splice(at, 1);
-    else scene.elements.push({
-        id: 'char-' + scene.id, type: 'character', assetId: 'rive-character', pose: 'standing',
-        position: { x: 0.5, y: 0.62 }, size: { width: 0.5, height: 0.5 },
-        rotation: 0, opacity: 1, zIndex: 10, visible: true,
-        entrance: { type: 'slide_up', duration: 0.5, delay: 0.2 },
-    });
+    const asset = ASSETS.characters.find(c => c.id === charId);
+    if (!asset) return;
+    let character = scene.elements.find(e => e.type === 'character');
+    if (character && character.assetId === charId) {
+        // Masquer/afficher sans détruire la pose, le placement ou l’animation.
+        character.visible = character.visible === false;
+    } else if (character) {
+        character.assetId = charId;
+        character.visible = true;
+        character.opacity = 1;
+        character.pose = character.pose || 'standing';
+    } else {
+        character = {
+            id: 'char-' + scene.id, type: 'character', assetId: charId, pose: 'standing',
+            position: { x: 0.5, y: 0.62 }, size: { width: 0.5, height: 0.5 },
+            rotation: 0, opacity: 1, zIndex: 10, visible: true,
+            entrance: { type: 'slide_up', duration: 0.5, delay: 0.2 },
+        };
+        scene.elements.push(character);
+    }
+    saveProject();
+    renderCurrentFrame();
     openSceneEditor(editingSceneId);
 }
 
