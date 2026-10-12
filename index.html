@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.6-context-aware-acting">
-    <title>Vidéos Plus — VideoStory 3.0.6</title>
-    <meta name="description" content="Vidéos Plus 3.0.6 comprend les histoires variées et peut générer un récit même sans texte saisi.">
+    <meta name="videostory-build" content="3.0.7-attention-reactions">
+    <title>Vidéos Plus — VideoStory 3.0.7</title>
+    <meta name="description" content="Vidéos Plus 3.0.7 comprend les histoires variées et peut générer un récit même sans texte saisi.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.6">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.7">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.6">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.7">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -721,6 +721,9 @@ const ActingBrain = (() => {
         dance:    { pri: 7, dur: 2.8, act: true, w: () => false },
         cry:      { pri: 8, dur: 2.4, act: true, w: () => false },
         shake:    { pri: 8, dur: 2.1, act: true, w: () => false },
+        smile:    { pri: 6, dur: 1.8, w: compile('sourir sourire souriant rayonn heureux content') },
+        wink:     { pri: 6, dur: 1.2, w: compile('clin doeil complicite complice') },
+        turn:     { pri: 8, dur: 2.2, act: true, w: () => false },
         sleep:    { pri: 6, dur: 3.0, act: true, w: () => false },
     };
     const COUNT_WORDS = { premierement: 1, dabord: 1, deux: 2, deuxieme: 2, ensuite: 2, trois: 3, troisieme: 3, quatre: 4, cinq: 5 };
@@ -737,6 +740,9 @@ const ActingBrain = (() => {
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:pleure|pleurons|pleurez|pleurent|pleurait|pleurer|fond en larmes|eclate en sanglots)\b|\b(?:en larmes|en sanglots)\b/, gesture: 'cry', emo: 'sad' },
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:tremble|tremblons|tremblez|tremblent|tremblait|trembler|frissonne|frissonnent|grelotte|grelotter)\b/, gesture: 'shake', emo: 'fear' },
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:dort|dormons|dormez|dorment|dormait|dormir|s.endort|sommeille|somnole)\b|\b(?:va dormir|au lit|bonne nuit)\b/, gesture: 'sleep', emo: 'joy' },
+        { re: /\b(?:sourit|sourire|souriant|grand sourire|sourire profond|rayonn\w*|eclate de joie)\b/, gesture: 'smile', emo: 'joy' },
+        { re: /\b(?:clin d.?oeil|clin d.?œil|complice|complicite)\b/, gesture: 'wink', emo: 'love' },
+        { re: /\b(?:se retourne|retourne-toi|retourne toi|regarde derriere|regarde derrière|fait demi-tour|demi-tour)\b/, gesture: 'turn', emo: 'surprise' },
         { re: /peut.?etre|qui sait|je ne sais pas|sais pas|on ne sait/, gesture: 'shrug', emo: 'doubt' },
         { re: /il etait une fois|il y a longtemps|autrefois/, gesture: 'present', emo: 'think', look: [0.8, -0.7] },
         { re: /tout a coup|soudain|d.un seul coup|brusquement/, emo: 'surprise' },
@@ -896,6 +902,11 @@ const ActingBrain = (() => {
                 if (ph.head) P.heads.push({ kind: ph.head, t0: t, t1: t + 0.9 });
                 if (ph.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ph.look[0], y: ph.look[1] });
             });
+            // Réactions de mise en scène : un moment positif reçoit un sourire
+            // lisible, un CTA un clin d’œil, et un contraste un vrai retournement.
+            if (scene.mood === 'positive' || scene.role === 'result') cand.push({ name: 'smile', n: 0, t0: dur * 0.42, t1: Math.min(dur - 0.35, dur * 0.42 + 1.8), pri: 6 });
+            if (scene.role === 'cta') cand.push({ name: 'wink', n: 0, t0: dur * 0.58, t1: Math.min(dur - 0.25, dur * 0.58 + 1.2), pri: 7 });
+            if (P.turn) cand.push({ name: 'turn', n: 0, t0: Math.max(0.25, P.turn.t - 0.2), t1: Math.min(dur - 0.2, P.turn.t + 2.0), pri: 9 });
         }
         // partition de jeu écrite par le réalisateur IA ou réglée à la main : mot de départ + émotion / geste / accessoire / plan / tête / regard
         const autoShotsOff = !!A;
@@ -1260,6 +1271,9 @@ const BuiltinCharacter = (() => {
             case 'dance': { const sw = Math.sin(t * 8) * 0.5; return { L: { x: -2.2 + sw, y: -6.8, mode: 'open', out: 1 }, R: { x: 2.2 - sw, y: -6.2, mode: 'open', out: 1 }, tilt: Math.sin(t * 8) * 0.12 }; }
             case 'cry': return { L: { x: -0.7, y: -7.9, mode: 'palm' }, R: { x: 0.7, y: -7.9, mode: 'palm' }, tilt: 0.08 };
             case 'shake': { const sw = Math.sin(t * 18) * 0.35; return { L: { x: -1.9 - sw, y: -5.5, mode: 'fist', out: 1 }, R: { x: 1.9 + sw, y: -5.5, mode: 'fist', out: 1 }, tilt: Math.sin(t * 18) * 0.06 }; }
+            case 'smile': return { L: { x: -2.2, y: -5.9, mode: 'open', out: 1 }, R: { x: 2.2, y: -5.9, mode: 'open', out: 1 }, tilt: -0.03 };
+            case 'wink': return { R: { x: 2.0, y: -6.3, mode: 'point', s: 1.05 }, tilt: -0.04 };
+            case 'turn': return null;
             case 'sleep': return { L: { x: -0.8, y: -5.2, mode: 'palm' }, R: { x: 0.8, y: -5.2, mode: 'palm' }, tilt: 0.16 };
             case 'fall': { const k = clamp((p - 0.26) / 0.06, 0, 1), m = k * k * (3 - 2 * k), fl = Math.sin(t * 22) * 0.5 * (1 - m);   // bras en l'air quand il perd l'équilibre, puis le long du corps
                 return { L: { x: -2.9 + 0.9 * m, y: -7.7 + 3.5 * m + fl, mode: 'open', out: 1 }, R: { x: 2.9 - 0.9 * m, y: -7.7 + 3.5 * m - fl, mode: 'open', out: 1 } }; }
@@ -1328,6 +1342,7 @@ const BuiltinCharacter = (() => {
         // sauter, danser, pleurer, trembler et dormir
         const act = a.act || null, aq0 = clamp(a.gp || 0, 0, 1), aw0 = clamp(a.gw || 0, 0, 1);
         const runK = act === 'run' ? aw0 : 0, laughK = act === 'laugh' ? aw0 : 0;
+        const smileK = a.gesture === 'smile' ? gk : 0, winkK = a.gesture === 'wink' ? gk : 0, turnK = act === 'turn' ? aw0 : 0;
         const jumpK = act === 'jump' ? aw0 : 0, danceK = act === 'dance' ? aw0 : 0;
         const cryK = act === 'cry' ? aw0 : 0, shakeK = act === 'shake' ? aw0 : 0, sleepK = act === 'sleep' ? aw0 : 0;
         const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
@@ -1341,6 +1356,10 @@ const BuiltinCharacter = (() => {
         const jumpLift = jumpK * Math.sin(Math.PI * aq0) * 1.15;
         const danceSwing = danceK * Math.sin(t * 8);
         const shakeOffset = shakeK * Math.sin(t * 34) * 0.12;
+        if (turnK) {
+            const facing = Math.cos(Math.PI * aq0), sideScale = 0.16 + 0.84 * Math.abs(facing);
+            ctx.scale(facing < 0 ? -sideScale : sideScale, 1);
+        }
         if (jumpLift || danceK || shakeK || sleepK) {
             ctx.translate(shakeOffset + danceSwing * 0.12, -jumpLift + sleepK * 0.05);
             ctx.rotate(danceSwing * 0.09 + shakeK * Math.sin(t * 32) * 0.035 + sleepK * 0.08);
@@ -1351,9 +1370,9 @@ const BuiltinCharacter = (() => {
         const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat, -1, 1.3);
         const browAngle = clamp(1.0 * E.sad + 0.8 * E.fear + 0.3 * E.love - 1.0 * E.angry - 0.15 * E.doubt, -1, 1);
         const eyeOpen = clamp(1 + 0.35 * E.surprise + 0.3 * E.fear + 0.2 * E.excited - 0.18 * E.sad - 0.22 * E.angry - 0.15 * E.proud - 0.18 * E.doubt - 0.08 * E.joy, 0.55, 1.4);
-        const curve = clamp(1.0 * E.joy + 0.7 * E.proud + 1.0 * E.love + 0.9 * E.excited - 0.85 * E.sad - 0.55 * E.angry - 0.35 * E.fear - 0.15 * E.doubt + 0.08 * E.think, -1, 1);
+        const curve = clamp(1.0 * E.joy + 0.7 * E.proud + 1.0 * E.love + 0.9 * E.excited + 1.15 * smileK - 0.85 * E.sad - 0.55 * E.angry - 0.35 * E.fear - 0.15 * E.doubt + 0.08 * E.think, -1, 1);
         const mouthO = clamp(0.95 * E.surprise + 0.35 * E.fear, 0, 1);
-        const blush = clamp(E.love * 1.2 + E.joy * 0.5 + E.proud * 0.2, 0, 1);
+        const blush = clamp(E.love * 1.2 + E.joy * 0.5 + E.proud * 0.2 + smileK * 0.45, 0, 1);
         const asym = clamp(E.doubt + 0.5 * E.think, 0, 1);
         const sad = E.sad > 0.45, happy = E.joy + E.excited + E.love > 0.7;
         const bounce = E.excited * Math.abs(Math.sin(t * 7)) * 0.1 + laughK * Math.abs(Math.sin(t * 10.5)) * 0.12;
@@ -1471,7 +1490,7 @@ const BuiltinCharacter = (() => {
         const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98);      // rire : yeux plissés ; sommeil : yeux fermés
         const look = a.eye || a.look;
         [-0.38, 0.38].forEach(x => {
-            const ey = hy + 0.02, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen), ry = Math.min(0.24, 0.17 * lid);
+            const ey = hy + 0.02, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(0.24, 0.17 * lid);
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, 0.2, ry, 0, 0, TAU); ctx.fill();
             const ir = 0.105 * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
             const px = x + look.x * 0.06, py = ey + look.y * 0.035;
@@ -3807,7 +3826,7 @@ async function llmBrain({ idea, script, options, cfg }) {
 // ===== JEU DU PERSONNAGE : frise modifiable + réalisateur IA =====
 const ACT_LABELS = {
     emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation' },
-    gesture: { wave: 'Saluer', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
+    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
     prop: { phone: 'Téléphone', money: 'Billets', book: 'Livre', tablet: 'Tablette', mic: 'Micro' },
     count: { 1: '1 doigt', 2: '2 doigts', 3: '3 doigts', 4: '4 doigts', 5: '5 doigts' },
     shot: { close: 'Gros plan', wide: 'Plan large' },
@@ -3876,6 +3895,7 @@ async function directorBrain(scenes, cfg) {
     } finally { clearTimeout(timer); }
 }
 const LITERAL_ACTION_RE = {
+    turn: /\b(?:se retourne|retourne[- ]toi|regarde derriere|fait demi[- ]tour|demi[- ]tour)\b/i,
     run: /\b(?:je|tu|il|elle|on|nous|vous|ils|elles)\s+[^.!?]{0,24}\b(?:cour\w*|sprint\w*|fui\w*|detal\w*)\b|\b(?:en courant|a toute vitesse|a toutes jambes|prend la fuite)\b/i,
     fall: /\b(?:tomb\w*|trebuch\w*|gliss\w*|faux pas|casse la figure)\b/i,
     jump: /\b(?:saute\w*|bond\w*|fait un bond)\b/i,
