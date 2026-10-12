@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.2-actions-rhythm-long-audio-safe-export">
-    <title>Vidéos Plus — VideoStory 3.0.2</title>
-    <meta name="description" content="Vidéos Plus 3.0.2 crée des vidéos animées expressives avec actions de course, chute et rire, narration Speechify et export vidéo.">
+    <meta name="videostory-build" content="3.0.3-cartoon-actions-semantic-acting">
+    <title>Vidéos Plus — VideoStory 3.0.3</title>
+    <meta name="description" content="Vidéos Plus 3.0.3 crée des vidéos animées expressives avec actions de dessin animé, narration Speechify et export vidéo.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.2">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.3">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.2">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.3">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -582,7 +582,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.2', channel: 'web', publicBuildId: 'videos-plus-3.0.2-actions-rhythm-long-audio-safe-export' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.3', channel: 'web', publicBuildId: 'videos-plus-3.0.3-cartoon-actions-semantic-acting' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -712,10 +712,16 @@ const ActingBrain = (() => {
         side:     { pri: 3, dur: 1.4, w: compile('=ici vers direction cible') },
         viewer:   { pri: 2, dur: 1.3, w: compile('=toi =tu =vous ecoute regarde =ton =ta =tes =votre') },
         self:     { pri: 2, dur: 1.3, w: compile('=moi personnellement =mon =ma =mes') },
-        // actions du corps entier : pour courir et tomber, on ne se fie qu'aux expressions (voir PHRASES) afin d'éviter « les prix tombent » ou « le cours de maths »
+        // actions du corps entier : pour courir, tomber, sauter, danser, pleurer, trembler et dormir,
+        // on se fie aux expressions (voir PHRASES) afin d'éviter les faux positifs sémantiques.
         run:      { pri: 8, dur: 3.0, act: true, w: () => false },
         fall:     { pri: 9, dur: 2.8, act: true, w: () => false },
         laugh:    { pri: 7, dur: 2.3, act: true, neg: true, w: compile('rigol hilar =mdr =lol haha hihi =rire =rit =rient =riait =riaient =rions eclatderire fourire marrant =drole blague') },
+        jump:     { pri: 8, dur: 2.1, act: true, w: () => false },
+        dance:    { pri: 7, dur: 2.8, act: true, w: () => false },
+        cry:      { pri: 8, dur: 2.4, act: true, w: () => false },
+        shake:    { pri: 8, dur: 2.1, act: true, w: () => false },
+        sleep:    { pri: 6, dur: 3.0, act: true, w: () => false },
     };
     const COUNT_WORDS = { premierement: 1, dabord: 1, deux: 2, deuxieme: 2, ensuite: 2, trois: 3, troisieme: 3, quatre: 4, cinq: 5 };
     const NOD = compile('=oui =daccord exactement =bien-sur effectivement absolument =voila certainement');
@@ -726,6 +732,11 @@ const ActingBrain = (() => {
     const PHRASES = [
         { re: /\b(?:(?:je|tu) cours|(?:il|elle|on) court|courons|courez|courent|courais|courait|courions|couraient|courir(?! (?:un|le|des) risques?| apres)|couru|courut|courra\w*|courrai\w*|sprint\w*|senfui\w*|detale\w*|a toute (?:vitesse|allure)|a toutes jambes|en courant|prend la fuite)\b/, gesture: 'run', emo: 'excited' },
         { re: /\b(?:(?:je|jai|il|elle|on|tu|nous|vous|ils|elles|lui|ca) (?:\w+ ){0,2}?(?:tomb\w*|trebuch\w*|gliss\w*|effondr\w*)(?! (?:amoureu\w*|enceinte|malade|daccord|en panne|en amour|en depression|dans le piege|dans la depression|sur\b|a pic))|trebuch\w*|glissade|faux pas|casse la figure)\b/, gesture: 'fall', emo: 'surprise' },
+        { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:saute|sautons|sautez|sautent|sautait|sauter|bondit|bondissent|bondir|fait un bond|fait des bonds)\b|\b(?:saute|sauter|bondit|bondir) de joie\b/, gesture: 'jump', emo: 'excited' },
+        { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:danse|dansons|dansez|dansent|dansait|danser|se met a danser|font la fete)\b|\b(?:danse|danser) de joie\b/, gesture: 'dance', emo: 'joy' },
+        { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:pleure|pleurons|pleurez|pleurent|pleurait|pleurer|fond en larmes|eclate en sanglots)\b|\b(?:en larmes|en sanglots)\b/, gesture: 'cry', emo: 'sad' },
+        { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:tremble|tremblons|tremblez|tremblent|tremblait|trembler|frissonne|frissonnent|grelotte|grelotter)\b/, gesture: 'shake', emo: 'fear' },
+        { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:dort|dormons|dormez|dorment|dormait|dormir|s.endort|sommeille|somnole)\b|\b(?:va dormir|au lit|bonne nuit)\b/, gesture: 'sleep', emo: 'joy' },
         { re: /peut.?etre|qui sait|je ne sais pas|sais pas|on ne sait/, gesture: 'shrug', emo: 'doubt' },
         { re: /il etait une fois|il y a longtemps|autrefois/, gesture: 'present', emo: 'think', look: [0.8, -0.7] },
         { re: /tout a coup|soudain|d.un seul coup|brusquement/, emo: 'surprise' },
@@ -879,6 +890,7 @@ const ActingBrain = (() => {
             PHRASES.forEach(ph => {
                 const m = ph.re.exec(textN); if (!m) return;
                 const i = wordAt(m.index), t = c.starts[i] || 0;
+                if (ph.gesture && ph.gesture !== 'stop' && negAt(c, i)) return;
                 if (ph.emo) P.spikes.push({ emo: ph.emo, t0: t - 0.1, dur: 1.6, s: 0.85, sym: SPIKE_SYM[ph.emo] || null });
                 if (ph.gesture) cand.push({ name: ph.gesture, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[ph.gesture].dur, pri: GES[ph.gesture].pri + 1 });
                 if (ph.head) P.heads.push({ kind: ph.head, t0: t, t1: t + 0.9 });
@@ -1021,13 +1033,18 @@ const ActingBrain = (() => {
             p = clamp((t - g.t0) / Math.max(0.1, g.t1 - g.t0), 0, 1);
             break;
         }
-        // l'émotion suit l'action : le rire rend joyeux, la course excite, la chute surprend puis étourdit
+        // l'émotion suit l'action : chaque action corporelle renforce le sens détecté dans la phrase
         if (act === 'laugh') { e.joy = Math.min(1, e.joy + 0.9 * w); e.excited = Math.min(1, e.excited + 0.4 * w); e.sad *= 1 - w; e.angry *= 1 - w; e.fear *= 1 - w; }
         else if (act === 'run') { e.excited = Math.min(1, e.excited + 0.5 * w); e.fear = Math.min(1, e.fear + 0.2 * w); }
         else if (act === 'fall') {
             const kS = smooth(p / 0.08) * (1 - smooth((p - 0.28) / 0.06)), kD = smooth((p - 0.3) / 0.06) * (1 - smooth((p - 0.72) / 0.1));
             e.surprise = Math.min(1, e.surprise + kS); e.fear = Math.min(1, e.fear + 0.6 * kS); e.doubt = Math.min(1, e.doubt + 0.7 * kD); e.sad = Math.min(1, e.sad + 0.35 * kD);
         }
+        else if (act === 'jump') { e.excited = Math.min(1, e.excited + 0.7 * w); e.joy = Math.min(1, e.joy + 0.35 * w); }
+        else if (act === 'dance') { e.joy = Math.min(1, e.joy + 0.8 * w); e.excited = Math.min(1, e.excited + 0.45 * w); }
+        else if (act === 'cry') { e.sad = Math.min(1, e.sad + 0.9 * w); e.joy *= 1 - w; e.excited *= 1 - w; }
+        else if (act === 'shake') { e.fear = Math.min(1, e.fear + 0.8 * w); e.doubt = Math.min(1, e.doubt + 0.25 * w); }
+        else if (act === 'sleep') { e.sad *= 1 - 0.5 * w; e.excited *= 1 - w; e.think = Math.min(1, e.think + 0.25 * w); }
         // rythme de la parole : enveloppe « il parle » (0 dans les pauses), préparation + coup de main sur chaque accent, main de tête
         let talkAmt, stroke = 0, prep = 0, hand = 1;
         if (P.strokes) {
@@ -1239,6 +1256,11 @@ const BuiltinCharacter = (() => {
             case 'self': return { R: { x: 0.35, y: -6.2, mode: 'palm' } };
             case 'run': { const sw = Math.sin(t * 9.5); return { L: { x: -1.5, y: -5.35 + 1.1 * sw, mode: 'fist', out: 1 }, R: { x: 1.5, y: -5.35 - 1.1 * sw, mode: 'fist', out: 1 } }; }   // bras pliés qui balancent
             case 'laugh': { const sw = Math.sin(t * 10.5) * 0.12; return { L: { x: -0.8, y: -4.9 + sw, mode: 'palm', out: 1 }, R: { x: 0.8, y: -4.9 - sw, mode: 'palm', out: 1 } }; }   // mains sur le ventre
+            case 'jump': { const sw = Math.sin(p * Math.PI) * 0.45; return { L: { x: -2.0, y: -7.4 - sw, mode: 'open', out: 1 }, R: { x: 2.0, y: -7.4 - sw, mode: 'open', out: 1 } }; }
+            case 'dance': { const sw = Math.sin(t * 8) * 0.5; return { L: { x: -2.2 + sw, y: -6.8, mode: 'open', out: 1 }, R: { x: 2.2 - sw, y: -6.2, mode: 'open', out: 1 }, tilt: Math.sin(t * 8) * 0.12 }; }
+            case 'cry': return { L: { x: -0.7, y: -7.9, mode: 'palm' }, R: { x: 0.7, y: -7.9, mode: 'palm' }, tilt: 0.08 };
+            case 'shake': { const sw = Math.sin(t * 18) * 0.35; return { L: { x: -1.9 - sw, y: -5.5, mode: 'fist', out: 1 }, R: { x: 1.9 + sw, y: -5.5, mode: 'fist', out: 1 }, tilt: Math.sin(t * 18) * 0.06 }; }
+            case 'sleep': return { L: { x: -0.8, y: -5.2, mode: 'palm' }, R: { x: 0.8, y: -5.2, mode: 'palm' }, tilt: 0.16 };
             case 'fall': { const k = clamp((p - 0.26) / 0.06, 0, 1), m = k * k * (3 - 2 * k), fl = Math.sin(t * 22) * 0.5 * (1 - m);   // bras en l'air quand il perd l'équilibre, puis le long du corps
                 return { L: { x: -2.9 + 0.9 * m, y: -7.7 + 3.5 * m + fl, mode: 'open', out: 1 }, R: { x: 2.9 - 0.9 * m, y: -7.7 + 3.5 * m - fl, mode: 'open', out: 1 } }; }
             case 'count': return { R: { x: 2.25, y: -7.0 + wig(14, 0.08), mode: 'fingers', n } };
@@ -1300,9 +1322,12 @@ const BuiltinCharacter = (() => {
         const amb = a.ambient || pose || 'standing';
         const gh = a.gesture ? gestureHands(a.gesture, a.gp, t, a.n, a.gside, a.prop) : null;
         const gk = gh ? clamp(a.gw, 0, 1.12) : 0;
-        // actions du corps entier choisies par l'histoire : courir, tomber, rire
+        // actions du corps entier choisies par l'histoire : courir, tomber, rire,
+        // sauter, danser, pleurer, trembler et dormir
         const act = a.act || null, aq0 = clamp(a.gp || 0, 0, 1), aw0 = clamp(a.gw || 0, 0, 1);
         const runK = act === 'run' ? aw0 : 0, laughK = act === 'laugh' ? aw0 : 0;
+        const jumpK = act === 'jump' ? aw0 : 0, danceK = act === 'dance' ? aw0 : 0;
+        const cryK = act === 'cry' ? aw0 : 0, shakeK = act === 'shake' ? aw0 : 0, sleepK = act === 'sleep' ? aw0 : 0;
         const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
         let fallK = 0, stumble = 0, dizzy = 0;
         if (act === 'fall') {      // trébuche -> tombe -> rebondit -> reste au sol, étourdi -> se relève
@@ -1311,7 +1336,14 @@ const BuiltinCharacter = (() => {
             stumble = q < 0.10 ? Math.sin(Math.PI * q / 0.10) : 0;
             dizzy = sm((q - 0.28) / 0.04) * (1 - sm((q - 0.64) / 0.06));
         }
-        const walk = amb === 'walking' ? t * 4.2 : (runK > 0 ? t * 9.5 : 0);
+        const jumpLift = jumpK * Math.sin(Math.PI * aq0) * 1.15;
+        const danceSwing = danceK * Math.sin(t * 8);
+        const shakeOffset = shakeK * Math.sin(t * 34) * 0.12;
+        if (jumpLift || danceK || shakeK || sleepK) {
+            ctx.translate(shakeOffset + danceSwing * 0.12, -jumpLift + sleepK * 0.05);
+            ctx.rotate(danceSwing * 0.09 + shakeK * Math.sin(t * 32) * 0.035 + sleepK * 0.08);
+        }
+        const walk = amb === 'walking' ? t * 4.2 : (runK > 0 ? t * 9.5 : (danceK > 0 ? t * 7.5 : 0));
         if (laughK > 0) { open = Math.max(open, laughK * (0.45 + 0.55 * Math.abs(Math.sin(t * 10.5)))); vow = 'aa'; }   // « ha ha ha » : la bouche s'ouvre et se ferme
         // visage : on mélange toutes les émotions actives
         const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat, -1, 1.3);
@@ -1434,7 +1466,7 @@ const BuiltinCharacter = (() => {
         // visage (les traits glissent un peu quand la tête se tourne)
         ctx.save(); ctx.translate(yaw * 0.16, 0);
         const bl0 = a.blink !== undefined ? a.blink : (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
-        const bl = Math.max(bl0, laughK * 0.92);      // il rit les yeux plissés
+        const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98);      // rire : yeux plissés ; sommeil : yeux fermés
         const look = a.eye || a.look;
         [-0.38, 0.38].forEach(x => {
             const ey = hy + 0.02, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen), ry = Math.min(0.24, 0.17 * lid);
@@ -1491,8 +1523,9 @@ const BuiltinCharacter = (() => {
         }
         // larmes de rire qui giclent vers l'extérieur
         if (laughK > 0.3) { [-1, 1].forEach((k, i) => { const q = (t * 1.7 + i * 0.5) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q) * laughK).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(k * (0.5 + 0.4 * q), hy + 0.12 + 0.5 * q, 0.07, 0.11, k * 0.5, 0, TAU); ctx.fill(); }); }
-        // larme quand il est triste, goutte de sueur quand il a peur
-        if (E.sad > 0.5) { const q = (t * 0.7) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q)).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(-0.47, hy + 0.2 + 0.85 * q, 0.07, 0.11, 0, 0, TAU); ctx.fill(); }
+        // larmes quand il est triste ou pleure, goutte de sueur quand il a peur
+        const tearK = Math.max(E.sad, cryK);
+        if (tearK > 0.5) { const q = (t * (cryK > 0.5 ? 1.15 : 0.7)) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q) * tearK).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(-0.47, hy + 0.2 + 0.85 * q, 0.07, 0.11, 0, 0, TAU); ctx.ellipse(0.47, hy + 0.2 + 0.72 * q, 0.07, 0.11, 0, 0, TAU); ctx.fill(); }
         if (E.fear > 0.45) { const q = (t * 0.9) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q * 0.6)).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(0.82, hy - 0.55 + 0.5 * q, 0.07, 0.12, 0, 0, TAU); ctx.fill(); }
         ctx.restore();
         // petites icônes de bande dessinée au-dessus de la tête
@@ -1514,6 +1547,11 @@ const BuiltinCharacter = (() => {
                 for (let j = 0; j < 10; j++) { const rr = j % 2 ? r * 0.45 : r, aa = -Math.PI / 2 + j * Math.PI / 5; ctx.lineTo(x + Math.cos(aa) * rr, y + Math.sin(aa) * rr); }
                 ctx.closePath(); ctx.fill(); ctx.stroke();
             }
+        }
+        if (sleepK > 0.25) {     // « Zzz » animé, convention visuelle immédiatement lisible
+            const z = (t * 0.7) % 1, alpha = sleepK * (1 - z * 0.35);
+            ctx.save(); ctx.translate(0.9 + z * 0.45, hy - 1.35 - z * 0.8); ctx.rotate(-0.12 + z * 0.18);
+            ctx.font = 'bold ' + (0.55 + z * 0.25) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(124,196,255,' + alpha.toFixed(2) + ')'; ctx.fillText('Z', 0, 0); ctx.restore();
         }
         ctx.restore();
 
@@ -3783,7 +3821,7 @@ async function directorBrain(scenes, cfg) {
     const list = scenes.map((s, i) => '[' + i + '] ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
     const prompt = 'You are the acting director of an animated film. ONE animated presenter character tells the story below. For each scene decide how the character acts, word by word. The words of each scene are numbered (index:word). Understand the whole story: negation (\"not sad\" means relieved), irony, contrast (\"but\"), the emotional arc across scenes, and what is physically described.\n' +
         'Return ONLY valid JSON, no markdown: {\"scenes\":[{\"i\": scene number, \"base\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"strength\": number 0.4-1, \"events\":[{\"w\": word index, and exactly ONE of: \"emo\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"gesture\": one of [' + ActingBrain.LISTS.gestures.join(', ') + ', count, hold], \"n\": 1-5 (only with gesture count), \"prop\": one of [' + ActingBrain.LISTS.props.join(', ') + '] (only with gesture hold), \"shot\": close or wide, \"head\": nod or shake, \"look\": left, right, up, down or cam}]}]}\n' +
-        'Rules: 2 to 6 events per scene, only where the acting is meaningful. Put an emotion event on the word that triggers the feeling. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), laugh when the character laughs or jokes). Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
+        'Rules: 2 to 6 events per scene, only where the acting is meaningful. Put an emotion event on the word that triggers the feeling. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 45000);
     try {
