@@ -872,11 +872,12 @@ const ActingBrain = (() => {
                 const hit = hasAny(ps, EMO[k]) && (k !== 'joy' || ps.some(p => p.length > 4)); if (!hit) return;
                 let emo = k;
                 if (negAt(c, i)) { emo = NEG_OPP[k]; if (!emo) return; }
-                P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[emo] || null });
+                P.emotionEvents.push({ emo, t, s: 0.85 });
+                P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[emo] || null, stateful: true });
             });
             // accessoires
             Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w)) cand.push({ name: 'hold', prop: name, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
-            if (hasAny(ps, IDEA)) P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.7, sym: 'bulb' });
+            if (hasAny(ps, IDEA)) { P.emotionEvents.push({ emo: 'excited', t, s: 0.7 }); P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.7, sym: 'bulb', stateful: true }); }
             // gestes
             let n = 0; ps.forEach(p => { if (COUNT_WORDS[p]) n = COUNT_WORDS[p]; if (/^[1-5]$/.test(p)) n = +p; });
             if (n && i < c.ws.length - 1) cand.push({ name: 'count', n, t0: t - 0.2, t1: t + 1.2, pri: 6 });
@@ -893,6 +894,7 @@ const ActingBrain = (() => {
             // coups d'accent : mots longs ou fin de groupe
             if (ps.some(p => p.length >= 7) || /[,;:!?]$/.test(w)) P.beats.push({ t, s: /[!?]$/.test(w) ? 0.95 : 0.7 });
         });
+        if (!A && P.turn) EMOS.forEach(k => { if (P.turn.to[k] > 0) P.emotionEvents.push({ emo: k, t: P.turn.t, s: P.turn.to[k] }); });
         // objets affichés à l'écran : le personnage les regarde et les montre quand ils apparaissent
         const objs = (scene.elements || []).filter(e => e.type === 'object' && e.visible !== false);
         objs.forEach(o => {
@@ -913,7 +915,7 @@ const ActingBrain = (() => {
                 const m = ph.re.exec(textN); if (!m) return;
                 const i = wordAt(m.index), t = c.starts[i] || 0;
                 if (ph.gesture && ph.gesture !== 'stop' && negAt(c, i)) return;
-                if (ph.emo) P.spikes.push({ emo: ph.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[ph.emo] || null });
+                if (ph.emo) { P.emotionEvents.push({ emo: ph.emo, t, s: 0.85 }); P.spikes.push({ emo: ph.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[ph.emo] || null, stateful: true }); }
                 if (ph.gesture) cand.push({ name: ph.gesture, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[ph.gesture].dur, pri: GES[ph.gesture].pri + 1 });
                 if (ph.head) P.heads.push({ kind: ph.head, t0: t, t1: t + 0.9 });
                 if (ph.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ph.look[0], y: ph.look[1] });
@@ -4097,7 +4099,7 @@ function actingRender(scene) {
     }).join('');
     el.innerHTML = '<div class="acting-row"><span class="acting-lab">Humeur</span><select onchange="actingSetBase(this.value)">' + opt(ACT_LABELS.emo, A.base) + '</select></div>' + (rows || '<p class="speechify-note">Aucun jeu sur cette scène : appuie sur « + Ajouter ».</p>');
     const n = document.getElementById('actingNote');
-    if (n) { const note = A.src === 'ia' ? '🎬 Écrit par le réalisateur IA : tu peux le modifier.' : A.src === 'manual' ? '✋ Réglé à la main.' : '⚙️ Détecté automatiquement : modifie une ligne pour le régler à la main.'; const held = scene.acting && scene.acting.events && scene.acting.events.some(ev => ev.emo) ? ' Une émotion reste active jusqu’au prochain repère émotionnel ou la fin de la scène.' : ''; n.textContent = note + held; }
+    if (n) { const note = A.src === 'ia' ? '🎬 Écrit par le réalisateur IA : tu peux le modifier.' : A.src === 'manual' ? '✋ Réglé à la main.' : '⚙️ Détecté automatiquement : modifie une ligne pour le régler à la main.'; const held = A.events.some(ev => ev.emo) ? ' Une émotion reste active jusqu’au prochain repère émotionnel ou la fin de la scène.' : ''; n.textContent = note + held; }
 }
 function actingSetWord(i, v) { const sc = actingScene(); if (!sc) return; actingEnsure(sc).events[i].w = +v; actingRefresh(sc); }
 function actingSetKind(i, k) { const sc = actingScene(); if (!sc) return; const ev = actingEnsure(sc).events[i]; actSetKindVal(ev, k, Object.keys(ACT_LABELS[k])[0]); actingRefresh(sc); }
