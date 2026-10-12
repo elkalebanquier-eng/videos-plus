@@ -1,4 +1,4 @@
-const CACHE_NAME = "pnf-shell-v1";
+const CACHE_NAME = "pnf-shell-v2";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", event => {
