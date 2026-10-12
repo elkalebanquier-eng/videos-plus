@@ -16,7 +16,7 @@ VideoStory 3.0.8 transforme des histoires en vidéos animées avec une direction
 - Personnage vectoriel expressif avec regard, respiration, clignements et gestes synchronisés au rythme de la parole, aux pauses et aux accents.
 - Transitions émotionnelles liées aux retournements du récit et intensité des gestes modulée au fil des scènes.
 - Narration Speechify et synchronisation avec le récit.
-- Export vidéo dans le navigateur; le conteneur (MP4/WebM) dépend des encodeurs disponibles sur l’appareil.
+- Export vidéo uniquement sur le téléphone avec un seul moteur WebCodecs : MP4 H.264, AAC si une piste audio est utilisée, 720p maximum et 30 i/s. Aucun rendu serveur ni export WebM de secours. Les navigateurs sans encodeur H.264 requis affichent un message au lieu de générer un fichier d’un autre format.
 - Pour les vidéos sonores de 2 minutes ou plus, sélection automatique du chemin d’export compatible afin de préserver la piste audio sur les appareils concernés.
 - Proxy Vercel sécurisé `/api/speechify` : la clé reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
 
