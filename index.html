@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.5-universal-story-brain">
-    <title>Vidéos Plus — VideoStory 3.0.5</title>
-    <meta name="description" content="Vidéos Plus 3.0.5 comprend les histoires variées et peut générer un récit même sans texte saisi.">
+    <meta name="videostory-build" content="3.0.6-context-aware-acting">
+    <title>Vidéos Plus — VideoStory 3.0.6</title>
+    <meta name="description" content="Vidéos Plus 3.0.6 comprend les histoires variées et peut générer un récit même sans texte saisi.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.5">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.6">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.5">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.6">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -582,7 +582,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.3', channel: 'web', publicBuildId: 'videos-plus-3.0.3-cartoon-actions-semantic-acting' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.6', channel: 'web', publicBuildId: 'videos-plus-3.0.6-context-aware-acting' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -3753,10 +3753,10 @@ async function llmBrain({ idea, script, options, cfg }) {
     const task = script
         ? 'Use exactly this script (do not rewrite it, only split it into scenes of 1-2 short sentences):\n"""\n' + script.slice(0, 6000) + '\n"""'
         : 'Write a narrated script about: "' + idea.slice(0, 300) + '". Target 45-60 seconds (100-135 spoken words). Write a strong hook in the first sentence, then a clear arc (context, tension, turning point, lesson, call to action). Use simple spoken language for a West African audience. Make 7-10 scenes, normally 8-18 words per scene, never rush the narration, and end with a concrete call to action. Split it into scenes of 1-2 short sentences.';
-    const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. Identify who acts, what changes, the cause and consequence, the emotional arc and the concrete visual objects before choosing scenes.\n' + task +
+    const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. First build a private semantic model of each sentence: subject, literal action, object, time, cause, consequence, uncertainty, negation, metaphor, contrast and emotional intensity. Then choose visuals that make the meaning obvious in the first second.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
-        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject.';
+        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -3851,10 +3851,28 @@ async function directorBrain(scenes, cfg) {
         return JSON.parse(txt);
     } finally { clearTimeout(timer); }
 }
+const LITERAL_ACTION_RE = {
+    run: /\b(?:je|tu|il|elle|on|nous|vous|ils|elles)\s+[^.!?]{0,24}\b(?:cour\w*|sprint\w*|fui\w*|detal\w*)\b|\b(?:en courant|a toute vitesse|a toutes jambes|prend la fuite)\b/i,
+    fall: /\b(?:tomb\w*|trebuch\w*|gliss\w*|faux pas|casse la figure)\b/i,
+    jump: /\b(?:saute\w*|bond\w*|fait un bond)\b/i,
+    dance: /\b(?:dans(?:e|es|ons|ez|ent|ait|aient|er|ant)|fait la fete)\b/i,
+    cry: /\b(?:pleur\w*|larme\w*|sanglot\w*|en larmes)\b/i,
+    shake: /\b(?:trembl\w*|frissonn\w*|grelott\w*)\b/i,
+    sleep: /\b(?:dorm\w*|somnole\w*|sommeill\w*|au lit|bonne nuit)\b/i,
+    laugh: /\b(?:rigo\w*|eclat\w* de rire|fourir\w*|haha|hihi|blague|drole)\b/i,
+};
+const BODY_ACTIONS = new Set(Object.keys(LITERAL_ACTION_RE));
+function actingContextWords(words, i) {
+    return words.slice(Math.max(0, i - 4), i).map(w => norm(w).replace(/[^a-z0-9]/g, ''));
+}
+function actingIsNegatedOrHypothetical(words, i) {
+    const ctx = actingContextWords(words, i);
+    return ctx.some(w => ['pas', 'jamais', 'sans', 'aucun', 'aucune', 'ni', 'si', 'peutetre', 'imagine', 'imaginons', 'supposons', 'comme'].includes(w));
+}
 function cleanActing(raw, scene) {
-    const nW = splitWords(scene.narration).length, L = ActingBrain.LISTS, ok = (v, arr) => arr.includes(v);
-    const events = [];
-    (Array.isArray(raw.events) ? raw.events : []).slice(0, 10).forEach(e => {
+    const words = splitWords(scene.narration), text = norm(scene.narration), nW = words.length, L = ActingBrain.LISTS, ok = (v, arr) => arr.includes(v);
+    const events = [], seen = new Set();
+    (Array.isArray(raw.events) ? raw.events : []).slice(0, 12).forEach(e => {
         if (!e || typeof e !== 'object') return;
         const w = Math.max(0, Math.min(nW - 1, Math.round(+e.w || 0))), ev = { w };
         if (ok(e.emo, L.emos)) ev.emo = e.emo;
@@ -3865,10 +3883,18 @@ function cleanActing(raw, scene) {
         else if (e.head === 'nod' || e.head === 'shake') ev.head = e.head;
         else if (['left', 'right', 'up', 'down', 'cam'].includes(e.look)) ev.look = e.look;
         else return;
+        const kind = ev.emo || ev.gesture || ev.shot || ev.head || ev.look;
+        const key = w + ':' + kind;
+        if (seen.has(key)) return;
+        // Un geste corporel n’est conservé que si l’action est réellement décrite,
+        // et jamais dans une négation ou une hypothèse (« si tu cours », « ne pleure pas »).
+        if (BODY_ACTIONS.has(ev.gesture) && (!LITERAL_ACTION_RE[ev.gesture].test(text) || actingIsNegatedOrHypothetical(words, w))) return;
+        if (ev.shot === 'close' && events.some(x => x.shot === 'close')) return;
+        seen.add(key);
         events.push(ev);
     });
     events.sort((a, b) => a.w - b.w);
-    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events };
+    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events: events.slice(0, 6) };
 }
 let directorBusy = false;
 async function runDirector(silent) {
