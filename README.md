@@ -1,6 +1,6 @@
-# Vidéos Plus — VideoStory 3.0.7
+# Vidéos Plus — VideoStory 3.0.8
 
-VideoStory 3.0.7 transforme des histoires en vidéos animées avec une direction artistique cartoon professionnelle, un cerveau narratif universel, un personnage expressif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.0.8 transforme des histoires en vidéos animées avec une direction artistique cartoon professionnelle, un cerveau narratif universel, un personnage expressif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 ## Fonctionnalités
 
@@ -9,6 +9,7 @@ VideoStory 3.0.7 transforme des histoires en vidéos animées avec une direction
 - Compréhension sémantique renforcée : négations, contrastes, actions littérales et sujet de l’action sont pris en compte avant de choisir le jeu du personnage.
 - Réalisateur IA contextuel : il modélise le sujet, l’action, la cause, la conséquence, l’hypothèse et l’arc émotionnel avant de choisir un geste, puis filtre les gestes corporels non littéraux, négatifs ou hypothétiques.
 - Réactions d’attention : sourire profond, clin d’œil complice, retournement, regard caméra, célébration et changements d’expression synchronisés aux moments clés.
+- Mise en scène des lieux : église, mosquée, marché et puits sont reconnus ; le personnage marche vers la destination, s’arrête devant elle et peut puiser de l’eau avec un geste et un bruitage synchronisés.
 - Interface et décors cartoon premium : grille technique retirée, badge éditorial nettoyé, paysages doux, nuages, collines et profondeur visuelle autour du personnage.
 - Création sans texte obligatoire : si l’idée et le script sont vides, le cerveau démarre avec une histoire universelle cohérente.
 - Analyse multi-domaines : le réalisateur distingue sujet, action, cause, conséquence, négation, hypothèse, métaphore et arc émotionnel dans les histoires personnelles, éducatives, scientifiques, commerciales ou fictives.

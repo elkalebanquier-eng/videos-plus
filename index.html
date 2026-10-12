@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.7-attention-reactions">
-    <title>Vidéos Plus — VideoStory 3.0.7</title>
-    <meta name="description" content="Vidéos Plus 3.0.7 comprend les histoires variées et peut générer un récit même sans texte saisi.">
+    <meta name="videostory-build" content="3.0.8-location-walk-stop">
+    <title>Vidéos Plus — VideoStory 3.0.8</title>
+    <meta name="description" content="Vidéos Plus 3.0.8 comprend les histoires variées et peut générer un récit même sans texte saisi.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.7">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.8">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.7">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.8">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -450,6 +450,10 @@ const ASSETS = {
         { id: 'rocket', name: 'Fusée', icon: '🚀', tags: ['launch', 'growth', 'startup'] },
         { id: 'globe', name: 'Monde', icon: '🌍', tags: ['world', 'global', 'africa'] },
         { id: 'shield', name: 'Bouclier', icon: '🛡️', tags: ['security', 'trust'] },
+        { id: 'church', name: 'Église', icon: '⛪', tags: ['church', 'eglise', 'religion'] },
+        { id: 'mosque', name: 'Mosquée', icon: '🕌', tags: ['mosque', 'mosquee', 'islam'] },
+        { id: 'market', name: 'Marché', icon: '🏪', tags: ['market', 'marche', 'boutique', 'commerce'] },
+        { id: 'well', name: 'Puits', icon: '🪣', tags: ['well', 'puits', 'eau', 'water', 'seau'] },
     ],
     backgrounds: [
         { id: 'gradient_blue', name: 'Bleu', from: '#0f0c29', to: '#302b63' },
@@ -582,7 +586,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.7', channel: 'web', publicBuildId: 'videos-plus-3.0.7-attention-reactions' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.8', channel: 'web', publicBuildId: 'videos-plus-3.0.8-location-walk-stop' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -725,6 +729,7 @@ const ActingBrain = (() => {
         wink:     { pri: 6, dur: 1.2, w: compile('clin doeil complicite complice') },
         turn:     { pri: 8, dur: 2.2, act: true, w: () => false },
         sleep:    { pri: 6, dur: 3.0, act: true, w: () => false },
+        draw:     { pri: 7, dur: 2.4, w: compile('puise puiser eau water seau pompe') },
     };
     const COUNT_WORDS = { premierement: 1, dabord: 1, deux: 2, deuxieme: 2, ensuite: 2, trois: 3, troisieme: 3, quatre: 4, cinq: 5 };
     const NOD = compile('=oui =daccord exactement =bien-sur effectivement absolument =voila certainement');
@@ -1021,7 +1026,7 @@ const ActingBrain = (() => {
             merged.forEach(sh => { sh.t1 = Math.min(sh.t1, sh.t0 + 3.2); });
             let closes = 0; P.shots = merged.filter(sh => sh.z < 1 || (closes++ < 2));
         }
-        P.ambient = (scene.brain && ['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(scene.brain.pose)) ? scene.brain.pose : null;
+        P.ambient = scene.location ? null : ((scene.brain && ['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(scene.brain.pose)) ? scene.brain.pose : null);
         cache.set(scene, { key, p: P });
         return P;
     }
@@ -1087,7 +1092,8 @@ const ActingBrain = (() => {
         const breath = (bw - 0.5) * 0.07 * (1 + 0.8 * (e.excited + e.fear + e.angry) + 0.4 * e.sad);
         let nod = 0, shake = 0;
         P.heads.forEach(h => { if (t >= h.t0 && t <= h.t1) { const x = (t - h.t0) / (h.t1 - h.t0), env = Math.sin(Math.PI * x); if (h.kind === 'nod') nod = Math.sin(x * Math.PI * 4) * env; else shake = Math.sin(x * Math.PI * 4) * env; } });
-        const amb = P.ambient || (['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(pose) ? pose : null);
+        const travelingToPlace = !!(scene && scene.location && scene.location.traveling && t < (scene.location.arriveAt || 0));
+        const amb = P.ambient || (travelingToPlace ? 'walking' : (['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(pose) ? (scene && scene.location ? 'standing' : pose) : null));
         // mouvement secondaire : oscillations amorties après chaque geste et chaque accent
         let sway = Math.sin(t * 1.9) * 0.08, ant = 0, push = 0, jolt = 0;
         P.gestures.forEach(g => {
@@ -1276,6 +1282,7 @@ const BuiltinCharacter = (() => {
             case 'smile': return { L: { x: -2.2, y: -5.9, mode: 'open', out: 1 }, R: { x: 2.2, y: -5.9, mode: 'open', out: 1 }, tilt: -0.03 };
             case 'wink': return { R: { x: 2.0, y: -6.3, mode: 'point', s: 1.05 }, tilt: -0.04 };
             case 'turn': return null;
+            case 'draw': { const dip = Math.sin(p * Math.PI) * 0.7; return { L: { x: -0.65, y: -4.55 + dip, mode: 'palm' }, R: { x: 0.65, y: -4.55 + dip, mode: 'palm' }, tilt: 0.06 }; }
             case 'sleep': return { L: { x: -0.8, y: -5.2, mode: 'palm' }, R: { x: 0.8, y: -5.2, mode: 'palm' }, tilt: 0.16 };
             case 'fall': { const k = clamp((p - 0.26) / 0.06, 0, 1), m = k * k * (3 - 2 * k), fl = Math.sin(t * 22) * 0.5 * (1 - m);   // bras en l'air quand il perd l'équilibre, puis le long du corps
                 return { L: { x: -2.9 + 0.9 * m, y: -7.7 + 3.5 * m + fl, mode: 'open', out: 1 }, R: { x: 2.9 - 0.9 * m, y: -7.7 + 3.5 * m - fl, mode: 'open', out: 1 } }; }
@@ -1711,6 +1718,7 @@ const ActingSfx = (() => {
         smile: (a, o, t) => { tone(a, o, 660, 990, t + 0.18, 0.22, 0.025, 'sine'); },
         wink: (a, o, t) => { tone(a, o, 880, 1320, t + 0.12, 0.16, 0.035, 'triangle'); },
         turn: (a, o, t) => sweep(a, o, t + 0.08, 0.38, 0.035, 380, 1250),
+        draw: (a, o, t) => { tone(a, o, 520, 760, t + 0.25, 0.12, 0.025, 'sine'); burst(a, o, t + 0.55, 0.14, 0.018, 1800, 1.2); },
         hold: (a, o, t) => tone(a, o, 520, 780, t + 0.2, 0.12, 0.05, 'triangle'),
         up: (a, o, t) => tone(a, o, 400, 900, t, 0.3, 0.045, 'triangle'),
         down: (a, o, t) => tone(a, o, 600, 220, t, 0.35, 0.045, 'triangle'),
@@ -1781,6 +1789,10 @@ const LEX = {
 };
 
 const OBJECT_RULES = [
+    ['church', 'eglise church chapelle paroisse cathedrale messe'.split(' ')],
+    ['mosque', 'mosquee mosque imam musulman islam prier priere ramadan'.split(' ')],
+    ['market', 'marche boutique bazar magasin commerce vendeur acheter achats'.split(' ')],
+    ['well', 'puits eau water seau pompe puiser'.split(' ')],
     ['money', 'argent cash dollar euro fcfa franc million milliard riche fortune salaire money dinero'.split(' ')],
     ['phone', 'telephone phone smartphone mobile iphone android appli'.split(' ')],
     ['building', 'entreprise societe immeuble bureau company startup siege'.split(' ')],
@@ -1799,6 +1811,12 @@ const OBJECT_RULES = [
     ['rocket', 'lancer decoller lancement rocket launch'.split(' ')],
     ['globe', 'monde mondial pays afrique international global world'.split(' ')],
     ['shield', 'securite protection confiance protege secure trust'.split(' ')],
+];
+const LOCATION_RULES = [
+    { id: 'church', words: 'eglise church chapelle paroisse cathedrale messe'.split(' '), stay: true },
+    { id: 'mosque', words: 'mosquee mosque imam musulman islam prier priere ramadan'.split(' '), stay: true },
+    { id: 'market', words: 'marche boutique bazar magasin commerce vendeur acheter achats'.split(' '), stay: true },
+    { id: 'well', words: 'puits eau water seau pompe puiser'.split(' '), stay: true },
 ];
 
 const STYLE_BG = {
@@ -1980,6 +1998,11 @@ class ScenePlanner {
         if (spec && ROLES.includes(spec.role)) role = spec.role;
 
         let objects = this.pickObjects(tokens);
+        const location = LOCATION_RULES
+            .map(r => ({ ...r, hits: countHits(tokens, r.words) }))
+            .filter(r => r.hits > 0)
+            .sort((a, b) => b.hits - a.hits)[0] || null;
+        if (location && !objects.includes(location.id)) objects = [location.id, ...objects].slice(0, 2);
         if (spec && Array.isArray(spec.objects)) {
             const valid = spec.objects.filter(o => ASSETS.objects.some(a => a.id === o)).slice(0, 2);
             if (valid.length || spec.objects.length === 0) objects = valid;
@@ -2004,7 +2027,8 @@ class ScenePlanner {
         if (spec && typeof spec.keyText === 'string' && spec.keyText.trim()) keyText = spec.keyText.trim().slice(0, 22);
         if (spec && spec.keyText === '') keyText = null;
 
-        const plan = { role, mood, objects, charId: asset0.id, pose, noChar, bg, keyText, cast };
+        const isTravel = countHits(tokens, POSE_CUES.walking) > 0;
+        const plan = { role, mood, objects, location: location ? { id: location.id, traveling: isTravel } : null, charId: asset0.id, pose, noChar, bg, keyText, cast };
         plan.layout = this.pickLayout(plan, prevPlans);
 
         // timing : chaque élément apparaît quand son mot est prononcé
@@ -2035,6 +2059,8 @@ class ScenePlanner {
         const dur = this.estimateDuration(narration, plan.role);
         const cast = plan.cast;
         const tm = plan.timing || { char: null, objs: [], text: null };
+        const location = plan.location;
+        const arriveAt = location ? (location.traveling ? clamp(dur * 0.58, 1.05, Math.max(1.05, dur - 0.75)) : Math.min(0.85, dur * 0.28)) : null;
 
         // retards d'apparition : au mot prononcé, avec un premier élément visible avant 0,7 s
         const charCap = plan.role === 'hook' ? 0.55 : 1.05;
@@ -2065,6 +2091,7 @@ class ScenePlanner {
             keyText: plan.keyText || '',
             background: plan.bg,
             role: plan.role, mood: plan.mood, layout: L,
+            location: location ? { id: location.id, traveling: !!location.traveling, arriveAt } : null,
             elements: [],
             transition: { type: same ? 'fade' : (plan.role === 'context' ? (index % 2 ? 'fade' : 'push') : (TRANS_BY_ROLE[plan.role] || 'fade')), duration: 0.5 },
             cast: { lead, last: lead },
@@ -2079,7 +2106,12 @@ class ScenePlanner {
 
         if (L === 'hero') {
             el({ id: 'char-' + id, type: 'character', assetId: plan.charId, pose: plan.pose, position: { x: 0.5, y: 0.62 }, size: { width: 0.5, height: 0.5 }, zIndex: 10, entrance: { ...charEnter, delay: same ? 0.05 : D(dChar) } });
-            plan.objects.forEach((o, i) => el({ id: 'obj-' + id + '-' + i, type: 'object', assetId: o, position: { x: plan.objects.length === 1 ? 0.5 : 0.28 + i * 0.44, y: 0.3 }, size: { width: 0.26, height: 0.26 }, zIndex: 5, entrance: { type: ent.obj, duration: 0.4, delay: D(dObjs[i]) } }));
+            plan.objects.forEach((o, i) => {
+                const isLocation = location && o === location.id;
+                const position = isLocation ? { x: 0.78, y: 0.36 } : { x: plan.objects.length === 1 ? 0.72 : 0.28 + i * 0.44, y: 0.3 };
+                const size = isLocation ? { width: 0.36, height: 0.36 } : { width: 0.26, height: 0.26 };
+                el({ id: 'obj-' + id + '-' + i, type: 'object', assetId: o, position, size, zIndex: 5, entrance: { type: ent.obj, duration: 0.4, delay: D(dObjs[i]) } });
+            });
         } else if (L === 'object') {
             plan.objects.forEach((o, i) => el({ id: 'obj-' + id + '-' + i, type: 'object', assetId: o, position: i === 0 ? { x: 0.5, y: 0.45 } : { x: 0.8, y: 0.68 }, size: i === 0 ? { width: 0.5, height: 0.5 } : { width: 0.2, height: 0.2 }, zIndex: 5 - i, entrance: { type: ent.obj, duration: 0.45, delay: D(dObjs[i]) } }));
         } else if (L === 'bigtext' && plan.objects.length) {
@@ -2759,6 +2791,7 @@ class CanvasRenderer {
         }
         ctx.save();
         ctx.translate(W / 2 + cx, H / 2 + cy); ctx.scale(camS, camS); ctx.translate(-W / 2, -H / 2);
+        if (scene.location) this.drawLocationPath(scene, t);
         const sorted = [...scene.elements].sort((a, b) => a.zIndex - b.zIndex);
         for (const element of sorted) {
             if (!element.visible) continue;
@@ -2771,6 +2804,24 @@ class CanvasRenderer {
         if (typeof state !== 'undefined' && state.project && state.project.subtitles && scene.narration) {
             this.renderSubtitles(scene.narration, t, scene.duration);
         }
+    }
+
+    drawLocationPath(scene, t) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k;
+        const arriving = scene.location.traveling && t < (scene.location.arriveAt || 0);
+        const sx = W * 0.50, sy = H * 0.72, ex = W * 0.78, ey = H * 0.48;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(255,255,255,' + (arriving ? 0.34 : 0.18) + ')';
+        ctx.lineWidth = 10 * k;
+        ctx.setLineDash([18 * k, 18 * k]);
+        ctx.lineDashOffset = -t * 80 * k;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(W * 0.60, H * 0.60, ex, ey); ctx.stroke();
+        ctx.setLineDash([]);
+        const pulse = 0.5 + 0.5 * Math.sin(t * 4.2);
+        ctx.fillStyle = 'rgba(255,225,120,' + (0.16 + pulse * 0.12) + ')';
+        ctx.beginPath(); ctx.ellipse(ex, ey + 24 * k, (32 + pulse * 8) * k, (9 + pulse * 3) * k, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
     }
 
     // ---------- Arrière-plans animés ----------
@@ -3350,6 +3401,15 @@ function forceUniqueRiveCharacter(project) {
     project.mascot = 'rive';
     project.scenes.forEach((scene, index) => {
         scene.elements = Array.isArray(scene.elements) ? scene.elements : [];
+        if (!scene.location && scene.narration && typeof LOCATION_RULES !== 'undefined') {
+            const tokens = tokenize(scene.narration);
+            const place = LOCATION_RULES.map(r => ({ ...r, hits: countHits(tokens, r.words) })).filter(r => r.hits > 0).sort((a, b) => b.hits - a.hits)[0];
+            if (place) {
+                const moving = countHits(tokens, POSE_CUES.walking) > 0;
+                scene.location = { id: place.id, traveling: moving, arriveAt: moving ? clamp((scene.duration || 5) * 0.58, 1.05, Math.max(1.05, (scene.duration || 5) - 0.75)) : Math.min(0.85, (scene.duration || 5) * 0.28) };
+                if (!scene.elements.some(el => el.type === 'object' && el.assetId === place.id)) scene.elements.push({ id: 'location-' + (scene.id || index), type: 'object', assetId: place.id, position: { x: 0.78, y: 0.36 }, size: { width: 0.36, height: 0.36 }, zIndex: 5, rotation: 0, opacity: 1, visible: true, entrance: { type: 'elastic', duration: 0.4, delay: 0.3 } });
+            }
+        }
         let firstCharacter = true;
         scene.elements = scene.elements.filter(el => el.type !== 'character' || firstCharacter-- > 0);
         const character = scene.elements.find(el => el.type === 'character');
@@ -3804,7 +3864,7 @@ async function llmBrain({ idea, script, options, cfg }) {
     const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. First build a private semantic model of each sentence: subject, literal action, object, time, cause, consequence, uncertainty, negation, metaphor, contrast and emotional intensity. Then choose visuals that make the meaning obvious in the first second.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
-        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression.';
+        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -3831,7 +3891,7 @@ async function llmBrain({ idea, script, options, cfg }) {
 // ===== JEU DU PERSONNAGE : frise modifiable + réalisateur IA =====
 const ACT_LABELS = {
     emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation' },
-    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
+    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', draw: 'Puiser de l’eau', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
     prop: { phone: 'Téléphone', money: 'Billets', book: 'Livre', tablet: 'Tablette', mic: 'Micro' },
     count: { 1: '1 doigt', 2: '2 doigts', 3: '3 doigts', 4: '4 doigts', 5: '5 doigts' },
     shot: { close: 'Gros plan', wide: 'Plan large' },
