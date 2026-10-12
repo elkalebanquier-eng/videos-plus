@@ -8,7 +8,7 @@ Les changements poussés sur `main` sont déployés automatiquement par Vercel. 
 
 Dans l’app, ouvre **Paramètres → Charger mes voix** pour vérifier l’accès, puis **Tester la voix Speechify** pour valider la synthèse. `simba-3.0` est utilisé par défaut pour le français; `simba-3.2` est réservé à l’anglais. La route serverless limite le texte à 2 000 caractères et efface les anciennes clés locales pendant la migration.
 
-Les exports sonores de **2 minutes ou plus** utilisent par prudence le chemin d’enregistrement compatible plutôt que le muxage AAC WebCodecs, afin d’éviter les pistes audio absentes ou coupées sur certains appareils. Le format final (MP4/WebM) dépend des capacités du navigateur. Pour un export long, garde l’application au premier plan jusqu’à la fin.
+L’export vidéo est entièrement local : un seul moteur WebCodecs produit du MP4 H.264, avec audio AAC lorsqu’une piste audio est présente. La sortie est limitée à 720p/30 i/s pour réduire la charge du téléphone et le poids du fichier. Si le navigateur ne fournit pas les encodeurs nécessaires, l’application refuse l’export plutôt que de créer un WebM ou un fichier MP4 sans son.
 
 ## Changer soi-même le lien Vercel
 

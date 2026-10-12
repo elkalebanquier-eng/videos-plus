@@ -348,7 +348,7 @@
             <div class="form-group"><label>Clé API Gemini</label><input type="password" id="settingKey" placeholder="Colle ta clé ici (optionnel)" autocomplete="off" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <div class="form-group"><label>Modèle Gemini</label><input type="text" id="settingModel" placeholder="gemini-3.6-flash" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">Sans carte bancaire : crée une clé gratuite sur aistudio.google.com. Avec l'offre gratuite, Google peut réutiliser les textes envoyés. Si le modèle change de nom ou si le réseau échoue, le cerveau local prend le relais automatiquement.</p>
-            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · rapide et fluide</option><option value="1080">1080p · plus net, plus lourd</option></select></div>
+            <div class="form-group"><label>Export vidéo</label><p style="font-size:12px;color:var(--text-muted);line-height:1.5;">MP4 H.264 · 720p maximum · 30 i/s. Le rendu reste sur ton téléphone pour éviter un serveur et garder des fichiers légers.</p></div>
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
             <div class="form-group"><label>Personnage : peau</label><select id="settingCharSkin"><option value="#4a2c1a">Ébène</option><option value="#6b4226">Brun foncé</option><option value="#8d5524">Brun</option><option value="#c68642">Caramel</option><option value="#f1c27d">Clair</option></select></div>
@@ -3759,7 +3759,6 @@ function loadSettingsUI() {
     setVal('settingAI', c.ai || 'local');
     setVal('settingKey', c.key || '');
     setVal('settingModel', c.model || 'gemini-3.6-flash');
-    setVal('settingQuality', c.quality || '720');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
     setVal('settingCharHair', c.charHair || 'short');
     setVal('settingCharSkin', c.charSkin || '#6b4226');
@@ -3777,7 +3776,6 @@ function saveSettings() {
         ai: getVal('settingAI'),
         key: getVal('settingKey').trim(),
         model: getVal('settingModel').trim() || 'gemini-3.6-flash',
-        quality: getVal('settingQuality'),
         charOutfit: getVal('settingCharOutfit'),
         charHair: getVal('settingCharHair'),
         charSkin: getVal('settingCharSkin'),
@@ -4832,22 +4830,22 @@ const WCExport = (() => {
     const toU8 = d => d instanceof ArrayBuffer ? new Uint8Array(d.slice(0)) : new Uint8Array(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength));
 
     function dims(project) {
-        const cfg = Settings.get();
         const base = RESOLUTIONS[project.format] || RESOLUTIONS['9:16'];
-        const sc = cfg.quality === '1080' ? 1 : 2 / 3;
+        // Profil mobile unique : 720p maximum, indépendamment des anciens réglages de qualité.
+        const sc = 2 / 3;
         const W = Math.round(base.width * sc / 2) * 2, H = Math.round(base.height * sc / 2) * 2;
-        return { W, H, bitrate: W * H > 1200000 ? 5000000 : 3000000 };
+        return { W, H, bitrate: W * H > 700000 ? 2000000 : 1600000 };
     }
 
-    // Renvoie { codec, aacOK } si l'appareil sait encoder du H.264, sinon null (=> ancien mode).
+    // Moteur unique : MP4 H.264/AAC par WebCodecs, sans repli WebM/MediaRecorder.
     async function plan(project) {
         try {
             if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof MessageChannel === 'undefined') return null;
             const { W, H, bitrate } = dims(project);
             let codec = '';
-            for (const c of ['avc1.640028', 'avc1.4d0028', 'avc1.42E028']) {
+            for (const c of ['avc1.4d0028', 'avc1.42E028', 'avc1.640028']) {
                 try {
-                    const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
+                    const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, hardwareAcceleration: 'prefer-hardware', avc: { format: 'avc' } });
                     if (r && r.supported) { codec = c; break; }
                 } catch (_) { /* codec suivant */ }
             }
@@ -4909,7 +4907,7 @@ const WCExport = (() => {
         const timeline = new TimelineEngine(project.scenes);
         const total = timeline.getTotalDuration();
         const frames = Math.max(1, Math.round(total * FPS));
-        const withAudio = !!pl.aacOK;
+        const withAudio = !!pl.aacOK && !!hasAudio;
         const mux = Mp4Mux.create({ width: W, height: H, fps: FPS, sampleRate: SR, channels: 1, withAudio });
         const enc = { v: null, a: null };
         let fatal = null, lock = null;
@@ -4934,7 +4932,7 @@ const WCExport = (() => {
                 },
                 error: e => { fatal = e; },
             });
-            enc.v.configure({ codec: pl.codec, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
+            enc.v.configure({ codec: pl.codec, width: W, height: H, bitrate, framerate: FPS, hardwareAcceleration: 'prefer-hardware', avc: { format: 'avc' } });
             const frameUs = Math.round(1e6 / FPS);
             for (let i = 0; i < frames; i++) {
                 if (fatal) throw fatal;
@@ -4967,257 +4965,68 @@ const WCExport = (() => {
 })();
 
 // ===== EXPORT VIDEO =====
-function pickRecorderMime() {
-    // « video/mp4 » seul est retiré : sur certains appareils il produit du VP9/AV1 dans un MP4, que les réseaux sociaux refusent
-    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=h264,aac', 'video/webm;codecs=vp8,opus', 'video/webm'];
-    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
-    return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
-}
-function pickAudioRecorderMime() {
-    // Certains navigateurs annoncent MP4 comme supporté mais abandonnent la piste
-    // audio avec MediaRecorder. Opus/WebM est prioritaire dès qu’une piste sonore existe.
-    const list = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2'];
-    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
-    return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
-}
-
-function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n, s) => n + Number(s.duration || 0), 0); }
-
-async function chooseLongExportWriter(filename, mime) {
-    if (typeof window.showSaveFilePicker !== 'function') return null;
-    try {
-        const ext = filename.split('.').pop() || 'webm';
-        const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'Vidéo', accept: { [(mime || 'video/webm').split(';')[0]]: ['.' + ext] } }] });
-        return await handle.createWritable();
-    } catch (e) {
-        if (e && e.name === 'AbortError') return false;
-        console.warn('Destination directe indisponible', e); return null;
-    }
-}
-
 async function exportVideo() {
-    if (!state.project || state.project.scenes.length === 0) {
+    if (!state.project || !state.project.scenes || state.project.scenes.length === 0) {
         showToast('Aucune scène à exporter', 'error');
         return;
     }
     normalizeSocialProject(state.project);
-    const durationSeconds = totalPreviewSeconds(state.project);
-    const detectedWcPlan = await WCExport.plan(state.project);
-    const wantsAudio = !!state.project.music
-        || state.project.scenes.some(scene => String(scene.narration || '').trim())
-        || Settings.get().charSfx !== 'off';
-    // Par prudence, les vidéos sonores longues empruntent l’enregistreur temps réel,
-    // plus compatible que le muxage AAC WebCodecs sur certains appareils.
-    const longAudioCompatibilityMode = durationSeconds >= 120 && wantsAudio && typeof MediaRecorder !== 'undefined';
-    const wcPlan = longAudioCompatibilityMode ? null : detectedWcPlan;
-    const requestedLongExport = durationSeconds > 300;
-    let directWriter = null;
-    let directWriterCancelled = false;
-    if (requestedLongExport && !wcPlan) {
-        const titleBase = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video');
-        const earlyMime = (wantsAudio ? pickAudioRecorderMime() : pickRecorderMime()) || 'video/webm';
-        directWriter = await chooseLongExportWriter(titleBase + (earlyMime.includes('mp4') ? '.mp4' : '.webm'), earlyMime);
-        if (directWriter === false) { directWriterCancelled = true; directWriter = null; }
+    if (typeof timeline !== 'undefined' && timeline) {
+        timeline = new TimelineEngine(state.project.scenes);
+        renderSceneList(); renderTimeline(); renderCurrentFrame();
     }
-    if (typeof timeline !== 'undefined' && timeline) { timeline = new TimelineEngine(state.project.scenes); renderSceneList(); renderTimeline(); renderCurrentFrame(); }
     const quality = socialQualityReport(state.project);
-    if (directWriterCancelled) showToast('Téléchargement direct annulé : export conservé en téléchargement classique.', 'error');
-    if (quality.issues.length) {
-        showToast('Conseil réseaux : ' + quality.issues.join(', ') + ' (' + Math.round(quality.total) + ' s)', 'error');
-    }
-    if (typeof MediaRecorder === 'undefined' && !wcPlan) {
-        showToast('Export non supporté sur cet appareil', 'error');
+    if (quality.issues.length) showToast('Conseil réseaux : ' + quality.issues.join(', ') + ' (' + Math.round(quality.total) + ' s)', 'error');
+
+    // Échec explicite plutôt que produire un WebM renommé ou un MP4 sans le son attendu.
+    const plan = await WCExport.plan(state.project);
+    if (!plan) {
+        showToast('Export MP4 non pris en charge par ce navigateur. Mets-le à jour puis réessaie.', 'error');
         return;
     }
     unlockAudio();
     if (state.isPlaying) { state.isPlaying = false; document.getElementById('playBtn').textContent = '▶'; }
     stop();
-    showLoading(requestedLongExport ? 'Export long en cours… ne ferme pas l’application' : 'Export en cours... garde l\'écran allumé', true);
+    showLoading('Préparation de l’export MP4 sur ce téléphone…', true);
     updateProgress(0);
     let useVoice = false;
-    if (VoiceStudio.engineOn() && VoiceStudio.supported()) {
-        {
+    try {
+        if (VoiceStudio.engineOn() && VoiceStudio.supported()) {
             try {
-                const r = await VoiceStudio.prepareProject(state.project, (i, n) => { showLoading('Voix naturelle : ' + i + '/' + n + '…', true); updateProgress(i / n); });
+                const r = await VoiceStudio.prepareProject(state.project, (i, n) => {
+                    showLoading('Préparation de la voix : ' + i + '/' + n + '…', true);
+                    updateProgress(i / n);
+                });
                 if (r.changed) refreshAfterVoice();
                 useVoice = r.done > 0;
-            } catch (e) { console.warn('Voix export', e); showToast('Voix indisponible : export sans voix', 'error'); }
-            showLoading('Export en cours... garde l\'écran allumé', true);
-            updateProgress(0);
-        }
-    }
-    try { await Character.prepare(state.project); } catch (e) { console.warn('Personnage', e); }
-    // --- Export MP4 moderne (WebCodecs) : vrai MP4 H.264/AAC, 30 i/s constantes, durée correcte ---
-    if (wcPlan) {
-        const hasAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
-        if (hasAudio && !wcPlan.aacOK) {
-            console.warn('Encodeur AAC absent : mode compatible');
-        } else {
-            let res = null;
-            try {
-                res = await WCExport.run(state.project, wcPlan, useVoice, hasAudio, txt => showLoading(txt, true));
             } catch (e) {
-                console.warn('Export MP4 moderne échoué, mode compatible', e);
-                showToast('MP4 moderne indisponible sur cet appareil : mode compatible…', 'error');
-                showLoading('Export en cours... garde l\'écran allumé', true);
-                updateProgress(0);
-            }
-            if (res) {
-                try {
-                    showLoading('Enregistrement de la vidéo…', true);
-                    updateProgress(1);
-                    const fname = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
-                    const saved = await saveBlobToDevice(res.blob, fname);
-                    hideLoading();
-                    if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 30 i/s' + (hasAudio ? ', avec son' : ', sans son') + ')');
-                } catch (e) {
-                    console.error('Enregistrement', e);
-                    hideLoading();
-                    showToast('Enregistrement impossible. Vérifie l’espace disponible puis réessaie.', 'error');
-                }
-                return;
+                console.warn('Préparation de la voix', e);
+                showToast('Voix indisponible : export sans voix', 'error');
             }
         }
-    }
-    let stream = null;
-    let activeRecorder = null;
-    let nativeStream = false;
-    try {
-        const cfg = Settings.get();
-        const base = RESOLUTIONS[state.project.format] || RESOLUTIONS['9:16'];
-        const sc = cfg.quality === '1080' ? 1 : 2 / 3;
-        const W = Math.round(base.width * sc / 2) * 2;
-        const H = Math.round(base.height * sc / 2) * 2;
-        const exportRenderer = new CanvasRenderer(W, H);
-        const exportTimeline = new TimelineEngine(state.project.scenes);
-        const total = exportTimeline.getTotalDuration();
-        const fps = 30;
-
-        stream = exportRenderer.canvas.captureStream(fps);
-
-        // Piste audio : la voix Speechify est un AudioBuffer et doit passer par
-        // MediaStreamDestination ; la voix native du navigateur, elle, ne peut pas être capturée.
-        let audioDest = null;
-        try {
-            const actx = getAudioCtx();
-            const wantsExportAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
-            if (actx && wantsExportAudio) {
-                await actx.resume();
-                audioDest = actx.createMediaStreamDestination();
-                audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-            }
-        } catch (e) { console.warn('Audio export indisponible', e); audioDest = null; }
-
-        const mime = audioDest ? (pickAudioRecorderMime() || pickRecorderMime()) : pickRecorderMime();
-        let mediaRecorder;
-        const recorderOptions = { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: W * H > 1000000 ? 4200000 : 2800000, audioBitsPerSecond: 96000 };
-        try { mediaRecorder = new MediaRecorder(stream, recorderOptions); }
-        catch (e) {
-            try { mediaRecorder = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: 2400000, audioBitsPerSecond: 64000 }); }
-            catch (e2) { mediaRecorder = new MediaRecorder(stream); }
+        try { await Character.prepare(state.project); } catch (e) { console.warn('Personnage', e); }
+        const hasAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
+        if (hasAudio && !plan.aacOK) {
+            throw new Error('Ce navigateur ne sait pas encoder le son AAC nécessaire au MP4. Essaie un navigateur récent sur ton téléphone.');
         }
-        activeRecorder = mediaRecorder;
-        const actualMime = mediaRecorder.mimeType || mime || 'video/webm';
-        const longFileName = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + (actualMime.includes('mp4') ? '.mp4' : '.webm');
-        let nativeWriteQueue = Promise.resolve(), nativeWriteError = null;
-        let directWriteQueue = Promise.resolve(), directWriteError = null;
-        try { nativeStream = !directWriter && !!(total > 60 && window.AndroidBridge && window.AndroidBridge.beginFile && window.AndroidBridge.beginFile(longFileName, actualMime)); } catch (_) { nativeStream = false; }
-        const chunks = [];
-        let recordedBytes = 0;
-        let recorderError = null;
-        mediaRecorder.ondataavailable = e => {
-            if (!e.data || !e.data.size) return;
-            if (nativeStream) {
-                nativeWriteQueue = nativeWriteQueue.then(async () => {
-                    const bytes = new Uint8Array(await e.data.arrayBuffer());
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i += 0xC000) { const part = bytes.subarray(i, i + 0xC000); for (let j = 0; j < part.length; j++) binary += String.fromCharCode(part[j]); }
-                    if (!window.AndroidBridge.writeFileChunk(btoa(binary))) throw new Error('écriture vidéo interrompue');
-                }).catch(err => { nativeWriteError = err; });
-            } else if (directWriter) {
-                directWriteQueue = directWriteQueue.then(() => directWriter.write(e.data)).catch(err => { directWriteError = err; });
-            } else { chunks.push(e.data); recordedBytes += e.data.size || 0; }
-        };
-        const recordingComplete = new Promise((resolve, reject) => {
-            // La finalisation peut prendre longtemps sur Android pour un fichier de 5 à 10 minutes.
-            const finalizeTimeout = Math.max(120000, Math.min(900000, total * 5000));
-            const timer = setTimeout(() => reject(new Error('Délai de finalisation dépassé après ' + Math.round(finalizeTimeout / 1000) + ' s')), finalizeTimeout);
-            mediaRecorder.onerror = e => { recorderError = e; clearTimeout(timer); reject(new Error('Enregistreur vidéo indisponible')); };
-            mediaRecorder.onstop = () => { clearTimeout(timer); if (recorderError) reject(recorderError); else resolve(nativeStream || directWriter ? null : new Blob(chunks, { type: actualMime })); };
-        });
-
-        // Première image avant de démarrer l'enregistrement
-        const first = exportTimeline.getSceneAtTime(0);
-        if (first) await exportRenderer.renderScene(first.scene, 0);
-        mediaRecorder.start(1000);
-        let voiceN = 0;
-        if (audioDest && state.project.music) MusicEngine.start(state.project.music, 0, total, audioDest);
-        if (audioDest && useVoice) voiceN = VoiceStudio.scheduleExport(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05);
-        if (audioDest) ActingSfx.schedule(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05, 0);
-        if (useVoice && voiceN === 0) throw new Error('Narration Speechify préparée mais absente de la piste audio exportée');
-
-        // Horloge déterministe : aucune image ni scène n’est sautée à l’export.
-        // L’aperçu et le fichier téléchargé suivent exactement la même timeline.
-        // Horloge réelle : si le téléphone est lent, on saute des images au lieu de bloquer l'appli,
-        // et la vidéo garde exactement la durée de la voix et de la musique.
-        const renderStartMs = performance.now();
-        let lastUi = 0, prevStart = 0;
-        while (true) {
-            const frameStart = performance.now();
-            if (prevStart && BuiltinCharacter.noteFrame(frameStart - prevStart)) showToast('Effets du personnage allégés pour garder la fluidité');
-            prevStart = frameStart;
-            const elapsed = (frameStart - renderStartMs) / 1000;
-            if (elapsed >= total) break;
-            const r = exportTimeline.getSceneAtTime(Math.min(elapsed, Math.max(0, total - 0.001)));
-            if (r) await exportRenderer.renderScene(r.scene, r.timeInScene);
-            if (frameStart - lastUi > 250) { lastUi = frameStart; updateProgress(elapsed / total); }
-            // on rend toujours la main au navigateur (interface, encodeur vidéo) entre deux images
-            await new Promise(res => setTimeout(res, Math.max(4, 1000 / fps - (performance.now() - frameStart))));
-        }
+        const result = await WCExport.run(state.project, plan, useVoice, hasAudio, text => showLoading(text, true));
+        if (!result.blob || result.blob.type !== 'video/mp4') throw new Error('Le moteur n’a pas produit un fichier MP4 valide.');
+        const header = new Uint8Array(await result.blob.slice(0, 12).arrayBuffer());
+        if (header.length < 8 || String.fromCharCode(...header.slice(4, 8)) !== 'ftyp') throw new Error('Le fichier MP4 produit est incomplet.');
+        showLoading('Enregistrement du MP4 sur ce téléphone…', true);
         updateProgress(1);
-        await new Promise(res => setTimeout(res, 500));
-        if (mediaRecorder.state === 'recording') mediaRecorder.requestData();
-        // Laisser au MediaRecorder le temps d’émettre le dernier chunk, proportionnellement au fichier.
-        await new Promise(res => setTimeout(res, Math.max(300, Math.min(3000, total * 8))));
-        if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        const blob = await recordingComplete;
-        MusicEngine.stop();
-        ActingSfx.stop();
-        VoiceStudio.stopExport();
-        stream.getTracks().forEach(tr => tr.stop());
-        if (nativeStream) {
-            await nativeWriteQueue;
-            if (nativeWriteError || !window.AndroidBridge.finishFile()) throw (nativeWriteError || new Error('enregistrement incomplet'));
-        }
-        if (directWriter) {
-            await directWriteQueue;
-            if (directWriteError) { try { await directWriter.abort(); } catch (_) {} throw directWriteError; }
-            await directWriter.close();
-        }
-        const type = blob ? (blob.type || mime || 'video/webm') : actualMime;
-        const ext = type.includes('mp4') ? 'mp4' : 'webm';
-        const filename = nativeStream ? longFileName : (((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.' + ext);
-        if (!nativeStream && !directWriter) {
-            showLoading('Enregistrement de la vidéo…', true);
-            updateProgress(1);
-            await saveBlobToDevice(blob, filename);
-        }
+        const filename = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
+        const saved = await saveBlobToDevice(result.blob, filename);
+        if (saved === false) throw new Error('Le téléphone a annulé l’enregistrement du fichier.');
         hideLoading();
-        showToast((ext === 'mp4' ? 'MP4 prête' : 'Vidéo WebM prête — cet appareil ne propose pas l’encodeur MP4') + ' (' + ext + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec musique') : ', sans audio') + ')');
+        showToast('MP4 prête · H.264' + (hasAudio ? '/AAC' : '') + ' · ' + result.W + '×' + result.H + ' · 30 i/s');
     } catch (error) {
-        console.error('Export error:', error);
-        try { if (activeRecorder && activeRecorder.state !== 'inactive') activeRecorder.stop(); } catch (_) {}
-        try { if (nativeStream && window.AndroidBridge && window.AndroidBridge.cancelFile) window.AndroidBridge.cancelFile(); } catch (_) {}
-        try { if (directWriter) await directWriter.abort(); } catch (_) {}
-        MusicEngine.stop();
-        ActingSfx.stop();
-        VoiceStudio.stopExport();
-        if (stream) stream.getTracks().forEach(tr => tr.stop());
+        console.error('Export MP4 local', error);
+        MusicEngine.stop(); ActingSfx.stop(); VoiceStudio.stopExport();
         hideLoading();
-        showToast('Export interrompu. Vérifie l’espace disponible puis réessaie.', 'error');
+        showToast(error && error.message ? error.message : 'Export interrompu. Libère de l’espace puis réessaie.', 'error');
     }
 }
-
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
     applyTheme(Settings.get().theme || 'dark');
