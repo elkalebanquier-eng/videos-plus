@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.8-location-walk-stop">
-    <title>Vidéos Plus — VideoStory 3.0.8</title>
-    <meta name="description" content="Vidéos Plus 3.0.8 comprend les histoires variées et peut générer un récit même sans texte saisi.">
+    <meta name="videostory-build" content="3.0.9-anime-layer-pilot">
+    <title>Vidéos Plus — VideoStory 3.0.9</title>
+    <meta name="description" content="Vidéos Plus 3.0.9 ajoute un style anime expressif et des histoires à émotions persistantes.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.8">
-    <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.9">
+    <meta property="og:description" content="Crée des vidéos animées dans un style anime expressif, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.8">
-    <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.9">
+    <meta name="twitter:description" content="Un personnage anime plus expressif, des émotions continues et l’export vidéo mobile.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -352,6 +352,7 @@
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
             <div class="form-group"><label>Personnage : peau</label><select id="settingCharSkin"><option value="#4a2c1a">Ébène</option><option value="#6b4226">Brun foncé</option><option value="#8d5524">Brun</option><option value="#c68642">Caramel</option><option value="#f1c27d">Clair</option></select></div>
+            <div class="form-group"><label>Personnage : style du dessin</label><select id="settingCharArtStyle"><option value="anime">Anime · yeux expressifs et lumière colorée</option><option value="classic">Classique · rendu actuel</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Anime est le nouveau style par défaut; tu peux revenir au rendu classique à tout moment.</p></div>
             <div class="form-group"><label>Personnage : couleur de la tenue</label><input type="color" id="settingCharColor" value="#1f3a5f"></div>
             <div class="form-group"><label>Personnage : effets</label><select id="settingCharFx"><option value="on">Pro : contours, lumière, ombre</option><option value="off">Léger : pour téléphone lent</option></select></div>
             <div class="form-group"><label>Personnage : bruitages</label><select id="settingCharSfx"><option value="on">Activés (applaudissements, ding…)</option><option value="off">Coupés</option></select></div>
@@ -586,7 +587,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.8', channel: 'web', publicBuildId: 'videos-plus-3.0.8-location-walk-stop' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.9', channel: 'web', publicBuildId: 'videos-plus-3.0.9-anime-layer-pilot' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -1187,9 +1188,11 @@ const BuiltinCharacter = (() => {
     const TAU = Math.PI * 2;
     const INK = 'rgba(24,14,32,0.92)';
     const SKINS = [['Ébène', '#4a2c1a'], ['Brun foncé', '#6b4226'], ['Brun', '#8d5524'], ['Caramel', '#c68642'], ['Clair', '#f1c27d']];
+    const HALO_ORDER = ['sad', 'fear', 'angry', 'love', 'joy', 'excited', 'proud', 'surprise', 'doubt', 'think'];
+    const HALO_RGB = { sad: '98,174,255', fear: '106,222,210', angry: '255,102,112', love: '255,123,183', joy: '255,205,112', excited: '255,184,94', proud: '255,218,125', surprise: '190,151,255', doubt: '165,174,204', think: '171,186,221' };
     const cfg = () => {
         const c = Settings.get();
-        return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f' };
+        return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f', artStyle: c.charArtStyle === 'classic' ? 'classic' : 'anime' };
     };
     const mix = (hex, amt) => tint(hex, amt, 1);
     function ik(sx, sy, hx, hy, l1, l2, sd, out) {
@@ -1251,7 +1254,8 @@ const BuiltinCharacter = (() => {
     }
     function draw(ctx, w, h, time, scene, pose) {
         const a = ActingBrain.at(scene, time, pose);
-        const fx = !lite && Settings.get().charFx !== 'off';
+        const appSettings = Settings.get();
+        const fx = !lite && appSettings.charFx !== 'off';
         const u = unit(w, h);
         ctx.save();
         // coup de caméra léger sur les moments forts
@@ -1261,7 +1265,13 @@ const BuiltinCharacter = (() => {
         ctx.translate(0, hc); ctx.scale(cz, cz); ctx.translate(0, -hc);
         // lueur derrière le personnage + ombre au sol qui suit ses mouvements
         const halo = ctx.createRadialGradient(0, -h * 0.45, h * 0.05, 0, -h * 0.45, h * 0.5);
-        halo.addColorStop(0, 'rgba(255,255,255,0.13)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
+        let haloRgb = '255,255,255';
+        if (appSettings.charArtStyle !== 'classic') {
+            let mood = 'think';
+            for (const key of HALO_ORDER) if ((a.e[key] || 0) > (a.e[mood] || 0)) mood = key;
+            haloRgb = HALO_RGB[mood];
+        }
+        halo.addColorStop(0, 'rgba(' + haloRgb + ',0.18)'); halo.addColorStop(0.52, 'rgba(255,255,255,0.035)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = halo; ctx.fillRect(-h * 0.5, -h * 0.95, h, h);
         const lift = clamp(a.e.excited * 0.4 + (a.ambient === 'walking' ? 0.2 : 0), 0, 0.5);
         ctx.fillStyle = 'rgba(0,0,0,' + (0.32 - lift * 0.15).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(0, h * 0.045, 1.9 * u * (1 - lift * 0.3), 0.3 * u, 0, 0, TAU); ctx.fill();
@@ -1269,7 +1279,7 @@ const BuiltinCharacter = (() => {
         // mode « pro » : le personnage est dessiné dans un calque (contour encre + éclairage), à 15 images/s comme en animation « à deux »
         const S = zoom * cz > 1.25 ? 1.5 : 1;          // en gros plan, le calque est dessiné plus fin pour rester net
         const Wo = Math.ceil(h * 0.86 * S), Ho = Math.ceil(h * 1.08 * S), ax = Wo / 2, ay = Math.round(Ho * 0.9);
-        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0);
+        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), appearance = (appSettings.charArtStyle || 'anime') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f'), key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
         if (L.key !== key) {
             L.key = key;
             const tq = twos / 15, aq = ActingBrain.at(scene, tq, pose);
@@ -1394,7 +1404,7 @@ const BuiltinCharacter = (() => {
 
     function render(ctx, w, h, time, a, open, vow, pose, opts) {
         opts = opts || {};
-        const c = cfg(), t = time, E = a.e;
+        const c = cfg(), t = time, E = a.e, anime = c.artStyle !== 'classic';
         const u = unit(w, h);
         const skin = c.skin, skinDk = mix(skin, -0.22), skinLt = mix(skin, 0.16);
         const amb = a.ambient || pose || 'standing';
@@ -1517,6 +1527,11 @@ const BuiltinCharacter = (() => {
                 ctx.save(); ctx.translate(0, sh + 0.1); ctx.rotate(sway * 0.2); ctx.translate(0, -(sh + 0.1)); ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.moveTo(-0.14, sh + 0.1); ctx.lineTo(0.14, sh + 0.1); ctx.lineTo(0.2, sh + 1.5); ctx.lineTo(0, sh + 1.9); ctx.lineTo(-0.2, sh + 1.5); ctx.closePath(); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.04; ctx.stroke(); ctx.restore();
                 ctx.fillStyle = outfitDk; ctx.beginPath(); ctx.moveTo(-0.5, sh - 0.1); ctx.lineTo(-0.15, sh + 1.7); ctx.lineTo(-1.0, sh + 1.4); ctx.closePath(); ctx.fill();
                 ctx.beginPath(); ctx.moveTo(0.5, sh - 0.1); ctx.lineTo(0.15, sh + 1.7); ctx.lineTo(1.0, sh + 1.4); ctx.closePath(); ctx.fill();
+                if (anime) {
+                    ctx.strokeStyle = 'rgba(205,221,255,0.34)'; ctx.lineWidth = 0.035;
+                    ctx.beginPath(); ctx.moveTo(-1.08, sh + 0.34); ctx.quadraticCurveTo(-0.76, sh + 0.22, -0.56, sh + 0.47); ctx.moveTo(1.08, sh + 0.34); ctx.quadraticCurveTo(0.76, sh + 0.22, 0.56, sh + 0.47); ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,224,155,0.9)'; ctx.beginPath(); ctx.arc(0.78, sh + 1.1, 0.055, 0, TAU); ctx.fill();
+                }
             }
         }
         if (!full) { ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-1.1, hip - 0.1, 2.2, 0.16); }  // ceinture
@@ -1546,28 +1561,49 @@ const BuiltinCharacter = (() => {
             for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-0.9 + i * 0.1, hy - 1.0 - i * 0.18); ctx.quadraticCurveTo(0.2, hy - 1.5 - i * 0.12, 1.1 - i * 0.05, hy - 1.0 - i * 0.2); ctx.stroke(); }
             ctx.fillStyle = wcDk; ctx.beginPath(); ctx.ellipse(1.0 + sway * 0.08, hy - 1.45, 0.3, 0.24, 0.5 + sway * 0.3, 0, TAU); ctx.fill();   // nœud
         }
+        // Frange en mèches séparées : silhouette anime lisible, sans image externe ni allocation par image.
+        if (anime && (c.hair === 'short' || c.hair === 'long')) {
+            const hair = ctx.createLinearGradient(-0.7, hy - 1.1, 0.75, hy - 0.12);
+            hair.addColorStop(0, '#3b2b4b'); hair.addColorStop(0.38, '#211a29'); hair.addColorStop(1, '#0d1017');
+            ctx.fillStyle = hair; ctx.beginPath();
+            ctx.moveTo(-0.96, hy - 0.28);
+            ctx.bezierCurveTo(-1.04, hy - 1.02, -0.57, hy - 1.2, -0.12, hy - 1.1);
+            ctx.bezierCurveTo(0.42, hy - 1.18, 0.88, hy - 0.84, 0.98, hy - 0.25);
+            ctx.lineTo(0.81, hy - 0.52); ctx.bezierCurveTo(0.68, hy - 0.63, 0.55, hy - 0.6, 0.43, hy - 0.44);
+            ctx.bezierCurveTo(0.31, hy - 0.63, 0.14, hy - 0.62, 0.02, hy - 0.42);
+            ctx.bezierCurveTo(-0.11, hy - 0.64, -0.28, hy - 0.61, -0.42, hy - 0.44);
+            ctx.bezierCurveTo(-0.58, hy - 0.62, -0.74, hy - 0.54, -0.84, hy - 0.34);
+            ctx.lineTo(-0.96, hy - 0.28); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = 'rgba(190,190,225,0.24)'; ctx.lineWidth = 0.035; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-0.73, hy - 0.96); ctx.quadraticCurveTo(-0.48, hy - 0.78, -0.5, hy - 0.55); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-0.16, hy - 1.02); ctx.quadraticCurveTo(0.1, hy - 0.82, 0.1, hy - 0.55); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0.5, hy - 0.9); ctx.quadraticCurveTo(0.72, hy - 0.77, 0.69, hy - 0.58); ctx.stroke();
+        }
         // visage (les traits glissent un peu quand la tête se tourne)
         ctx.save(); ctx.translate(yaw * 0.16, 0);
         const bl0 = a.blink !== undefined ? a.blink : (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
         const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98);      // rire : yeux plissés ; sommeil : yeux fermés
         const look = a.eye || a.look;
         [-0.38, 0.38].forEach(x => {
-            const ey = hy + 0.02, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(0.24, 0.17 * lid);
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, 0.2, ry, 0, 0, TAU); ctx.fill();
-            const ir = 0.105 * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
+            const ey = hy + 0.02, eyeRx = anime ? 0.235 : 0.2, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(anime ? 0.28 : 0.24, (anime ? 0.205 : 0.17) * lid);
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, 0, TAU); ctx.fill();
+            const ir = (anime ? 0.132 : 0.105) * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
             const px = x + look.x * 0.06, py = ey + look.y * 0.035;
             const ig = ctx.createRadialGradient(px, py, ir * 0.1, px, py, ir); ig.addColorStop(0, '#6a3a18'); ig.addColorStop(0.65, '#3a1d0c'); ig.addColorStop(1, '#1b0e07');
             ctx.fillStyle = ig; ctx.beginPath(); ctx.ellipse(px, py, ir, Math.min(ir, ry * 0.98), 0, 0, TAU); ctx.fill();
             ctx.fillStyle = '#0a0503'; ctx.beginPath(); ctx.ellipse(px, py, ir * 0.45, Math.min(ir * 0.45, ry * 0.5), 0, 0, TAU); ctx.fill();
-            if (lid > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + 0.04, py - 0.045, 0.034, 0, TAU); ctx.fill(); ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(px - 0.035, py + 0.04, 0.016, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
-            ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.55, 0.2, ry * 0.5, 0, Math.PI, TAU); ctx.fill();
-            ctx.strokeStyle = '#1a0f09'; ctx.lineWidth = 0.07; ctx.beginPath(); ctx.ellipse(x, ey, 0.2, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
-            { const so = x < 0 ? -1 : 1; ctx.lineWidth = 0.04; ctx.beginPath(); ctx.moveTo(x + so * 0.19, ey - ry * 0.35); ctx.lineTo(x + so * 0.27, ey - ry * 0.75); ctx.moveTo(x + so * 0.15, ey - ry * 0.75); ctx.lineTo(x + so * 0.21, ey - ry * 1.15); ctx.stroke();
-              ctx.strokeStyle = skinDk; ctx.lineWidth = 0.03; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.25, 0.2, ry * 1.45, 0, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.strokeStyle = '#1a0f09'; }
+            if (anime && lid > 0.35) { ctx.strokeStyle = 'rgba(255,199,120,0.7)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.arc(px, py + ir * 0.16, ir * 0.78, 0.15, Math.PI - 0.15); ctx.stroke(); }
+            if (lid > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + 0.045, py - 0.05, anime ? 0.045 : 0.034, 0, TAU); ctx.fill(); ctx.globalAlpha = 0.78; ctx.beginPath(); ctx.arc(px - 0.045, py + 0.045, anime ? 0.021 : 0.016, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+                if (anime && E.joy + E.love + E.excited + E.proud > 0.75) { ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(px - ir * 0.38, py + ir * 0.32, ir * 0.12, 0, TAU); ctx.fill(); }
+            }
+            ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.55, eyeRx, ry * 0.5, 0, 0, TAU); ctx.fill();
+            ctx.strokeStyle = anime ? '#180d18' : '#1a0f09'; ctx.lineWidth = anime ? 0.095 : 0.07; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+            { const so = x < 0 ? -1 : 1; ctx.lineWidth = anime ? 0.05 : 0.04; ctx.beginPath(); ctx.moveTo(x + so * eyeRx * 0.92, ey - ry * 0.35); ctx.lineTo(x + so * eyeRx * 1.35, ey - ry * 0.85); ctx.moveTo(x + so * eyeRx * 0.72, ey - ry * 0.78); ctx.lineTo(x + so * eyeRx * 1.05, ey - ry * 1.2); ctx.stroke();
+              ctx.strokeStyle = skinDk; ctx.lineWidth = 0.03; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.25, eyeRx, ry * 1.45, 0, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.strokeStyle = anime ? '#180d18' : '#1a0f09'; }
             if (bl > 0.6) { ctx.beginPath(); ctx.moveTo(x - 0.2, ey); ctx.quadraticCurveTo(x, ey + 0.07, x + 0.2, ey); ctx.stroke(); }
         });
         // sourcils : hauteur, inclinaison et asymétrie selon l'émotion
-        ctx.strokeStyle = '#120d0b'; ctx.lineWidth = 0.085;
+        ctx.strokeStyle = '#120d0b'; ctx.lineWidth = anime ? 0.105 : 0.085;
         [-1, 1].forEach(sd => {
             const raise = browRaise + (sd < 0 ? 0.55 : -0.2) * asym;
             const x0 = sd * 0.62, x1 = sd * 0.14, by = hy - 0.36 - 0.17 * raise;
@@ -1579,7 +1615,7 @@ const BuiltinCharacter = (() => {
         ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.beginPath(); ctx.ellipse(0.03, hy + 0.05, 0.05, 0.14, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(30,10,5,0.45)'; ctx.beginPath(); ctx.ellipse(-0.075, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.ellipse(0.105, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.beginPath(); ctx.ellipse(0, hy + 1.0, 0.32, 0.1, 0, 0, TAU); ctx.fill();
-        if (blush > 0.25) { ctx.fillStyle = 'rgba(210,90,70,' + (0.28 * blush).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(-0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.ellipse(0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.fill(); }
+        if (blush > 0.25) { ctx.fillStyle = 'rgba(210,90,70,' + (anime ? 0.34 : 0.28) * blush + ')'; ctx.beginPath(); ctx.ellipse(-0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.ellipse(0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.fill(); if (anime) { ctx.strokeStyle = 'rgba(255,215,205,' + (0.55 * blush) + ')'; ctx.lineWidth = 0.025; [-1, 1].forEach(sd => { for (let j = 0; j < 3; j++) { ctx.beginPath(); ctx.moveTo(sd * (0.49 + j * 0.09), hy + 0.32); ctx.lineTo(sd * (0.48 + j * 0.09), hy + 0.42); ctx.stroke(); } }); } }
         // bouche : repos selon l'émotion, ou forme de la voyelle quand il parle
         const my = hy + 0.68, lip = mix(skin, -0.38);
         if (open < 0.06) {
@@ -3632,6 +3668,8 @@ function loadAssetsLibrary() {
 
 // ===== MODÈLES (templates) : scripts à compléter, adaptés au public =====
 const TEMPLATES = [
+    { id: 'anime-pilot', icon: '🌸', name: 'Pilote anime — émotions', desc: 'Une courte histoire qui passe de la peur à l’espoir puis à la fierté', style: 'cinematic', music: 'emotional', fields: [],
+      script: "Dans la pluie, Kofi avance seul, le regard triste. Il a peur d'échouer et s'arrête, les mains tremblantes. Puis une amie lui tend la main : l'espoir revient, il sourit, retrouve son courage et décide d'essayer encore. Au lever du soleil, il réussit et reste fier de son chemin." },
     { id: 'business', icon: '💼', name: 'Histoire d\'entreprise', desc: 'Récit de succès/échec', style: 'cinematic', music: 'business', fields: [],
       script: "Nokia était autrefois l'une des entreprises les plus puissantes du monde. Mais une série de décisions stratégiques a changé son histoire. En 2007, l'iPhone a révolutionné le marché. Nokia a refusé de changer. Résultat : l'entreprise a perdu 90% de sa valeur en 5 ans." },
     { id: 'motivation', icon: '🔥', name: 'Motivation', desc: 'Discours inspirant', style: 'cinematic', music: 'motivation', fields: [],
@@ -3792,6 +3830,7 @@ function loadSettingsUI() {
     setVal('settingModel', c.model || 'gemini-3.6-flash');
     setVal('settingQuality', c.quality || '720');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
+    setVal('settingCharArtStyle', c.charArtStyle === 'classic' ? 'classic' : 'anime');
     setVal('settingCharHair', c.charHair || 'short');
     setVal('settingCharSkin', c.charSkin || '#6b4226');
     setVal('settingCharColor', c.charColor || '#1f3a5f');
@@ -3810,6 +3849,7 @@ function saveSettings() {
         model: getVal('settingModel').trim() || 'gemini-3.6-flash',
         quality: getVal('settingQuality'),
         charOutfit: getVal('settingCharOutfit'),
+        charArtStyle: getVal('settingCharArtStyle', 'anime'),
         charHair: getVal('settingCharHair'),
         charSkin: getVal('settingCharSkin'),
         charColor: getVal('settingCharColor'),
