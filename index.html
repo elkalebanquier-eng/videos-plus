@@ -1044,7 +1044,7 @@ const ActingBrain = (() => {
                     }
                     if (sh.t1 > sh.t0) resolved.push(sh);
                 });
-                let closes = 0; P.shots = resolved.filter(sh => sh.z < 1 || (closes++ < 2));
+                let closes = 0; P.shots = resolved.filter(sh => sh.t1 - sh.t0 >= 0.45 && (sh.z < 1 || (closes++ < 2)));
             } else P.shots = merged.filter(sh => sh.z < 1 || (P.shots.filter(q => q.z > 1).indexOf(sh) < 2));
         }
         P.ambient = scene.location ? null : ((scene.brain && ['pointing', 'thinking', 'money', 'happy', 'sad', 'walking'].includes(scene.brain.pose)) ? scene.brain.pose : null);
