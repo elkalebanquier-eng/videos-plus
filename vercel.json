@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/index.html?build=videos-plus-v3-0-actions" }
+    { "source": "/", "destination": "/index.html?build=videos-plus-v3-0-1-long-audio-safe-export" }
   ],
   "headers": [
     {

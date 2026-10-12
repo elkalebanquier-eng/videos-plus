@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0-course-chute-rire-speechify-proxy">
-    <title>Vidéos Plus — VideoStory 3.0</title>
-    <meta name="description" content="Vidéos Plus 3.0 crée des vidéos animées expressives avec actions de course, chute et rire, narration Speechify et export vidéo.">
+    <meta name="videostory-build" content="3.0.1-long-audio-safe-export">
+    <title>Vidéos Plus — VideoStory 3.0.1</title>
+    <meta name="description" content="Vidéos Plus 3.0.1 crée des vidéos animées expressives avec actions de course, chute et rire, narration Speechify et export vidéo.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.1">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.1">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -582,7 +582,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0', channel: 'web', publicBuildId: 'videos-plus-3.0-course-chute-rire-speechify-proxy' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.1', channel: 'web', publicBuildId: 'videos-plus-3.0.1-long-audio-safe-export' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -4541,8 +4541,16 @@ async function exportVideo() {
         return;
     }
     normalizeSocialProject(state.project);
-    const wcPlan = await WCExport.plan(state.project); // null = appareil sans encodeur H.264 -> ancien mode
-    const requestedLongExport = totalPreviewSeconds(state.project) > 300;
+    const durationSeconds = totalPreviewSeconds(state.project);
+    const detectedWcPlan = await WCExport.plan(state.project);
+    const wantsAudio = !!state.project.music
+        || state.project.scenes.some(scene => String(scene.narration || '').trim())
+        || Settings.get().charSfx !== 'off';
+    // Par prudence, les vidéos sonores longues empruntent l’enregistreur temps réel,
+    // plus compatible que le muxage AAC WebCodecs sur certains appareils.
+    const longAudioCompatibilityMode = durationSeconds >= 120 && wantsAudio && typeof MediaRecorder !== 'undefined';
+    const wcPlan = longAudioCompatibilityMode ? null : detectedWcPlan;
+    const requestedLongExport = durationSeconds > 300;
     let directWriter = null;
     let directWriterCancelled = false;
     if (requestedLongExport && !wcPlan) {
