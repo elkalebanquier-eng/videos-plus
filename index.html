@@ -4602,6 +4602,13 @@ function pickRecorderMime() {
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
+function pickAudioRecorderMime() {
+    // Certains navigateurs annoncent MP4 comme supporté mais abandonnent la piste
+    // audio avec MediaRecorder. Opus/WebM est prioritaire dès qu’une piste sonore existe.
+    const list = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2'];
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
+    return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
 
 function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n, s) => n + Number(s.duration || 0), 0); }
 
@@ -4637,7 +4644,7 @@ async function exportVideo() {
     let directWriterCancelled = false;
     if (requestedLongExport && !wcPlan) {
         const titleBase = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video');
-        const earlyMime = pickRecorderMime() || 'video/webm';
+        const earlyMime = (wantsAudio ? pickAudioRecorderMime() : pickRecorderMime()) || 'video/webm';
         directWriter = await chooseLongExportWriter(titleBase + (earlyMime.includes('mp4') ? '.mp4' : '.webm'), earlyMime);
         if (directWriter === false) { directWriterCancelled = true; directWriter = null; }
     }
@@ -4717,18 +4724,20 @@ async function exportVideo() {
 
         stream = exportRenderer.canvas.captureStream(fps);
 
-        // Piste audio : musique générée (la voix du navigateur ne peut pas être enregistrée)
+        // Piste audio : la voix Speechify est un AudioBuffer et doit passer par
+        // MediaStreamDestination ; la voix native du navigateur, elle, ne peut pas être capturée.
         let audioDest = null;
         try {
             const actx = getAudioCtx();
-            if (actx && (state.project.music || useVoice)) {
+            const wantsExportAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
+            if (actx && wantsExportAudio) {
                 await actx.resume();
                 audioDest = actx.createMediaStreamDestination();
                 audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
             }
         } catch (e) { console.warn('Audio export indisponible', e); audioDest = null; }
 
-        const mime = pickRecorderMime();
+        const mime = audioDest ? (pickAudioRecorderMime() || pickRecorderMime()) : pickRecorderMime();
         let mediaRecorder;
         const recorderOptions = { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: W * H > 1000000 ? 4200000 : 2800000, audioBitsPerSecond: 96000 };
         try { mediaRecorder = new MediaRecorder(stream, recorderOptions); }
@@ -4774,6 +4783,7 @@ async function exportVideo() {
         if (audioDest && state.project.music) MusicEngine.start(state.project.music, 0, total, audioDest);
         if (audioDest && useVoice) voiceN = VoiceStudio.scheduleExport(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05);
         if (audioDest) ActingSfx.schedule(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05, 0);
+        if (useVoice && voiceN === 0) throw new Error('Narration Speechify préparée mais absente de la piste audio exportée');
 
         // Horloge déterministe : aucune image ni scène n’est sautée à l’export.
         // L’aperçu et le fichier téléchargé suivent exactement la même timeline.
