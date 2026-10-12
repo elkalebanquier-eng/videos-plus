@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.3-cartoon-actions-semantic-acting">
-    <title>Vidéos Plus — VideoStory 3.0.3</title>
-    <meta name="description" content="Vidéos Plus 3.0.3 crée des vidéos animées expressives avec actions de dessin animé, narration Speechify et export vidéo.">
+    <meta name="videostory-build" content="3.0.4-cartoon-ui-premium">
+    <title>Vidéos Plus — VideoStory 3.0.4</title>
+    <meta name="description" content="Vidéos Plus 3.0.4 crée des vidéos animées expressives avec interface et décors cartoon professionnels.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.3">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.4">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.3">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.4">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #8b5cf6; --primary-dark: #7c3aed; --secondary: #ec4899;
-            --bg-dark: #0f0f1a; --bg-card: #1a1a2e; --bg-input: #16213e;
-            --text: #ffffff; --text-muted: rgba(255,255,255,0.6);
-            --border: rgba(255,255,255,0.1); --success: #10b981; --error: #ef4444;
+            --primary: #6c63ff; --primary-dark: #5148dc; --secondary: #ff6b9d;
+            --bg-dark: #10152b; --bg-card: #18203d; --bg-input: #121a35;
+            --text: #ffffff; --text-muted: rgba(235,241,255,0.68);
+            --border: rgba(210,225,255,0.14); --success: #36d399; --error: #ff6177;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-dark); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: radial-gradient(circle at 10% -10%, #293563 0, transparent 38%), var(--bg-dark); color: var(--text); min-height: 100vh; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
         .screen { display: none; min-height: 100vh; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(15,15,26,0.95); backdrop-filter: blur(10px); z-index: 100; }
+        .header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(16,21,43,0.86); backdrop-filter: blur(18px); z-index: 100; box-shadow: 0 8px 28px rgba(4,8,24,.16); }
         .logo { display: flex; align-items: center; gap: 12px; }
-        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 8px 18px rgba(108,99,255,.32); }
         .logo h1 { font-size: 20px; font-weight: 700; }
         .header-btn { padding: 8px; border-radius: 8px; background: transparent; border: none; color: var(--text); cursor: pointer; }
         .header-btn:hover { background: rgba(255,255,255,0.1); }
@@ -47,7 +47,7 @@
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(139,92,246,0.6); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 20px; margin-top: 40px; }
-        .action-card { padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; text-align: left; }
+        .action-card { padding: 20px; background: linear-gradient(145deg, rgba(35,46,84,.92), rgba(24,32,61,.92)); border: 1px solid var(--border); border-radius: 20px; cursor: pointer; text-align: left; box-shadow: 0 12px 28px rgba(3,8,28,.18); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
         .action-card:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
         .action-card .icon { font-size: 28px; margin-bottom: 12px; }
         .action-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
@@ -73,15 +73,15 @@
         .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
         .editor-container { height: 100vh; display: flex; flex-direction: column; }
         .editor-main { flex: 1; display: flex; overflow: hidden; }
-        .preview-area { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; position: relative; }
+        .preview-area { flex: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, #263761 0, #11172d 55%, #0b1023 100%); position: relative; padding: 18px; }
         .preview-canvas-container { position: relative; max-height: 100%; }
-        #previewCanvas { max-height: calc(100vh - 200px); max-width: 100%; border-radius: 8px; }
+        #previewCanvas { max-height: calc(100vh - 200px); max-width: 100%; border-radius: 18px; box-shadow: 0 22px 60px rgba(0,0,0,.42); outline: 1px solid rgba(255,255,255,.12); }
         .playback-controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.8); padding: 12px 20px; border-radius: 50px; }
         .playback-controls button { padding: 8px; background: transparent; border: none; color: white; cursor: pointer; border-radius: 50%; }
         .playback-controls button:hover { background: rgba(255,255,255,0.1); }
         .playback-controls .play-btn { background: var(--primary); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
         .time-display { font-size: 13px; color: var(--text-muted); min-width: 80px; text-align: center; }
-        .scene-panel { width: 300px; border-left: 1px solid var(--border); background: var(--bg-card); display: flex; flex-direction: column; }
+        .scene-panel { width: 300px; border-left: 1px solid var(--border); background: rgba(24,32,61,.94); display: flex; flex-direction: column; box-shadow: -12px 0 32px rgba(2,6,24,.16); }
         .scene-panel-header { padding: 16px; border-bottom: 1px solid var(--border); }
         .scene-panel-header h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
         .scene-list { flex: 1; overflow-y: auto; padding: 12px; }
@@ -2767,6 +2767,21 @@ class CanvasRenderer {
         ctx.fillRect(0, 0, W, H);
 
         const R = rng(seed);
+        // Décor cartoon de premier plan : formes douces et lisibles, sans quadrillage de debug.
+        const warm = scene.mood === 'negative' ? '#ff8b9e' : scene.mood === 'positive' ? '#ffe07a' : '#9be7e5';
+        ctx.save();
+        ctx.globalAlpha = 0.72;
+        const sun = ctx.createRadialGradient(W * .78, H * .17, 0, W * .78, H * .17, W * .16);
+        sun.addColorStop(0, warm); sun.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H * .45);
+        ctx.globalAlpha = 0.16; ctx.fillStyle = '#ffffff';
+        const cloud = (x, y, s) => { ctx.beginPath(); ctx.arc(x, y, 28 * s, 0, TAU); ctx.arc(x + 30 * s, y - 12 * s, 38 * s, 0, TAU); ctx.arc(x + 68 * s, y, 25 * s, 0, TAU); ctx.roundRect(x - 28 * s, y, 124 * s, 30 * s, 16 * s); ctx.fill(); };
+        cloud(W * .12, H * .19, k * .9); cloud(W * .64, H * .32, k * .65);
+        ctx.globalAlpha = 0.2; ctx.fillStyle = tint(bg.to, .55, .2);
+        ctx.beginPath(); ctx.moveTo(-W * .05, H * .76); ctx.quadraticCurveTo(W * .25, H * .56, W * .52, H * .75); ctx.quadraticCurveTo(W * .78, H * .57, W * 1.05, H * .75); ctx.lineTo(W * 1.05, H); ctx.lineTo(-W * .05, H); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 0.24; ctx.fillStyle = '#102448';
+        ctx.beginPath(); ctx.moveTo(-W * .05, H * .84); ctx.quadraticCurveTo(W * .28, H * .67, W * .55, H * .84); ctx.quadraticCurveTo(W * .8, H * .68, W * 1.05, H * .84); ctx.lineTo(W * 1.05, H); ctx.lineTo(-W * .05, H); ctx.closePath(); ctx.fill();
+        ctx.restore();
         if (style === 'vibrant') {
             for (let i = 0; i < 8; i++) {
                 const x = R() * W + Math.sin(t * 0.45 + i) * 28 * k, y = R() * H + Math.cos(t * 0.38 + i * 2) * 34 * k;
@@ -2843,15 +2858,13 @@ class CanvasRenderer {
         const p=clamp(t/Math.max(.1,scene.duration),0,1), kind=scene.visualKind||'blueprint';
         const accent=scene.mood==='negative'?'#ff526d':scene.mood==='positive'?'#ffd23f':'#21d9d0';
         const ease=EASE.outCubic(clamp(t/.38,0,1));
-        // grille blueprint discrète
-        ctx.save(); ctx.globalAlpha=.16; ctx.strokeStyle='#bffcff'; ctx.lineWidth=1*k;
-        const step=48*k; for(let x=(idx*13)%step;x<W;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-        for(let y=(idx*17)%step;y<H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();} ctx.restore();
-        // badge d'étape en haut
-        ctx.save(); ctx.globalAlpha=ease; ctx.fillStyle='rgba(5,12,30,.82)'; ctx.strokeStyle=accent; ctx.lineWidth=2*k;
+        // Badge éditorial : ne jamais afficher les marqueurs internes « étape » du moteur.
+        const rawBeat = String(scene.socialBeat || '').trim();
+        const beat = /^(?:étape|etape)\s*\d+/i.test(rawBeat) ? 'MOMENT CLÉ' : (rawBeat || 'MOMENT CLÉ');
+        ctx.save(); ctx.globalAlpha=ease; ctx.fillStyle='rgba(255,255,255,.94)'; ctx.strokeStyle=accent; ctx.lineWidth=2*k;
         const bw=Math.min(W*.72,360*k), bh=36*k, bx=(W-bw)/2, by=22*k;
         ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,14*k); ctx.fill(); ctx.stroke();
-        ctx.fillStyle=accent; ctx.font='800 '+(16*k)+'px Inter, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(scene.socialBeat||'À RETENIR',W/2,by+bh/2); ctx.restore();
+        ctx.fillStyle='#18203d'; ctx.font='800 '+(16*k)+'px Inter, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(beat.slice(0,24),W/2,by+bh/2); ctx.restore();
         // visuel infographique selon le rôle (absent quand le personnage joue la scène : il ne doit pas être caché)
         const hasChar = (scene.elements || []).some(e => e.type === 'character' && e.visible !== false);
         if (!hasChar) {
@@ -2876,8 +2889,7 @@ class CanvasRenderer {
         }
         // mot-clé en bas, distinct des sous-titres
         const label=(scene.keyText||'').slice(0,22); if(label){ctx.save();const w=Math.min(W*.86,520*k),h=62*k;const x=(W-w)/2,y=H*.70;ctx.globalAlpha=clamp((p-.08)*4,0,1);ctx.fillStyle='#fff';ctx.strokeStyle=accent;ctx.lineWidth=4*k;ctx.beginPath();ctx.roundRect(x,y,w,h,14*k);ctx.fill();ctx.stroke();ctx.fillStyle='#111936';ctx.font='900 '+(24*k)+'px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,W/2,y+h/2);ctx.restore();}
-        // barre de progression très courte pour encourager la complétion
-        ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillRect(W*.10,H*.93,W*.80,5*k);ctx.fillStyle=accent;ctx.fillRect(W*.10,H*.93,W*.80*p,5*k);
+        // Aucun curseur de progression interne dans la vidéo : le montage reste propre.
     }
 
     // ---------- Effets de scène : confettis, onde de choc, pulsation rouge ----------
