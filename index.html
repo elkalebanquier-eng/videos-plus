@@ -730,6 +730,8 @@ const ActingBrain = (() => {
         turn:     { pri: 8, dur: 2.2, act: true, w: () => false },
         sleep:    { pri: 6, dur: 3.0, act: true, w: () => false },
         draw:     { pri: 7, dur: 2.4, w: compile('puise puiser eau water seau pompe') },
+        plant:    { pri: 8, dur: 2.0, w: () => false },
+        water:    { pri: 8, dur: 2.2, w: () => false },
     };
     const COUNT_WORDS = { premierement: 1, dabord: 1, deux: 2, deuxieme: 2, ensuite: 2, trois: 3, troisieme: 3, quatre: 4, cinq: 5 };
     const NOD = compile('=oui =daccord exactement =bien-sur effectivement absolument =voila certainement');
@@ -763,6 +765,12 @@ const ActingBrain = (() => {
         { re: /sans (?:argent|travail|ami|famille|abri)|plus rien|rien du tout/, emo: 'sad' },
         { re: /pour la premiere fois|jamais vu|record du monde/, emo: 'surprise', gesture: 'wide' },
         { re: /mon (?:reve|but|objectif)|je veux|je vais/, emo: 'proud', gesture: 'hips' },
+        { re: /\b(?:plante\w*|sem\w*|enterre\w*)\b/, emo: 'think', gesture: 'plant' },
+        { re: /\b(?:arros\w*|puise\w*)\b/, emo: 'love', gesture: 'water' },
+        { re: /\b(?:pousse|germe|eclot\w*|apparai\w*)\b/, emo: 'surprise', gesture: 'up' },
+        { re: /\b(?:aide\w*|entraide|ensemble|communaute)\b/, emo: 'love', gesture: 'wide' },
+        { re: /\b(?:offre\w*|partage\w*|ombre)\b/, emo: 'love', gesture: 'wide' },
+        { re: /\b(?:meme quand|meme si|malgre)\b.{0,70}\b(?:moqu\w*|critiqu\w*|ridicul\w*|dout\w*|rient de)\b/, emo: 'proud', gesture: 'hips' },
     ];
     // « pas triste », « jamais content », « ne … plus » : l'émotion s'inverse au lieu d'être jouée telle quelle
     const NEG = compile('=pas =jamais =sans =aucun =aucune =nullement =ni =non');
@@ -1282,6 +1290,8 @@ const BuiltinCharacter = (() => {
             case 'smile': return { L: { x: -2.2, y: -5.9, mode: 'open', out: 1 }, R: { x: 2.2, y: -5.9, mode: 'open', out: 1 }, tilt: -0.03 };
             case 'wink': return { R: { x: 2.0, y: -6.3, mode: 'point', s: 1.05 }, tilt: -0.04 };
             case 'turn': return null;
+            case 'plant': { const dip = Math.sin(p * Math.PI * 4) * 0.18; return { L: { x: -0.75, y: -3.65 + dip, mode: 'palm' }, R: { x: 0.75, y: -3.65 - dip, mode: 'palm' }, tilt: 0.08 }; }
+            case 'water': { const pour = Math.sin(p * Math.PI) * 0.55; return { L: { x: -0.9, y: -4.9 + pour, mode: 'palm' }, R: { x: 1.0, y: -5.4 - pour, mode: 'palm' }, tilt: -0.06 }; }
             case 'draw': { const dip = Math.sin(p * Math.PI) * 0.7; return { L: { x: -0.65, y: -4.55 + dip, mode: 'palm' }, R: { x: 0.65, y: -4.55 + dip, mode: 'palm' }, tilt: 0.06 }; }
             case 'sleep': return { L: { x: -0.8, y: -5.2, mode: 'palm' }, R: { x: 0.8, y: -5.2, mode: 'palm' }, tilt: 0.16 };
             case 'fall': { const k = clamp((p - 0.26) / 0.06, 0, 1), m = k * k * (3 - 2 * k), fl = Math.sin(t * 22) * 0.5 * (1 - m);   // bras en l'air quand il perd l'équilibre, puis le long du corps
@@ -1762,8 +1772,8 @@ const Character = {
 // ===== LEXIQUE DU CERVEAU (fr / en / es, sans accents) =====
 const LEX = {
     stop: new Set(('le la les un une des de du d l et en au aux ce cet cette ces il elle ils elles on nous vous je tu qui que quoi dont ou ne pas plus mais donc car ni sur sous dans par pour avec sans son sa ses leur leurs est sont etait ete ont avait etre avoir fait tres aussi comme si se y qu the a an of and to in is are was were it its that this for with as at by be has have had not but or you we they he she i el los las una es por con para lo del al').split(' ')),
-    pos: ('succes reussi gagn victoire croissance profit benefice riche fortune heureux joie bonheur amour espoir courage force meilleur magnifique incroyable genial parfait progres solution reve oser bravo felicit revolution puissan win success growth happy love hope best great amazing proud ganar exito feliz').split(' '),
-    neg: ('echec echou perd perte faillite chute declin crise dette pauvre misere triste peur douleur probleme erreur difficile mort danger risque faute faible abandon honte refus fail loss lose crash debt poor sad fear pain problem death perder fracaso miedo').split(' '),
+    pos: ('succes reussi gagn victoire croissance profit benefice riche fortune heureux joie bonheur amour espoir courage force meilleur magnifique incroyable genial parfait progres solution reve oser bravo felicit revolution puissan aide entraide grandir pousse ombre offrir partager persever win success growth happy love hope best great amazing proud ganar exito feliz').split(' '),
+    neg: ('echec echou perd perte faillite chute declin crise dette pauvre misere triste peur douleur probleme erreur difficile mort danger risque faute faible abandon honte refus moqu critiqu ridicul fail loss lose crash debt poor sad fear pain problem death perder fracaso miedo').split(' '),
     negators: ['pas', 'jamais', 'aucun', 'sans', 'not', 'never', 'no', 'nunca', 'sin'],
     person: ('homme femme il elle ils elles personne gens patron ceo client jeune entrepreneur etudiant fondateur directeur pere mere fille gars monsieur madame he she man woman people boss hombre mujer').split(' '),
     female: ['femme', 'mere', 'fille', 'madame', 'soeur', 'epouse', 'she', 'her', 'woman', 'mujer'],
@@ -1993,6 +2003,9 @@ class ScenePlanner {
         const tokens = tokenize(sentence);
         const sent = this.sentiment(tokens);
         let mood = sent > 0.2 ? 'positive' : sent < -0.2 ? 'negative' : 'neutral';
+        // Face aux moqueries ou aux critiques, la persévérance est un arc de courage, pas une défaite.
+        const normalizedSentence = norm(sentence);
+        if (/(?:meme quand|meme si|malgre|en depit de).{0,70}(?:moqu|critiqu|ridicul|dout|rient de)/.test(normalizedSentence)) mood = 'positive';
         if (spec && MOODS.includes(spec.mood)) mood = spec.mood;
         let role = this.roleFor(i, n, sentence, tokens, mood);
         if (spec && ROLES.includes(spec.role)) role = spec.role;
@@ -2163,11 +2176,11 @@ class ScenePlanner {
 // ===== POSES et MOTS =====
 const ALL_POSES = ['standing', 'happy', 'sad', 'thinking', 'pointing', 'walking', 'money', 'sitting'];
 const POSE_CUES = {
-    pointing: 'regard voici voila decouvr abonn cliqu suiv partag rejoin ecout sachez retenez essay commenc telecharg subscribe follow'.split(' '),
-    thinking: 'pourquoi comment idee pens reflechi dout imagin question hesit why how think'.split(' '),
+    pointing: 'regard voici voila decouvr abonn cliqu suiv partag rejoin ecout sachez retenez lecon message essay commenc telecharg subscribe follow'.split(' '),
+    thinking: 'pourquoi comment idee pens reflechi comprend realis dout imagin question hesit plant sem cultiv why how think'.split(' '),
     money: 'argent fcfa million milliard salaire gagn pay riche fortune dollar euro profit benefice vend achet prix cash money'.split(' '),
     sad: 'perd perdu echec echou pleur triste faillite chute crise probleme difficile mort peur douleur honte abandon dette pauvre misere fail lose sad'.split(' '),
-    happy: 'succes reussi victoire bravo heureu joie fier fete felicit celebr content magnifique merci bonheur rit win happy'.split(' '),
+    happy: 'succes reussi victoire bravo heureu joie fier fete felicit celebr content magnifique merci bonheur rit aide entraide grandir pousse ombre offrir partager communaute win happy'.split(' '),
     walking: 'march partir partit partait partent voyag arriv court courir courait route chemin kilometre revien sortir sortit aller alla traverse deplac walk'.split(' '),
     sitting: 'assis asseoir reunion bureau travaill ecri etudie lire lis cours classe discut attend conseil sit'.split(' '),
 };
@@ -3982,7 +3995,7 @@ async function llmBrain({ idea, script, options, cfg }) {
     const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. First build a private semantic model of each sentence: subject, literal action, object, time, cause, consequence, uncertainty, negation, metaphor, contrast and emotional intensity. Then choose visuals that make the meaning obvious in the first second.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
-        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression.';
+        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -4009,7 +4022,7 @@ async function llmBrain({ idea, script, options, cfg }) {
 // ===== JEU DU PERSONNAGE : frise modifiable + réalisateur IA =====
 const ACT_LABELS = {
     emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation' },
-    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', draw: 'Puiser de l’eau', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
+    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', draw: 'Puiser de l’eau', plant: 'Planter une graine', water: 'Arroser', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
     prop: { phone: 'Téléphone', money: 'Billets', book: 'Livre', tablet: 'Tablette', mic: 'Micro' },
     count: { 1: '1 doigt', 2: '2 doigts', 3: '3 doigts', 4: '4 doigts', 5: '5 doigts' },
     shot: { close: 'Gros plan', wide: 'Plan large' },
@@ -4063,7 +4076,7 @@ async function directorBrain(scenes, cfg) {
     const list = scenes.map((s, i) => '[' + i + '] ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
     const prompt = 'You are the acting director of an animated film. ONE animated presenter character tells the story below. For each scene decide how the character acts, word by word. The words of each scene are numbered (index:word). Understand the whole story: negation (\"not sad\" means relieved), irony, contrast (\"but\"), the emotional arc across scenes, and what is physically described.\n' +
         'Return ONLY valid JSON, no markdown: {\"scenes\":[{\"i\": scene number, \"base\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"strength\": number 0.4-1, \"events\":[{\"w\": word index, and exactly ONE of: \"emo\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"gesture\": one of [' + ActingBrain.LISTS.gestures.join(', ') + ', count, hold], \"n\": 1-5 (only with gesture count), \"prop\": one of [' + ActingBrain.LISTS.props.join(', ') + '] (only with gesture hold), \"shot\": close or wide, \"head\": nod or shake, \"look\": left, right, up, down or cam}]}]}\n' +
-        'Rules: 2 to 6 events per scene, only where the acting is meaningful. Put an emotion event on the word that triggers the feeling. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
+        'Rules: 2 to 6 events per scene, only where the acting is meaningful. Put an emotion event on the word that triggers the feeling. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 45000);
     try {
