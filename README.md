@@ -1,17 +1,14 @@
-# Vidéos Plus — VideoStory 2.8
+# Vidéos Plus — VideoStory 3.0
 
-VideoStory 2.8 crée des vidéos verticales à partir d’histoires, avec un personnage animé plus expressif, des scènes éditables, la narration Speechify et l’export vidéo. Le point d’entrée web est `index.html`; le domaine de production actuel est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.0 transforme des histoires en vidéos animées avec des actions de course, chute et rire, un personnage expressif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 ## Fonctionnalités
 
 - Création locale d’histoires et découpage en scènes.
-- Personnage vectoriel avec expressions, respiration, clignements, regard et gestes plus naturels.
-- Narration Speechify avec synchronisation des mots, de la bouche et des gestes.
-- Export vidéo dans le navigateur, avec mode de compatibilité selon les capacités de l’appareil.
-- Proxy Vercel sécurisé `/api/speechify` : la clé API reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
+- Actions du personnage déclenchées par le récit : courir, tomber, rire, avec expressions, mouvements, effets visuels et bruitages associés.
+- Personnage vectoriel expressif avec regard, respiration, clignements et gestes.
+- Narration Speechify et synchronisation avec le récit.
+- Export vidéo dans le navigateur; le conteneur (MP4/WebM) dépend des encodeurs disponibles sur l’appareil.
+- Proxy Vercel sécurisé `/api/speechify` : la clé reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
 
-## Déploiement Vercel
-
-Le dépôt GitHub est la source du projet et les pushes sur `main` déclenchent le déploiement. Dans **Vercel → Settings → Environment Variables**, configure `SPEECHIFY_API_KEY` pour Production (et Preview si nécessaire), puis relance un déploiement. Ne commite jamais la clé.
-
-Les tests et les étapes de configuration figurent dans [README-WEB.md](README-WEB.md).
+Les pushes sur `main` déclenchent le déploiement Vercel. La configuration Speechify et les étapes pour modifier le domaine sont dans [README-WEB.md](README-WEB.md).
