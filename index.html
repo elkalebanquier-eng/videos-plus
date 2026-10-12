@@ -694,6 +694,7 @@ const ActingBrain = (() => {
     };
     const SPIKE_SYM = { surprise: 'excl', fear: 'sweat', angry: 'vein', love: 'heart', think: 'ques', doubt: 'ques' };
     const EMOTION_HOLD_SECONDS = 2.35;
+    const EMOTION_BLEND_SECONDS = 0.55;
     // geste : mots déclencheurs, priorité, durée (secondes)
     const GES = {
         wave:     { pri: 7, dur: 1.9, w: compile('bonjour salut coucou bienvenue =hello bonsoir =bye revoir adieu =hey') },
@@ -793,7 +794,7 @@ const ActingBrain = (() => {
         tablet: { obj: 'computer', w: compile('ordinateur =pc site internet code programme logiciel plateforme =web youtube') },
         mic:    { obj: 'mic',      w: compile('podcast interview micro =parole discours conference temoign') },
     };
-    const EMPTY = { start: {}, base: {}, spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null, level: 0 };
+    const EMPTY = { start: {}, base: {}, emotionEvents: [], spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null, level: 0 };
     const cache = new WeakMap();
 
     const hasAny = (ps, fn) => ps.some(fn);
@@ -848,12 +849,12 @@ const ActingBrain = (() => {
         if (hit && hit.key === key) return hit.p;
         const c = LipSync.info(scene), dur = scene.duration || 5;
         const A = scene.acting && Array.isArray(scene.acting.events) ? scene.acting : null;
-        const P = { start: {}, base: baseOf(scene), turn: null, spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null };
+        const P = { start: {}, base: baseOf(scene), turn: null, emotionEvents: [], spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null };
         EMOS.forEach(k => P.start[k] = 0);
         // scène d'avant : on part de son émotion finale, pour que l'enchaînement soit naturel
         try {
             const list = (state.project && state.project.scenes) || [], i = list.indexOf(scene);
-            if (i > 0 && list[i - 1].narration) { const pp = plan(list[i - 1]); P.start = Object.assign({}, pp.turn ? pp.turn.to : pp.base); }   // on repart de l'émotion où la scène d'avant s'est terminée
+            if (i > 0 && list[i - 1].narration) { const pp = plan(list[i - 1]), pe = pp.emotionEvents || [], last = pe[pe.length - 1]; P.start = Object.assign({}, last ? last.target : (pp.turn ? pp.turn.to : pp.base)); }   // garder l'émotion finale, y compris après plusieurs repères
             else P.start = Object.assign({}, P.start, { joy: 0.2 });
         } catch (_) {}
         if (!A) {
@@ -871,11 +872,12 @@ const ActingBrain = (() => {
                 const hit = hasAny(ps, EMO[k]) && (k !== 'joy' || ps.some(p => p.length > 4)); if (!hit) return;
                 let emo = k;
                 if (negAt(c, i)) { emo = NEG_OPP[k]; if (!emo) return; }
-                P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[emo] || null });
+                P.emotionEvents.push({ emo, t, s: 0.85 });
+                P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[emo] || null, stateful: true });
             });
             // accessoires
             Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w)) cand.push({ name: 'hold', prop: name, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
-            if (hasAny(ps, IDEA)) P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.7, sym: 'bulb' });
+            if (hasAny(ps, IDEA)) { P.emotionEvents.push({ emo: 'excited', t, s: 0.7 }); P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.7, sym: 'bulb', stateful: true }); }
             // gestes
             let n = 0; ps.forEach(p => { if (COUNT_WORDS[p]) n = COUNT_WORDS[p]; if (/^[1-5]$/.test(p)) n = +p; });
             if (n && i < c.ws.length - 1) cand.push({ name: 'count', n, t0: t - 0.2, t1: t + 1.2, pri: 6 });
@@ -892,6 +894,7 @@ const ActingBrain = (() => {
             // coups d'accent : mots longs ou fin de groupe
             if (ps.some(p => p.length >= 7) || /[,;:!?]$/.test(w)) P.beats.push({ t, s: /[!?]$/.test(w) ? 0.95 : 0.7 });
         });
+        if (!A && P.turn) EMOS.forEach(k => { if (P.turn.to[k] > 0) P.emotionEvents.push({ emo: k, t: P.turn.t, s: P.turn.to[k] }); });
         // objets affichés à l'écran : le personnage les regarde et les montre quand ils apparaissent
         const objs = (scene.elements || []).filter(e => e.type === 'object' && e.visible !== false);
         objs.forEach(o => {
@@ -912,7 +915,7 @@ const ActingBrain = (() => {
                 const m = ph.re.exec(textN); if (!m) return;
                 const i = wordAt(m.index), t = c.starts[i] || 0;
                 if (ph.gesture && ph.gesture !== 'stop' && negAt(c, i)) return;
-                if (ph.emo) P.spikes.push({ emo: ph.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[ph.emo] || null });
+                if (ph.emo) { P.emotionEvents.push({ emo: ph.emo, t, s: 0.85 }); P.spikes.push({ emo: ph.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[ph.emo] || null, stateful: true }); }
                 if (ph.gesture) cand.push({ name: ph.gesture, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[ph.gesture].dur, pri: GES[ph.gesture].pri + 1 });
                 if (ph.head) P.heads.push({ kind: ph.head, t0: t, t1: t + 0.9 });
                 if (ph.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ph.look[0], y: ph.look[1] });
@@ -931,8 +934,8 @@ const ActingBrain = (() => {
             A.events.forEach(ev => {
                 if (!ev) return;
                 const wi = clamp(Math.round(+ev.w || 0), 0, nW - 1), t = c.starts[wi] || 0, side = ev.side === 'left' ? -1 : 1;
-                if (EMOS.includes(ev.emo)) P.spikes.push({ emo: ev.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.9, sym: SPIKE_SYM[ev.emo] || null });
-                if (ev.sym === 'bulb' || ev.sym === 'excl' || ev.sym === 'ques' || ev.sym === 'heart' || ev.sym === 'vein' || ev.sym === 'sweat') P.spikes.push({ emo: EMOS.includes(ev.emo) ? ev.emo : 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.4, sym: ev.sym });
+                if (EMOS.includes(ev.emo)) { P.emotionEvents.push({ emo: ev.emo, t, s: 0.9 }); P.spikes.push({ emo: ev.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.9, sym: SPIKE_SYM[ev.emo] || null, stateful: true }); }
+                if (ev.sym === 'bulb' || ev.sym === 'excl' || ev.sym === 'ques' || ev.sym === 'heart' || ev.sym === 'vein' || ev.sym === 'sweat') P.spikes.push({ emo: EMOS.includes(ev.emo) ? ev.emo : 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.4, sym: ev.sym, stateful: EMOS.includes(ev.emo) });
                 const prop = PROPS[ev.prop] ? ev.prop : null;
                 if (ev.gesture === 'hold' || (!ev.gesture && prop)) { if (prop) cand.push({ name: 'hold', prop, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 9, force: true }); }
                 else if (ev.gesture === 'count') cand.push({ name: 'count', n: clamp(Math.round(+ev.n || 1), 1, 5), t0: t - 0.2, t1: t + 1.2, pri: 9, force: true });
@@ -941,6 +944,17 @@ const ActingBrain = (() => {
                 if (ev.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ev.look === 'left' ? -0.9 : ev.look === 'right' ? 0.9 : 0, y: ev.look === 'up' ? -0.8 : ev.look === 'down' ? 0.8 : 0 });
                 if (ev.shot === 'close' || ev.shot === 'wide') (P.forcedShots = P.forcedShots || []).push({ t0: t - 0.05, t1: t + 1.8, z: ev.shot === 'close' ? 1.5 : 0.94 });
             });
+        }
+        // Une émotion est un état narratif : elle reste active jusqu'au prochain repère, même si aucun mot-clé ne la répète.
+        if (P.emotionEvents.length) {
+            P.emotionEvents.sort((a, b) => a.t - b.t);
+            const grouped = [];
+            P.emotionEvents.forEach(ev => {
+                let last = grouped[grouped.length - 1];
+                if (!last || Math.abs(last.t - ev.t) > 0.001) { const target = {}; EMOS.forEach(k => target[k] = 0); last = { t: ev.t, target }; grouped.push(last); }
+                last.target[ev.emo] = Math.max(last.target[ev.emo], ev.s);
+            });
+            P.emotionEvents = grouped.filter((cue, i) => i === 0 || EMOS.some(k => Math.abs(cue.target[k] - grouped[i - 1].target[k]) > 0.01));
         }
         // actions du corps entier (courir / tomber / rire) : elles doivent tenir dans la scène et ne sont jamais coupées en plein mouvement
         cand.forEach(g => {
@@ -1059,11 +1073,24 @@ const ActingBrain = (() => {
         const bl = smooth(t / 0.6);
         const bt = P.turn ? smooth((t - P.turn.t + 0.1) / 0.6) : 1;
         EMOS.forEach(k => { const bk = P.turn ? (P.turn.from[k] || 0) * (1 - bt) + (P.turn.to[k] || 0) * bt : (P.base[k] || 0); e[k] = (P.start[k] || 0) * (1 - bl) + bk * bl; });
+        if (P.emotionEvents && P.emotionEvents.length) {
+            let ix = -1; for (let i = 0; i < P.emotionEvents.length; i++) if (P.emotionEvents[i].t <= t) ix = i;
+            if (ix >= 0) {
+                const cue = P.emotionEvents[ix], from = {};
+                if (ix > 0) EMOS.forEach(k => from[k] = P.emotionEvents[ix - 1].target[k] || 0);
+                else {
+                    const cb = smooth(cue.t / 0.6), ct = P.turn ? smooth((cue.t - P.turn.t + 0.1) / 0.6) : 1;
+                    EMOS.forEach(k => { const bk = P.turn ? (P.turn.from[k] || 0) * (1 - ct) + (P.turn.to[k] || 0) * ct : (P.base[k] || 0); from[k] = (P.start[k] || 0) * (1 - cb) + bk * cb; });
+                }
+                const q = smooth((t - cue.t) / EMOTION_BLEND_SECONDS);
+                EMOS.forEach(k => { e[k] = (from[k] || 0) * (1 - q) + (cue.target[k] || 0) * q; });
+            }
+        }
         let sym = null, symP = 0;
         P.spikes.forEach(sp => {
             const x = t - sp.t0; if (x < 0 || x > sp.dur) return;
             const env = Math.min(1, x / 0.18) * Math.min(1, (sp.dur - x) / 0.65);
-            e[sp.emo] = Math.min(1, e[sp.emo] + sp.s * env);
+            if (!sp.stateful) e[sp.emo] = Math.min(1, e[sp.emo] + sp.s * env);
             if (sp.sym && env > 0.05 && (!sym || sp.t0 >= symP)) { sym = sp.sym; symP = sp.t0; }
         });
         let name = null, n = 0, w = 0, p = 0, gside = 1, prop = null, act = null;
@@ -4072,7 +4099,7 @@ function actingRender(scene) {
     }).join('');
     el.innerHTML = '<div class="acting-row"><span class="acting-lab">Humeur</span><select onchange="actingSetBase(this.value)">' + opt(ACT_LABELS.emo, A.base) + '</select></div>' + (rows || '<p class="speechify-note">Aucun jeu sur cette scène : appuie sur « + Ajouter ».</p>');
     const n = document.getElementById('actingNote');
-    if (n) n.textContent = A.src === 'ia' ? '🎬 Écrit par le réalisateur IA : tu peux le modifier.' : A.src === 'manual' ? '✋ Réglé à la main.' : '⚙️ Détecté automatiquement : modifie une ligne pour le régler à la main.';
+    if (n) { const note = A.src === 'ia' ? '🎬 Écrit par le réalisateur IA : tu peux le modifier.' : A.src === 'manual' ? '✋ Réglé à la main.' : '⚙️ Détecté automatiquement : modifie une ligne pour le régler à la main.'; const held = A.events.some(ev => ev.emo) ? ' Une émotion reste active jusqu’au prochain repère émotionnel ou la fin de la scène.' : ''; n.textContent = note + held; }
 }
 function actingSetWord(i, v) { const sc = actingScene(); if (!sc) return; actingEnsure(sc).events[i].w = +v; actingRefresh(sc); }
 function actingSetKind(i, k) { const sc = actingScene(); if (!sc) return; const ev = actingEnsure(sc).events[i]; actSetKindVal(ev, k, Object.keys(ACT_LABELS[k])[0]); actingRefresh(sc); }
@@ -4093,7 +4120,7 @@ async function directorBrain(scenes, cfg) {
     const list = scenes.map((s, i) => '[' + i + '] ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
     const prompt = 'You are the acting director of an animated film. ONE animated presenter character tells the story below. For each scene decide how the character acts, word by word. The words of each scene are numbered (index:word). Understand the whole story: negation (\"not sad\" means relieved), irony, contrast (\"but\"), the emotional arc across scenes, and what is physically described.\n' +
         'Return ONLY valid JSON, no markdown: {\"scenes\":[{\"i\": scene number, \"base\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"strength\": number 0.4-1, \"events\":[{\"w\": word index, and exactly ONE of: \"emo\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"gesture\": one of [' + ActingBrain.LISTS.gestures.join(', ') + ', count, hold], \"n\": 1-5 (only with gesture count), \"prop\": one of [' + ActingBrain.LISTS.props.join(', ') + '] (only with gesture hold), \"shot\": close or wide, \"head\": nod or shake, \"look\": left, right, up, down or cam}]}]}\n' +
-        'Rules: 2 to 6 events per scene, only where the acting is meaningful. Put an emotion event on the word that triggers the feeling. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
+        'Rules: 2 to 8 events per scene, only where the acting is meaningful. Put an emotion event on each meaningful change, on the word that triggers it. An emotion event becomes the active emotional state until the next emotion event or the end of the scene; do not reset to the base after a few seconds. Keep the base as the starting mood, and include an emotion cue after a real contrast such as ‘but’ when the story changes direction. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 45000);
     try {
@@ -4171,7 +4198,7 @@ function cleanActing(raw, scene) {
         events.push(ev);
     });
     events.sort((a, b) => a.w - b.w);
-    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events: events.slice(0, 6) };
+    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events: events.slice(0, 8) };
 }
 let directorBusy = false;
 async function runDirector(silent) {
