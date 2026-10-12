@@ -689,7 +689,7 @@ const ActingBrain = (() => {
         think: compile('pourquoi comment question reflech pens imagin idee hypothes mystere enigme comprend savoir cherch analys curieu apprend etudi strategie plan calcul decision choisir option alternative solution'),
         proud: compile('fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom'),
         love: compile('aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute'),
-        doubt: compile('peut-etre =peut probablement douteu doute hesit incertain suspect bizarre croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment'),
+        doubt: compile('peut-etre probablement douteu doute hesit incertain suspect bizarre croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment'),
         excited: compile('=vite maintenant =allons ensemble =pret lancez commencez abonne rejoin nouveau nouvelle revolution explos =boom decoll =go incroyable decouvrez imm\u00e9diat gratuitement bonus'),
     };
     const SPIKE_SYM = { surprise: 'excl', fear: 'sweat', angry: 'vein', love: 'heart', think: 'ques', doubt: 'ques' };
@@ -705,7 +705,7 @@ const ActingBrain = (() => {
         facepalm: { pri: 7, dur: 1.5, w: compile('betise idiot stupide naif gaffe bourde ridicule honte oubli') },
         cross:    { pri: 4, dur: 1.7, w: compile('refus rejet desaccord bloque =impossible') },
         shrug:    { pri: 5, dur: 1.5, w: compile('peut-etre hesit incertain =bof =sais apparemment suppos') },
-        hips:     { pri: 3, dur: 1.9, w: compile('confiance determin courage defi relev leader patron =boss =chef motiv pret') },
+        hips:     { pri: 9, dur: 1.9, w: compile('confiance determin courage defi relev leader patron =boss =chef motiv pret') },
         wide:     { pri: 4, dur: 1.6, w: compile('beaucoup enorme immense gigantesque monde partout infini milliard million vaste univers mondial planete afrique continent foule') },
         up:       { pri: 4, dur: 1.4, w: compile('monte augment hausse croiss grandir sommet =haut ciel progress depass explos decoll record niveau objectif ameliore boost idee astuce') },
         down:     { pri: 4, dur: 1.4, w: compile('baisse chute tombe tomber diminu descend effondr crash perd perte declin recul =moins =bas couler gouffre') },
@@ -765,8 +765,8 @@ const ActingBrain = (() => {
         { re: /sans (?:argent|travail|ami|famille|abri)|plus rien|rien du tout/, emo: 'sad' },
         { re: /pour la premiere fois|jamais vu|record du monde/, emo: 'surprise', gesture: 'wide' },
         { re: /mon (?:reve|but|objectif)|je veux|je vais/, emo: 'proud', gesture: 'hips' },
-        { re: /\b(?:plante\w*|sem\w*|enterre\w*)\b/, emo: 'think', gesture: 'plant' },
-        { re: /\b(?:arros\w*|puise\w*)\b/, emo: 'love', gesture: 'water' },
+        { re: /\b(?:plante\w*|sem(?:e|er|ons|ez|ent|ais|ait)\b|enterre\w*)\b/, emo: 'think', gesture: 'plant' },
+        { re: /\b(?:l?arros\w*|puise\w*)\b/, emo: 'love', gesture: 'water' },
         { re: /\b(?:pousse|germe|eclot\w*|apparai\w*)\b/, emo: 'surprise', gesture: 'up' },
         { re: /\b(?:aide\w*|entraide|ensemble|communaute)\b/, emo: 'love', gesture: 'wide' },
         { re: /\b(?:offre\w*|partage\w*|ombre)\b/, emo: 'love', gesture: 'wide' },
@@ -2177,7 +2177,7 @@ class ScenePlanner {
 const ALL_POSES = ['standing', 'happy', 'sad', 'thinking', 'pointing', 'walking', 'money', 'sitting'];
 const POSE_CUES = {
     pointing: 'regard voici voila decouvr abonn cliqu suiv partag rejoin ecout sachez retenez lecon message essay commenc telecharg subscribe follow'.split(' '),
-    thinking: 'pourquoi comment idee pens reflechi comprend realis dout imagin question hesit plant sem cultiv why how think'.split(' '),
+    thinking: 'pourquoi comment idee pens reflechi comprend realis dout imagin question hesit plant semenc cultiv why how think'.split(' '),
     money: 'argent fcfa million milliard salaire gagn pay riche fortune dollar euro profit benefice vend achet prix cash money'.split(' '),
     sad: 'perd perdu echec echou pleur triste faillite chute crise probleme difficile mort peur douleur honte abandon dette pauvre misere fail lose sad'.split(' '),
     happy: 'succes reussi victoire bravo heureu joie fier fete felicit celebr content magnifique merci bonheur rit aide entraide grandir pousse ombre offrir partager communaute win happy'.split(' '),
