@@ -1,6 +1,6 @@
-# Vidéos Plus — VideoStory 3.0.4
+# Vidéos Plus — VideoStory 3.0.5
 
-VideoStory 3.0.4 transforme des histoires en vidéos animées avec une direction artistique cartoon professionnelle, un personnage expressif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.0.5 transforme des histoires en vidéos animées avec une direction artistique cartoon professionnelle, un cerveau narratif universel, un personnage expressif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 ## Fonctionnalités
 
@@ -8,6 +8,8 @@ VideoStory 3.0.4 transforme des histoires en vidéos animées avec une direction
 - Actions du personnage déclenchées par le récit : courir, tomber, rire, sauter, danser, pleurer, trembler et dormir, avec expressions, mouvements, effets visuels et bruitages associés.
 - Compréhension sémantique renforcée : négations, contrastes, actions littérales et sujet de l’action sont pris en compte avant de choisir le jeu du personnage.
 - Interface et décors cartoon premium : grille technique retirée, badge éditorial nettoyé, paysages doux, nuages, collines et profondeur visuelle autour du personnage.
+- Création sans texte obligatoire : si l’idée et le script sont vides, le cerveau démarre avec une histoire universelle cohérente.
+- Analyse multi-domaines : le réalisateur distingue sujet, action, cause, conséquence, négation, hypothèse, métaphore et arc émotionnel dans les histoires personnelles, éducatives, scientifiques, commerciales ou fictives.
 - Personnage vectoriel expressif avec regard, respiration, clignements et gestes synchronisés au rythme de la parole, aux pauses et aux accents.
 - Transitions émotionnelles liées aux retournements du récit et intensité des gestes modulée au fil des scènes.
 - Narration Speechify et synchronisation avec le récit.

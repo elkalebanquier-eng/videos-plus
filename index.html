@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.4-cartoon-ui-premium">
-    <title>Vidéos Plus — VideoStory 3.0.4</title>
-    <meta name="description" content="Vidéos Plus 3.0.4 crée des vidéos animées expressives avec interface et décors cartoon professionnels.">
+    <meta name="videostory-build" content="3.0.5-universal-story-brain">
+    <title>Vidéos Plus — VideoStory 3.0.5</title>
+    <meta name="description" content="Vidéos Plus 3.0.5 comprend les histoires variées et peut générer un récit même sans texte saisi.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.4">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.5">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.4">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.5">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -230,11 +230,11 @@
         </header>
         <div class="create-container">
             <div class="form-group">
-                <label>💡 Idée en une phrase (le cerveau écrit tout)</label>
+                <label>💡 Idée en une phrase <span style="font-weight:400;opacity:.72">(facultative : le cerveau peut commencer seul)</span></label>
                 <input type="text" id="ideaInput" placeholder="Ex : pourquoi Nokia a perdu face à l'iPhone" style="width:100%;padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;">
             </div>
             <div class="form-group">
-                <label>Votre script (optionnel si tu donnes une idée)</label>
+                <label>Votre script <span style="font-weight:400;opacity:.72">(facultatif)</span></label>
                 <textarea id="scriptInput" placeholder="Écrivez votre histoire ou collez votre script..."></textarea>
                 <div class="char-count"><span id="wordCount">0 mots</span><span id="estDuration">~0 min</span></div>
             </div>
@@ -3702,6 +3702,8 @@ function generateScenes() { return runBrain(false); }
 function autoPilot() { return runBrain(true); }
 
 function writeLocalScript(idea, lang) {
+    // Une demande vide devient une histoire universelle plutôt qu'une erreur ou une phrase vide.
+    idea = String(idea || '').trim() || 'une petite décision qui change une vie';
     const clean = idea.trim().replace(/[?.!]+$/, '');
     const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
     const planner = new ScenePlanner();
@@ -3751,10 +3753,10 @@ async function llmBrain({ idea, script, options, cfg }) {
     const task = script
         ? 'Use exactly this script (do not rewrite it, only split it into scenes of 1-2 short sentences):\n"""\n' + script.slice(0, 6000) + '\n"""'
         : 'Write a narrated script about: "' + idea.slice(0, 300) + '". Target 45-60 seconds (100-135 spoken words). Write a strong hook in the first sentence, then a clear arc (context, tension, turning point, lesson, call to action). Use simple spoken language for a West African audience. Make 7-10 scenes, normally 8-18 words per scene, never rush the narration, and end with a concrete call to action. Split it into scenes of 1-2 short sentences.';
-    const prompt = 'You are the creative director of a short vertical video studio. Narration language: ' + langName + '. Visual style: ' + options.style + '.\n' + task +
+    const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. Identify who acts, what changes, the cause and consequence, the emotional arc and the concrete visual objects before choosing scenes.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
-        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null for abstract scenes with no person (companies, markets, numbers, objects). Preserve the narration exactly. Choose the pose from the described action: pointing to address the audience, thinking for questions, sad for failure, happy for success, money for earnings, walking for travel, sitting for work or study.';
+        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -3895,9 +3897,12 @@ async function runDirector(silent) {
 
 async function runBrain(auto) {
     unlockAudio(); // doit se faire pendant le clic, avant les attentes réseau
-    const idea = (document.getElementById('ideaInput')?.value || '').trim();
+    let idea = (document.getElementById('ideaInput')?.value || '').trim();
     let script = document.getElementById('scriptInput').value.trim();
-    if (!script && !idea) { showToast('Écris une idée ou un script', 'error'); return; }
+    if (!script && !idea) {
+        idea = 'une petite décision qui change une vie';
+        showToast('🧠 Je crée une histoire universelle pour commencer…', 'success');
+    }
     const options = readOptions();
     const cfg = Settings.get();
     const useLLM = cfg.ai === 'gemini' && !!cfg.key;
