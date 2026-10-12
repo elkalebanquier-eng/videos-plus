@@ -687,8 +687,8 @@ const ActingBrain = (() => {
         surprise: compile('incroyable stupefi =choc soudain brusquement etonn surpris inimaginable =impossible =waouh =wow enorme extraordinaire inattendu miracle revelation decouv apparu stupeur =quoi sensationnel hallucin'),
         fear: compile('peur effray terrifi danger menace risque crainte angoiss panique inquiet cauchemar horrible redout piege alerte urgence terreur tremb dangereu fragile vulnerab'),
         think: compile('pourquoi comment question reflech pens imagin idee hypothes mystere enigme comprend savoir cherch analys curieu apprend etudi strategie plan calcul decision choisir option alternative solution'),
-        proud: compile('fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom'),
-        love: compile('aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute'),
+        proud: compile('fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom persever tenace resil surmont overcome'),
+        love: compile('aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute aide aider entraide solidaire partag offr'),
         doubt: compile('peut-etre probablement douteu doute hesit incertain suspect bizarre croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment'),
         excited: compile('=vite maintenant =allons ensemble =pret lancez commencez abonne rejoin nouveau nouvelle revolution explos =boom decoll =go incroyable decouvrez imm\u00e9diat gratuitement bonus'),
     };
@@ -768,8 +768,8 @@ const ActingBrain = (() => {
         { re: /\b(?:plante\w*|sem(?:e|er|ons|ez|ent|ais|ait)\b|enterre\w*)\b/, emo: 'think', gesture: 'plant' },
         { re: /\b(?:l?arros\w*|puise\w*)\b/, emo: 'love', gesture: 'water' },
         { re: /\b(?:pousse|germe|eclot\w*|apparai\w*)\b/, emo: 'surprise', gesture: 'up' },
-        { re: /\b(?:aide\w*|entraide|ensemble|communaute)\b/, emo: 'love', gesture: 'wide' },
-        { re: /\b(?:offre\w*|partage\w*|ombre)\b/, emo: 'love', gesture: 'wide' },
+        { re: /\b(?:l?aide\w*|entraide|ensemble|communaute)\b/, emo: 'love', gesture: 'wide' },
+        { re: /\b(?:offre\w*|partage\w*|l?ombre)\b/, emo: 'love', gesture: 'wide' },
         { re: /\b(?:meme quand|meme si|malgre)\b.{0,70}\b(?:moqu\w*|critiqu\w*|ridicul\w*|dout\w*|rient de)\b/, emo: 'proud', gesture: 'hips' },
     ];
     // « pas triste », « jamais content », « ne … plus » : l'émotion s'inverse au lieu d'être jouée telle quelle
@@ -977,7 +977,7 @@ const ActingBrain = (() => {
                 else return;
             }
             if (!g.force && prevLast && g.name === prevLast && g.t0 < 2.2 && g.name !== 'count' && g.name !== 'hold') return;
-            if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 2.5 && g.name !== 'count') return;
+            if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 4.0 && g.name !== 'count') return;
             if (prev && g.t0 < prev.t1 - 0.15) {
                 // un geste voulu (écrit par le réalisateur ou réglé à la main) coupe le précédent ; sinon le plus important gagne
                 if (g.force && g.t0 - prev.t0 <= 0.3) out.pop();
