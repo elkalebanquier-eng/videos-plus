@@ -1,6 +1,6 @@
-# Vidéos Plus — version web 3.0.1
+# Vidéos Plus — version web 3.0.2
 
-`index.html` contient VideoStory 3.0.1, avec des actions de course, chute et rire liées au récit, un personnage expressif, l’édition des scènes et l’export vidéo dans le navigateur. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
+`index.html` contient VideoStory 3.0.2, avec des actions de course, chute et rire liées au récit, des gestes synchronisés à la parole, des transitions émotionnelles plus nuancées, l’édition des scènes et l’export vidéo dans le navigateur. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
 
 ## Déploiement et Speechify
 

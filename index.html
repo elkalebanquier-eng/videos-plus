@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.1-long-audio-safe-export">
-    <title>Vidéos Plus — VideoStory 3.0.1</title>
-    <meta name="description" content="Vidéos Plus 3.0.1 crée des vidéos animées expressives avec actions de course, chute et rire, narration Speechify et export vidéo.">
+    <meta name="videostory-build" content="3.0.2-actions-rhythm-long-audio-safe-export">
+    <title>Vidéos Plus — VideoStory 3.0.2</title>
+    <meta name="description" content="Vidéos Plus 3.0.2 crée des vidéos animées expressives avec actions de course, chute et rire, narration Speechify et export vidéo.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.1">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.2">
     <meta property="og:description" content="Crée des vidéos animées avec des actions plus naturelles, une narration et l’export vidéo.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.1">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.2">
     <meta name="twitter:description" content="Course, chute, rire : un personnage animé plus vivant dans tes vidéos.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -582,7 +582,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.1', channel: 'web', publicBuildId: 'videos-plus-3.0.1-long-audio-safe-export' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.2', channel: 'web', publicBuildId: 'videos-plus-3.0.2-actions-rhythm-long-audio-safe-export' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -765,38 +765,71 @@ const ActingBrain = (() => {
     const cache = new WeakMap();
 
     const hasAny = (ps, fn) => ps.some(fn);
-    function baseOf(scene) {
-        const c = LipSync.info(scene), txt = String(scene.narration || '');
+    function scoreWords(c, i0, i1) {
         const sc = {}; EMOS.forEach(k => sc[k] = 0);
-        c.ws.forEach((w, i) => { const ps = parts(w); EMOS.forEach(k => { if (hasAny(ps, EMO[k])) { if (negAt(c, i)) { const o = NEG_OPP[k]; if (o) sc[o] += 0.8; } else sc[k] += 1; } }); });
+        for (let i = i0; i < i1; i++) { const ps = parts(c.ws[i]); EMOS.forEach(k => { if (hasAny(ps, EMO[k])) { if (negAt(c, i)) { const o = NEG_OPP[k]; if (o) sc[o] += 0.8; } else sc[k] += 1; } }); }
+        return sc;
+    }
+    // first / last : le morceau est le début / la fin de la scène (la ponctuation finale et l'appel à l'action ne comptent qu'à la fin)
+    function finishBase(sc, scene, first, last) {
+        const txt = String(scene.narration || '');
         if (scene.mood === 'positive') sc.joy += 0.7;
         if (scene.mood === 'negative') { if (sc.angry + sc.fear < 1) sc.sad += 0.7; }
-        if (/\?\s*$/.test(txt)) sc.think += 0.9;
-        if (/!/.test(txt)) { if (scene.mood === 'negative' && sc.sad < 1) sc.angry += 0.5; else sc.excited += 0.55; }
-        if (/\.\.\.|…/.test(txt)) sc.doubt += 0.4;
-        if (scene.role === 'hook') sc.surprise += 0.6;
-        if (scene.role === 'cta') { sc.excited += 0.7; sc.joy += 0.4; }
+        if (last) {
+            if (/\?\s*$/.test(txt)) sc.think += 0.9;
+            if (/!/.test(txt)) { if (scene.mood === 'negative' && sc.sad < 1) sc.angry += 0.5; else sc.excited += 0.55; }
+            if (/\.\.\.|…/.test(txt)) sc.doubt += 0.4;
+            if (scene.role === 'cta') { sc.excited += 0.7; sc.joy += 0.4; }
+        }
+        if (first && scene.role === 'hook') sc.surprise += 0.6;
         let best = null, bs = 0; EMOS.forEach(k => { if (sc[k] > bs) { bs = sc[k]; best = k; } });
         const base = {}; EMOS.forEach(k => base[k] = 0);
         if (best && bs >= 0.6) base[best] = clamp(0.45 + 0.2 * bs, 0.45, 0.95);
         else base.joy = 0.2;                                           // sourire léger par défaut
         EMOS.forEach(k => { if (k !== best && sc[k] >= 0.9) base[k] = Math.max(base[k], 0.3); });
+        base.__best = best && bs >= 0.6 ? best : null;
         return base;
     }
+    function baseOf(scene) { const c = LipSync.info(scene), b = finishBase(scoreWords(c, 0, c.ws.length), scene, true, true); delete b.__best; return b; }
+    // retournement de l'histoire : « il avait peur, MAIS il a réussi » -> l'émotion change au mot « mais » au lieu de rester la même toute la scène
+    const CONTRAST = compile('=mais =pourtant =cependant =toutefois =sauf jusqu');
+    function turnOf(scene) {
+        const c = LipSync.info(scene), n = c.ws.length, dur = scene.duration || 5;
+        for (let k = 2; k <= n - 3; k++) {
+            if (!hasAny(parts(c.ws[k]), CONTRAST)) continue;
+            const t = c.starts[k] || 0; if (t < 0.5 || t > dur - 0.7) continue;
+            const from = finishBase(scoreWords(c, 0, k), scene, true, false), to = finishBase(scoreWords(c, k, n), scene, false, true);
+            if (!to.__best || to.__best === from.__best) continue;
+            delete from.__best; delete to.__best;
+            return { t, from, to };
+        }
+        return null;
+    }
+    // arc de l'histoire : jeu plus retenu au début, plus fort vers le climax (environ aux deux tiers), qui retombe à la fin
+    function arcOf(scene) {
+        try { const list = (state.project && state.project.scenes) || [], i = list.indexOf(scene); return i < 0 ? null : { i, n: list.length }; } catch (_) { return null; }
+    }
+    function arcFactor(ar) { if (!ar || ar.n < 3) return 1; const pos = ar.i / (ar.n - 1); return 0.8 + 0.4 * Math.exp(-Math.pow((pos - 0.7) / 0.28, 2)); }
     function plan(scene) {
-        const key = LipSync.info(scene).key + '|' + (scene.role || '') + (scene.mood || '') + (scene.brain && scene.brain.pose || '') + '|' + (scene.acting ? JSON.stringify(scene.acting) : '') + '|' + (scene.elements || []).filter(e => e.type === 'object').map(e => e.assetId + ':' + ((e.entrance && e.entrance.delay) || 0) + ':' + (e.position ? e.position.x : 0)).join(',');
+        const key = LipSync.info(scene).key + '|' + (scene.role || '') + (scene.mood || '') + (scene.brain && scene.brain.pose || '') + '|' + (scene.acting ? JSON.stringify(scene.acting) : '') + '|' + (() => { const ar = arcOf(scene); return ar ? ar.i + '/' + ar.n : '-'; })() + '|' + (scene.elements || []).filter(e => e.type === 'object').map(e => e.assetId + ':' + ((e.entrance && e.entrance.delay) || 0) + ':' + (e.position ? e.position.x : 0)).join(',');
         const hit = cache.get(scene);
         if (hit && hit.key === key) return hit.p;
         const c = LipSync.info(scene), dur = scene.duration || 5;
         const A = scene.acting && Array.isArray(scene.acting.events) ? scene.acting : null;
-        const P = { start: {}, base: baseOf(scene), spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null };
+        const P = { start: {}, base: baseOf(scene), turn: null, spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null };
         EMOS.forEach(k => P.start[k] = 0);
         // scène d'avant : on part de son émotion finale, pour que l'enchaînement soit naturel
         try {
             const list = (state.project && state.project.scenes) || [], i = list.indexOf(scene);
-            if (i > 0 && list[i - 1].narration) P.start = baseOf(list[i - 1]);
+            if (i > 0 && list[i - 1].narration) { const pp = plan(list[i - 1]); P.start = Object.assign({}, pp.turn ? pp.turn.to : pp.base); }   // on repart de l'émotion où la scène d'avant s'est terminée
             else P.start = Object.assign({}, P.start, { joy: 0.2 });
         } catch (_) {}
+        if (!A) {
+            const f = arcFactor(arcOf(scene));
+            if (f !== 1) EMOS.forEach(k => { P.base[k] = clamp((P.base[k] || 0) * f, 0, 0.95); });
+            P.turn = turnOf(scene);
+            if (P.turn && f !== 1) EMOS.forEach(k => { P.turn.from[k] = clamp(P.turn.from[k] * f, 0, 0.95); P.turn.to[k] = clamp(P.turn.to[k] * f, 0, 0.95); });
+        }
         const cand = [], lastByType = {};
         c.ws.forEach((w, i) => {
             const t = c.starts[i] || 0, ps = parts(w);
@@ -881,6 +914,16 @@ const ActingBrain = (() => {
             if (g.t1 - g.t0 < D * 0.6) g.drop = true;
         });
         for (let q = cand.length - 1; q >= 0; q--) if (cand[q].drop) cand.splice(q, 1);
+        // RYTHME : voix rapide = gestes plus courts, voix lente = plus amples ; le geste se relâche à la fin de la phrase (jamais traîné sur la suivante)
+        {
+            const wps = c.ws.length / Math.max(1, dur), tempo = clamp(2.6 / Math.max(0.8, wps), 0.8, 1.25);
+            const iw = t0 => { let k = 0; for (let i = 0; i < c.starts.length; i++) if ((c.starts[i] || 0) <= t0 + 0.25) k = i; return k; };
+            const sentEnd = t0 => { for (let i = iw(t0); i < c.ws.length; i++) if (/[.!?…]["»”)]*$/.test(c.ws[i])) return c.starts[i + 1] !== undefined ? c.starts[i + 1] : dur; return dur; };
+            cand.forEach(g => {
+                if (g.act || g.force || g.name === 'hold' || g.name === 'count') return;
+                g.t1 = Math.min(g.t0 + (g.t1 - g.t0) * tempo, Math.max(g.t0 + 0.9, sentEnd(g.t0) + 0.1));
+            });
+        }
         // dernier geste de la scène d'avant : on ne le rejoue pas tout de suite
         let prevLast = null;
         try { const list = (state.project && state.project.scenes) || [], pi = list.indexOf(scene); if (pi > 0 && list[pi - 1].narration) { const pg = plan(list[pi - 1]).gestures; if (pg.length) prevLast = pg[pg.length - 1].name; } } catch (_) {}
@@ -919,8 +962,25 @@ const ActingBrain = (() => {
             if (/(\.\.\.|…)$/.test(w)) P.looks.push({ t0: tn - 0.75, t1: tn + 0.35, x: 0.55, y: 0.65 });
         });
         P.spikes.forEach(sp => { if (sp.t0 > 0.3) P.blinks.push(sp.t0 + 0.08); });
+        if (P.turn) { P.blinks.push(P.turn.t + 0.05); P.beats.push({ t: P.turn.t, s: 0.95 }); }      // il « réalise » : clignement + coup de tête sur le mot du retournement
         P.blinks.sort((x, y) => x - y);
         { const keep = []; P.blinks.forEach(x => { if (!keep.length || x - keep[keep.length - 1] >= 1.0) keep.push(x); }); P.blinks = keep; }   // jamais deux clignements « de texte » collés
+        // RYTHME DE LA PAROLE : coups de main sur les mots accentués, mains qui se posent dans les pauses, main de tête qui alterne à chaque phrase
+        P.strokes = []; P.pauses = [];
+        c.ws.forEach((w, i) => {
+            const ts = c.starts[i] || 0, tn = c.starts[i + 1], len = parts(w).reduce((m, q) => Math.max(m, q.length), 0);
+            const term = /[.!?…]["»”)]*$/.test(w), soft = /[,;:]["»”)]*$/.test(w);
+            const raw = w.replace(/[^A-Za-zÀ-ÿ]/g, ''), caps = raw.length >= 3 && raw === raw.toUpperCase();
+            if (caps) P.beats.push({ t: ts, s: 1 });
+            const sv = caps ? 1 : /[!?]["»”)]*$/.test(w) ? 1 : term ? 0.8 : soft ? 0.7 : len >= 7 ? 0.85 : len >= 5 ? 0.4 : 0;
+            const last = P.strokes[P.strokes.length - 1];
+            if (sv > 0 && (!last || ts - last.t >= 0.28)) P.strokes.push({ t: ts, s: sv });
+            if ((term || soft) && tn !== undefined) {
+                const dots = /(\.\.\.|…)["»”)]*$/.test(w), gap = Math.min(dots ? 0.6 : term ? 0.4 : 0.2, Math.max(0.12, (tn - ts) * (dots ? 0.55 : 0.45)));
+                P.pauses.push({ t0: tn - gap, t1: tn, mid: tn - gap / 2, flip: term });
+            }
+        });
+        P.pauses.push({ t0: dur - 0.3, t1: dur + 3, mid: dur, flip: false });      // fin de scène : les mains se posent
         // plans de caméra : gros plan sur les émotions fortes, léger recul sur les grands gestes
         P.shots = [];
         if (!autoShotsOff) P.spikes.forEach(sp => { if (['sad', 'love', 'fear', 'surprise', 'angry'].includes(sp.emo) && sp.t0 > 0.2) P.shots.push({ t0: sp.t0, t1: sp.t0 + 1.7, z: 1.5 }); });
@@ -945,7 +1005,8 @@ const ActingBrain = (() => {
         const P = scene && scene.narration ? plan(scene) : EMPTY;
         const e = {}; EMOS.forEach(k => e[k] = 0);
         const bl = smooth(t / 0.6);
-        EMOS.forEach(k => { e[k] = (P.start[k] || 0) * (1 - bl) + (P.base[k] || 0) * bl; });
+        const bt = P.turn ? smooth((t - P.turn.t + 0.1) / 0.6) : 1;
+        EMOS.forEach(k => { const bk = P.turn ? (P.turn.from[k] || 0) * (1 - bt) + (P.turn.to[k] || 0) * bt : (P.base[k] || 0); e[k] = (P.start[k] || 0) * (1 - bl) + bk * bl; });
         let sym = null, symP = 0;
         P.spikes.forEach(sp => {
             const x = t - sp.t0; if (x < 0 || x > sp.dur) return;
@@ -966,6 +1027,20 @@ const ActingBrain = (() => {
         else if (act === 'fall') {
             const kS = smooth(p / 0.08) * (1 - smooth((p - 0.28) / 0.06)), kD = smooth((p - 0.3) / 0.06) * (1 - smooth((p - 0.72) / 0.1));
             e.surprise = Math.min(1, e.surprise + kS); e.fear = Math.min(1, e.fear + 0.6 * kS); e.doubt = Math.min(1, e.doubt + 0.7 * kD); e.sad = Math.min(1, e.sad + 0.35 * kD);
+        }
+        // rythme de la parole : enveloppe « il parle » (0 dans les pauses), préparation + coup de main sur chaque accent, main de tête
+        let talkAmt, stroke = 0, prep = 0, hand = 1;
+        if (P.strokes) {
+            let pz = 0, flips = 0;
+            P.pauses.forEach(q => { const k = smooth((t - q.t0) / 0.08) * (1 - smooth((t - q.t1) / 0.18)); if (k > pz) pz = k; if (q.flip && t >= q.mid) flips++; });
+            talkAmt = clamp((1 - pz) * smooth((t - 0.15) / 0.4), 0, 1);
+            hand = flips % 2 ? -1 : 1;
+            P.strokes.forEach(q => {
+                const x = t - q.t;
+                const pv = x < -0.12 ? 0 : x < 0 ? smooth((x + 0.12) / 0.12) : x < 0.06 ? 1 - smooth(x / 0.06) : 0;
+                const sv = x < 0 || x > 0.8 ? 0 : x < 0.06 ? smooth(x / 0.06) : Math.exp(-(x - 0.06) / 0.15);
+                prep = Math.max(prep, q.s * pv); stroke = Math.max(stroke, q.s * sv);
+            });
         }
         let beat = 0; P.beats.forEach(b => { const x = t - b.t; if (x >= 0 && x < 0.6) beat = Math.max(beat, b.s * Math.exp(-x / 0.14)); });
         const wx = Math.sin(t * 1.7) * 0.18 + Math.sin(t * 5.3) * 0.06, wy = Math.sin(t * 1.1) * 0.12;
@@ -1001,7 +1076,7 @@ const ActingBrain = (() => {
         let zUp = 0, zDown = 0;
         (P.shots || []).forEach(sh => { if (t >= sh.t0 - 0.2 && t <= sh.t1 + 0.25) { const k = smooth((t - (sh.t0 - 0.18)) / 0.18) * smooth((sh.t1 + 0.22 - t) / 0.22), v = (sh.z - 1) * k; if (v > 0) zUp = Math.max(zUp, v); else zDown = Math.min(zDown, v); } });
         camZ += zUp + zDown;
-        return { e, act, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, eye, blink, breath, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, sway, ant, push, jolt, camZ, gside, prop };
+        return { e, act, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, eye, blink, breath, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, talkAmt, stroke, prep, hand, sway, ant, push, jolt, camZ, gside, prop };
     }
     // partition actuelle de la scène sous forme d'événements (pour la frise éditable)
     function describe(scene) {
@@ -1047,7 +1122,7 @@ const BuiltinCharacter = (() => {
     function grad(ctx, x0, y0, x1, y1, a, b) { const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; }
 
     // ---- cibles des mains selon la pose : [x, y, mode] pour chaque bras (-1 = gauche écran, +1 = droite écran)
-    function ambientTargets(g, t, beat, speakAmt) {
+    function ambientTargets(g, t, beat, speakAmt, a) {
         const sw = Math.sin(t * 1.3), rest = side => ({ x: side * 1.62, y: -3.95 + 0.05 * Math.sin(t * 1.6 + side) });
         const L = rest(-1), R = rest(1);
         const talk = speakAmt * (0.5 + 0.5 * Math.sin(t * 2.4)) ;
@@ -1058,8 +1133,15 @@ const BuiltinCharacter = (() => {
         else if (g === 'sad') { L.x = -1.3; L.y = -3.9; R.x = 1.3; R.y = -3.9; }
         else if (g === 'walking') { L.y = -4.0 + 0.4 * Math.sin(t * 4.2); R.y = -4.0 - 0.4 * Math.sin(t * 4.2); L.x = -1.55; R.x = 1.55; }
         else { // debout : la main droite explique, la gauche accompagne
-            R.x = 2.75 + 0.25 * talk; R.y = -5.35 - 0.9 * talk - 0.5 * beat; R.mode = talk > 0.1 ? 'palm' : null;
-            L.x = -1.62 - 0.04 * talk; L.y = -3.95 - 0.2 * talk;
+            if (a && a.talkAmt !== undefined) {   // main de tête qui alterne à chaque phrase, levée avant l'accent, coup net dessus, repos dans les pauses
+                const tk = a.talkAmt, st = a.stroke || 0, pr = a.prep || 0, hd = a.hand || 1, dr = 0.5 + 0.5 * Math.sin(t * 1.7);
+                const lead = hd > 0 ? R : L, aux = hd > 0 ? L : R;
+                lead.x = hd * (2.75 + 0.2 * tk * dr); lead.y = -5.35 - 0.8 * tk - 0.4 * pr + 0.5 * st; lead.mode = tk > 0.1 ? 'palm' : null;
+                aux.x = -hd * (1.62 + 0.55 * tk); aux.y = -3.95 - 0.4 * tk - 0.2 * pr + 0.25 * st; aux.mode = tk > 0.1 ? 'palm' : null;
+            } else {
+                R.x = 2.75 + 0.25 * talk; R.y = -5.35 - 0.9 * talk - 0.5 * beat; R.mode = talk > 0.1 ? 'palm' : null;
+                L.x = -1.62 - 0.04 * talk; L.y = -3.95 - 0.2 * talk;
+            }
         }
         return [L, R];
     }
@@ -1439,7 +1521,7 @@ const BuiltinCharacter = (() => {
         ctx.save(); ctx.translate(lean, bob * 0.6);
         const sleeve = c.outfit === 'tee' || c.outfit === 'dress' ? c.color : (c.outfit === 'suit' ? outfitDk : outfitLt);
         const longSleeve = c.outfit === 'suit' || c.outfit === 'boubou';
-        const T = ambientTargets(g, t, a.beat, open > 0.02 ? 1 : 0);
+        const T = ambientTargets(g, t, a.beat, open > 0.02 ? 1 : 0, a);
         const drawHand = (x, y, mode, n, sc, sd, rot) => {
             ctx.save(); ctx.translate(x, y); ctx.scale(sc * 1.2, sc * 1.2);
             if (!HAND_UPRIGHT[mode]) ctx.rotate(rot || 0);          // la main prolonge l'avant-bras
