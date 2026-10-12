@@ -1291,7 +1291,9 @@ const BuiltinCharacter = (() => {
         return S;
     }
     function paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, t) {
-        const S = handSpec(mode, n, 1, t), pw = 0.07;
+        // Le côté réel doit être transmis à handSpec : sinon le pouce et les doigts
+        // sont toujours construits comme une main droite avant le miroir graphique.
+        const S = handSpec(mode, n, sd, t), pw = 0.07;
         const stroke = (f, color, width) => {
             ctx.save(); ctx.translate(f.ox, f.oy); ctx.rotate(f.ang); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(f.bend * 0.1, -f.len * 0.5, f.bend * 0.17, -f.len); ctx.stroke(); ctx.restore();
