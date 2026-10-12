@@ -1932,6 +1932,9 @@ class ScenePlanner {
     }
 
     pickLayout(plan, prev) {
+        // Continuité visuelle prioritaire : le présentateur reste à l’écran dans
+        // chaque scène et les objets/textes deviennent des éléments secondaires.
+        if (!plan.noChar) return 'hero';
         const numeric = /\d/.test(plan.keyText || '');
         const feasible = { hero: !plan.noChar, object: plan.objects.length > 0, bigtext: !!plan.keyText };
         let order;
@@ -3321,11 +3324,31 @@ function loadGoVideos() {
 function forceUniqueRiveCharacter(project) {
     if (!project || !Array.isArray(project.scenes)) return project;
     project.mascot = 'rive';
-    project.scenes.forEach(scene => {
+    project.scenes.forEach((scene, index) => {
         scene.elements = Array.isArray(scene.elements) ? scene.elements : [];
         let firstCharacter = true;
         scene.elements = scene.elements.filter(el => el.type !== 'character' || firstCharacter-- > 0);
-        scene.elements.forEach(el => { if (el.type === 'character') { el.assetId = 'rive-character'; el.pose = el.pose || 'standing'; } });
+        const character = scene.elements.find(el => el.type === 'character');
+        if (character) {
+            character.assetId = 'rive-character';
+            character.pose = character.pose || scene.brain?.pose || 'standing';
+            character.visible = true;
+            character.opacity = 1;
+        } else {
+            const objects = scene.elements.filter(el => el.type === 'object' && el.visible !== false);
+            const objectX = objects[0]?.position?.x;
+            const x = objectX == null ? 0.5 : objectX < 0.5 ? 0.74 : 0.26;
+            scene.elements.push({
+                id: 'char-continuity-' + (scene.id || index), type: 'character', assetId: 'rive-character',
+                pose: scene.brain?.pose || (scene.mood === 'negative' ? 'sad' : scene.mood === 'positive' ? 'happy' : 'standing'),
+                position: { x, y: 0.62 }, size: { width: 0.5, height: 0.5 },
+                zIndex: 10, rotation: 0, opacity: 1, visible: true,
+                entrance: { type: 'fade_in', duration: 0.28, delay: 0.05 },
+            });
+        }
+        scene.layout = 'hero';
+        scene.cast = { ...(scene.cast || {}), lead: 'rive-character', last: 'rive-character', chars: ['rive-character'], mode: 'single' };
+        scene.brain = { ...(scene.brain || {}), chars: ['rive-character'], who: scene.brain?.who || 'Personnage principal', why: scene.brain?.why || 'continuité visuelle', pose: scene.brain?.pose || 'standing' };
     });
     return project;
 }
@@ -3335,6 +3358,7 @@ function loadProject(id) {
     const project = projects.find(p => p.id === id);
     if (project) {
         state.project = forceUniqueRiveCharacter(project);
+        saveProject();
         state.currentTime = 0;
         showScreen('editorScreen');
         initEditor();
@@ -4004,6 +4028,7 @@ function previewSize(format) {
 }
 
 function initEditor() {
+    forceUniqueRiveCharacter(state.project);
     normalizeSocialProject(state.project);
     document.getElementById('editorTitle').textContent = state.project.title;
     const pv = previewSize(state.project.format);
