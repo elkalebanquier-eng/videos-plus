@@ -2853,7 +2853,7 @@ class CanvasRenderer {
         sun.addColorStop(0, warm); sun.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H * .45);
         ctx.globalAlpha = 0.16; ctx.fillStyle = '#ffffff';
-        const cloud = (x, y, s) => { ctx.beginPath(); ctx.arc(x, y, 28 * s, 0, TAU); ctx.arc(x + 30 * s, y - 12 * s, 38 * s, 0, TAU); ctx.arc(x + 68 * s, y, 25 * s, 0, TAU); ctx.roundRect(x - 28 * s, y, 124 * s, 30 * s, 16 * s); ctx.fill(); };
+        const cloud = (x, y, s) => { ctx.beginPath(); ctx.arc(x, y, 28 * s, 0, Math.PI * 2); ctx.arc(x + 30 * s, y - 12 * s, 38 * s, 0, Math.PI * 2); ctx.arc(x + 68 * s, y, 25 * s, 0, Math.PI * 2); ctx.roundRect(x - 28 * s, y, 124 * s, 30 * s, 16 * s); ctx.fill(); };
         cloud(W * .12, H * .19, k * .9); cloud(W * .64, H * .32, k * .65);
         ctx.globalAlpha = 0.2; ctx.fillStyle = tint(bg.to, .55, .2);
         ctx.beginPath(); ctx.moveTo(-W * .05, H * .76); ctx.quadraticCurveTo(W * .25, H * .56, W * .52, H * .75); ctx.quadraticCurveTo(W * .78, H * .57, W * 1.05, H * .75); ctx.lineTo(W * 1.05, H); ctx.lineTo(-W * .05, H); ctx.closePath(); ctx.fill();
