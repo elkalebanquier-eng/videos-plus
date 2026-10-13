@@ -5273,7 +5273,17 @@ async function exportVideo() {
         const total = exportTimeline.getTotalDuration();
         const fps = 30;
 
-        stream = exportRenderer.canvas.captureStream(fps);
+        let videoTrack = null, manualFrameCapture = false;
+        try {
+            stream = exportRenderer.canvas.captureStream(0);
+            videoTrack = stream.getVideoTracks()[0] || null;
+            manualFrameCapture = !!(videoTrack && typeof videoTrack.requestFrame === 'function');
+        } catch (_) { manualFrameCapture = false; }
+        if (!manualFrameCapture) {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            stream = exportRenderer.canvas.captureStream(fps);
+            videoTrack = stream.getVideoTracks()[0] || null;
+        }
 
         // Piste audio : la voix Speechify est un AudioBuffer et doit passer par
         // MediaStreamDestination ; la voix native du navigateur, elle, ne peut pas être capturée.
@@ -5331,6 +5341,7 @@ async function exportVideo() {
         const first = exportTimeline.getSceneAtTime(0);
         if (first) await exportRenderer.renderScene(first.scene, 0);
         mediaRecorder.start(1000);
+        if (manualFrameCapture && videoTrack) videoTrack.requestFrame();
         let voiceN = 0;
         if (audioDest && state.project.music) MusicEngine.start(state.project.music, 0, total, audioDest);
         if (audioDest && useVoice) voiceN = VoiceStudio.scheduleExport(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05);
@@ -5351,6 +5362,7 @@ async function exportVideo() {
             if (elapsed >= total) break;
             const r = exportTimeline.getSceneAtTime(Math.min(elapsed, Math.max(0, total - 0.001)));
             if (r) await exportRenderer.renderScene(r.scene, r.timeInScene);
+            if (manualFrameCapture && videoTrack) videoTrack.requestFrame();
             if (frameStart - lastUi > 250) { lastUi = frameStart; updateProgress(elapsed / total); }
             // on rend toujours la main au navigateur (interface, encodeur vidéo) entre deux images
             await new Promise(res => setTimeout(res, Math.max(4, 1000 / fps - (performance.now() - frameStart))));
