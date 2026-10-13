@@ -1,6 +1,6 @@
-# Vidéos Plus — VideoStory 3.1.0
+# Vidéos Plus — VideoStory 3.2.0
 
-VideoStory 3.1.0 transforme des histoires en vidéos animées avec une direction artistique cartoon, un mode Anime pilote, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.2.0 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
@@ -17,7 +17,9 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Création sans texte obligatoire : si l’idée et le script sont vides, le cerveau démarre avec une histoire universelle cohérente.
 - Analyse multi-domaines : le réalisateur distingue sujet, action, cause, conséquence, négation, hypothèse, métaphore et arc émotionnel dans les histoires personnelles, éducatives, scientifiques, commerciales ou fictives.
 - Personnage vectoriel expressif avec regard, respiration, clignements et gestes synchronisés au rythme de la parole, aux pauses et aux accents.
-- Mode Anime pilote (activé par défaut) : yeux agrandis avec iris et reflets, mèches frontales en couches, accents de costume et lueur de scène teintée selon l’émotion; le rendu Classique reste sélectionnable dans Paramètres.
+- Trois rendus sélectionnables : Anime expressif, Cartoon doux aux traits plus arrondis, ou Classique.
+- Personnage personnalisable : tenue, coiffure, couleur des cheveux, carnation et couleur de la tenue.
+- Mouvements adaptés au confort : suivi des préférences « réduire les animations » du téléphone, réglage manuel pour mouvements doux, ou animation normale; les expressions et le synchronisme de parole restent actifs.
 - Modèle « Pilote anime — émotions » pour tester une histoire courte qui passe de la peur à l’espoir puis à la fierté.
 - Transitions émotionnelles liées aux retournements du récit et intensité des gestes modulée au fil des scènes.
 - Narration Speechify et synchronisation avec le récit.
@@ -25,6 +27,6 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Pour les vidéos sonores de 2 minutes ou plus, sélection automatique du chemin d’export compatible afin de préserver la piste audio sur les appareils concernés.
 - Proxy Vercel sécurisé `/api/speechify` : la clé reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
 
-Le pilote Anime s’appuie sur le dessin Canvas et le cache de rendu existants : aucun fichier image distant ni moteur d’encodage serveur supplémentaire. Il améliore le style 2D sans prétendre remplacer une production d’anime image par image ou un rig professionnel complet.
+Les styles s’appuient sur le dessin Canvas et le cache de rendu existants : aucun fichier image distant ni moteur d’encodage serveur supplémentaire. Les bras sont articulés par calcul procédural et les poses suivent le récit, mais ce personnage reste une animation vectorielle 2D légère — pas encore un rig professionnel image par image.
 
 Les pushes sur `main` déclenchent le déploiement Vercel. La configuration Speechify et les étapes pour modifier le domaine sont dans [README-WEB.md](README-WEB.md).

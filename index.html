@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.1.0-story-beats">
-    <title>Vidéos Plus — VideoStory 3.1.0</title>
-    <meta name="description" content="Vidéos Plus 3.1.0 améliore la structure narrative, les émotions et les brouillons multilingues.">
+    <meta name="videostory-build" content="3.2.0-character-comfort">
+    <title>Vidéos Plus — VideoStory 3.2.0</title>
+    <meta name="description" content="Vidéos Plus 3.2.0 ajoute un style cartoon doux, plus de personnalisation et des mouvements adaptés à chacun.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.1.0">
-    <meta property="og:description" content="Crée des vidéos animées dans un style anime expressif, avec narration et export mobile.">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.2.0">
+    <meta property="og:description" content="Crée des vidéos animées dans un style anime ou cartoon doux, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.1.0">
-    <meta name="twitter:description" content="Un personnage anime plus expressif, des émotions continues et l’export vidéo mobile.">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.2.0">
+    <meta name="twitter:description" content="Un personnage personnalisable, plus doux en mouvement, des émotions continues et l’export mobile.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -351,10 +351,12 @@
             <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · rapide et fluide</option><option value="1080">1080p · plus net, plus lourd</option></select></div>
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
+            <div class="form-group"><label>Personnage : couleur des cheveux</label><select id="settingCharHairColor"><option value="#1b1410">Noir</option><option value="#4b2e22">Brun</option><option value="#865632">Châtain</option><option value="#b27835">Cuivré</option><option value="#c8aa68">Blond</option><option value="#8d909b">Gris argenté</option></select></div>
             <div class="form-group"><label>Personnage : peau</label><select id="settingCharSkin"><option value="#4a2c1a">Ébène</option><option value="#6b4226">Brun foncé</option><option value="#8d5524">Brun</option><option value="#c68642">Caramel</option><option value="#f1c27d">Clair</option></select></div>
-            <div class="form-group"><label>Personnage : style du dessin</label><select id="settingCharArtStyle"><option value="anime">Anime · yeux expressifs et lumière colorée</option><option value="classic">Classique · rendu actuel</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Anime est le nouveau style par défaut; tu peux revenir au rendu classique à tout moment.</p></div>
+            <div class="form-group"><label>Personnage : style du dessin</label><select id="settingCharArtStyle"><option value="anime">Anime · frange en mèches et yeux brillants</option><option value="soft">Cartoon doux · visage rond et traits simples</option><option value="classic">Classique · rendu d’origine</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Choisis le rendu qui te plaît; tes autres réglages du personnage restent conservés.</p></div>
             <div class="form-group"><label>Personnage : couleur de la tenue</label><input type="color" id="settingCharColor" value="#1f3a5f"></div>
             <div class="form-group"><label>Personnage : effets</label><select id="settingCharFx"><option value="on">Pro : contours, lumière, ombre</option><option value="off">Léger : pour téléphone lent</option></select></div>
+            <div class="form-group"><label>Personnage : mouvements</label><select id="settingCharMotion"><option value="system">Selon les préférences de ton téléphone</option><option value="normal">Animation normale</option><option value="reduced">Mouvements doux et réduits</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Le mode doux atténue les secousses, les rebonds et les grands mouvements sans couper les expressions.</p></div>
             <div class="form-group"><label>Personnage : bruitages</label><select id="settingCharSfx"><option value="on">Activés (applaudissements, ding…)</option><option value="off">Coupés</option></select></div>
 <div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
                         <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
@@ -587,7 +589,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.1.0', channel: 'web', publicBuildId: 'videos-plus-3.1.0-story-beats' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.2.0', channel: 'web', publicBuildId: 'videos-plus-3.2.0-character-comfort' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -1192,7 +1194,7 @@ const BuiltinCharacter = (() => {
     const HALO_RGB = { sad: '98,174,255', fear: '106,222,210', angry: '255,102,112', love: '255,123,183', joy: '255,205,112', excited: '255,184,94', proud: '255,218,125', surprise: '190,151,255', doubt: '165,174,204', think: '171,186,221' };
     const cfg = () => {
         const c = Settings.get();
-        return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f', artStyle: c.charArtStyle === 'classic' ? 'classic' : 'anime' };
+        return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', hairColor: c.charHairColor || '#1b1410', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f', artStyle: c.charArtStyle === 'classic' ? 'classic' : c.charArtStyle === 'soft' ? 'soft' : 'anime' };
     };
     const mix = (hex, amt) => tint(hex, amt, 1);
     function ik(sx, sy, hx, hy, l1, l2, sd, out) {
@@ -1244,7 +1246,12 @@ const BuiltinCharacter = (() => {
         return LY;
     }
     const unit = (w, h) => Math.min(h * 0.94 / 10.2, (w || h) * 1.0 / 3.6);
-    let lite = false, slow = 0;
+    let lite = false, slow = 0, reducedMotionQuery = null;
+    function prefersReducedMotion() {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+        if (!reducedMotionQuery) reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        return reducedMotionQuery.matches;
+    }
     // le moteur d'export / de lecture signale chaque intervalle entre deux images : si le téléphone peine, les effets s'allègent tout seuls
     function noteFrame(ms) {
         if (lite) return false;
@@ -1252,9 +1259,26 @@ const BuiltinCharacter = (() => {
         if (slow >= 12) { lite = true; return true; }
         return false;
     }
+    function applyMotionComfort(a, scale) {
+        a.motionScale = scale;
+        if (scale >= 1) return a;
+        a.push = (a.push || 0) * 0.35;
+        a.jolt = (a.jolt || 0) * 0.15;
+        a.beat = (a.beat || 0) * 0.55;
+        a.sway = (a.sway || 0) * 0.65;
+        a.shake = (a.shake || 0) * 0.35;
+        a.nod = (a.nod || 0) * 0.65;
+        a.talkAmt = (a.talkAmt || 0) * 0.7;
+        a.stroke = (a.stroke || 0) * 0.7;
+        a.prep = (a.prep || 0) * 0.7;
+        if (Number.isFinite(a.camZ)) a.camZ = 1 + (a.camZ - 1) * 0.45;
+        return a;
+    }
     function draw(ctx, w, h, time, scene, pose) {
-        const a = ActingBrain.at(scene, time, pose);
         const appSettings = Settings.get();
+        const systemReduced = appSettings.charMotion !== 'normal' && prefersReducedMotion();
+        const motionScale = appSettings.charMotion === 'reduced' || systemReduced ? 0.45 : 1;
+        const a = applyMotionComfort(ActingBrain.at(scene, time, pose), motionScale);
         const fx = !lite && appSettings.charFx !== 'off';
         const u = unit(w, h);
         ctx.save();
@@ -1279,10 +1303,10 @@ const BuiltinCharacter = (() => {
         // mode « pro » : le personnage est dessiné dans un calque (contour encre + éclairage), à 15 images/s comme en animation « à deux »
         const S = zoom * cz > 1.25 ? 1.5 : 1;          // en gros plan, le calque est dessiné plus fin pour rester net
         const Wo = Math.ceil(h * 0.86 * S), Ho = Math.ceil(h * 1.08 * S), ax = Wo / 2, ay = Math.round(Ho * 0.9);
-        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), appearance = (appSettings.charArtStyle || 'anime') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f'), key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
+        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), appearance = (appSettings.charArtStyle || 'anime') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charHairColor || '#1b1410') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f') + '~' + (appSettings.charMotion || 'system') + '~' + motionScale, key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
         if (L.key !== key) {
             L.key = key;
-            const tq = twos / 15, aq = ActingBrain.at(scene, tq, pose);
+            const tq = twos / 15, aq = applyMotionComfort(ActingBrain.at(scene, tq, pose), motionScale);
             const o = L.off.getContext('2d'), d = Math.max(2, Math.round(h * 0.0055 * S));
             o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, Wo, Ho);
             o.save(); o.translate(ax, ay); o.scale(S, S); render(o, w, h, tq, aq, LipSync.open(scene, tq, pose), LipSync.vowel(scene, tq), pose, { noShadow: true }); o.restore();
@@ -1404,19 +1428,20 @@ const BuiltinCharacter = (() => {
 
     function render(ctx, w, h, time, a, open, vow, pose, opts) {
         opts = opts || {};
-        const c = cfg(), t = time, E = a.e, anime = c.artStyle !== 'classic';
+        const c = cfg(), t = time, E = a.e, anime = c.artStyle === 'anime', soft = c.artStyle === 'soft';
+        const motionScale = Number.isFinite(a.motionScale) ? clamp(a.motionScale, 0.2, 1) : 1, mt = t * motionScale;
         const u = unit(w, h);
         const skin = c.skin, skinDk = mix(skin, -0.22), skinLt = mix(skin, 0.16);
         const amb = a.ambient || pose || 'standing';
-        const gh = a.gesture ? gestureHands(a.gesture, a.gp, t, a.n, a.gside, a.prop) : null;
-        const gk = gh ? clamp(a.gw, 0, 1.12) : 0;
+        const gh = a.gesture ? gestureHands(a.gesture, a.gp, mt, a.n, a.gside, a.prop) : null;
+        const gk = gh ? clamp(a.gw, 0, 1.12) * motionScale : 0;
         // actions du corps entier choisies par l'histoire : courir, tomber, rire,
         // sauter, danser, pleurer, trembler et dormir
         const act = a.act || null, aq0 = clamp(a.gp || 0, 0, 1), aw0 = clamp(a.gw || 0, 0, 1);
-        const runK = act === 'run' ? aw0 : 0, laughK = act === 'laugh' ? aw0 : 0;
-        const smileK = a.gesture === 'smile' ? gk : 0, winkK = a.gesture === 'wink' ? gk : 0, turnK = act === 'turn' ? aw0 : 0;
-        const jumpK = act === 'jump' ? aw0 : 0, danceK = act === 'dance' ? aw0 : 0;
-        const cryK = act === 'cry' ? aw0 : 0, shakeK = act === 'shake' ? aw0 : 0, sleepK = act === 'sleep' ? aw0 : 0;
+        const runK = act === 'run' ? aw0 * motionScale : 0, laughK = act === 'laugh' ? aw0 * motionScale : 0;
+        const smileK = a.gesture === 'smile' ? gk : 0, winkK = a.gesture === 'wink' ? gk : 0, turnK = act === 'turn' ? aw0 * motionScale : 0;
+        const jumpK = act === 'jump' ? aw0 * motionScale : 0, danceK = act === 'dance' ? aw0 * motionScale : 0;
+        const cryK = act === 'cry' ? aw0 * motionScale : 0, shakeK = act === 'shake' ? aw0 * motionScale : 0, sleepK = act === 'sleep' ? aw0 * motionScale : 0;
         const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
         let fallK = 0, stumble = 0, dizzy = 0;
         if (act === 'fall') {      // trébuche -> tombe -> rebondit -> reste au sol, étourdi -> se relève
@@ -1425,9 +1450,10 @@ const BuiltinCharacter = (() => {
             stumble = q < 0.10 ? Math.sin(Math.PI * q / 0.10) : 0;
             dizzy = sm((q - 0.28) / 0.04) * (1 - sm((q - 0.64) / 0.06));
         }
+        fallK *= motionScale; stumble *= motionScale; dizzy *= motionScale;
         const jumpLift = jumpK * Math.sin(Math.PI * aq0) * 1.15;
-        const danceSwing = danceK * Math.sin(t * 8);
-        const shakeOffset = shakeK * Math.sin(t * 34) * 0.12;
+        const danceSwing = danceK * Math.sin(mt * 8);
+        const shakeOffset = shakeK * Math.sin(mt * 34) * 0.12;
         if (turnK) {
             const facing = Math.cos(Math.PI * aq0), sideScale = 0.16 + 0.84 * Math.abs(facing);
             ctx.scale(facing < 0 ? -sideScale : sideScale, 1);
@@ -1436,8 +1462,8 @@ const BuiltinCharacter = (() => {
             ctx.translate(shakeOffset + danceSwing * 0.12, -jumpLift + sleepK * 0.05);
             ctx.rotate(danceSwing * 0.09 + shakeK * Math.sin(t * 32) * 0.035 + sleepK * 0.08);
         }
-        const walk = amb === 'walking' ? t * 4.2 : (runK > 0 ? t * 9.5 : (danceK > 0 ? t * 7.5 : 0));
-        if (laughK > 0) { open = Math.max(open, laughK * (0.45 + 0.55 * Math.abs(Math.sin(t * 10.5)))); vow = 'aa'; }   // « ha ha ha » : la bouche s'ouvre et se ferme
+        const walk = amb === 'walking' ? mt * 4.2 : (runK > 0 ? mt * 9.5 : (danceK > 0 ? mt * 7.5 : 0));
+        if (laughK > 0) { open = Math.max(open, laughK * (0.45 + 0.55 * Math.abs(Math.sin(mt * 10.5)))); vow = 'aa'; }   // « ha ha ha » : la bouche s'ouvre et se ferme
         // visage : on mélange toutes les émotions actives
         const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat, -1, 1.3);
         const browAngle = clamp(1.0 * E.sad + 0.8 * E.fear + 0.3 * E.love - 1.0 * E.angry - 0.15 * E.doubt, -1, 1);
@@ -1447,15 +1473,15 @@ const BuiltinCharacter = (() => {
         const blush = clamp(E.love * 1.2 + E.joy * 0.5 + E.proud * 0.2 + smileK * 0.45, 0, 1);
         const asym = clamp(E.doubt + 0.5 * E.think, 0, 1);
         const sad = E.sad > 0.45, happy = E.joy + E.excited + E.love > 0.7;
-        const bounce = E.excited * Math.abs(Math.sin(t * 7)) * 0.1 + laughK * Math.abs(Math.sin(t * 10.5)) * 0.12;
-        const bob = (walk ? Math.abs(Math.sin(walk)) * (0.12 + 0.2 * runK) : (a.breath !== undefined ? a.breath : Math.sin(t * 1.6) * 0.035)) + E.sad * 0.08 - bounce + a.beat * 0.03;
+        const bounce = E.excited * Math.abs(Math.sin(mt * 7)) * 0.1 + laughK * Math.abs(Math.sin(mt * 10.5)) * 0.12;
+        const bob = ((walk ? Math.abs(Math.sin(walk)) * (0.12 + 0.2 * runK) : (a.breath !== undefined ? a.breath : Math.sin(mt * 1.6) * 0.035)) + E.sad * 0.08 - bounce + a.beat * 0.03) * motionScale;
         const shrug = gh && gh.shrug ? gk * 0.3 : 0;
-        const tilt = E.sad * 0.1 + Math.sin(t * 0.7) * 0.025 - E.think * 0.07 + E.doubt * 0.06 - E.proud * 0.03 + (gh && gh.tilt ? gh.tilt * gk : 0) + a.shake * 0.05 + a.nod * 0.0 + (open > 0.05 ? Math.sin(t * 7) * 0.015 * open : 0) - laughK * 0.1 + laughK * Math.sin(t * 21) * 0.03;
+        const tilt = (E.sad * 0.1 + Math.sin(mt * 0.7) * 0.025 - E.think * 0.07 + E.doubt * 0.06 - E.proud * 0.03 + (gh && gh.tilt ? gh.tilt * gk : 0) + a.shake * 0.05 + a.nod * 0.0 + (open > 0.05 ? Math.sin(mt * 7) * 0.015 * open : 0) - laughK * 0.1 + laughK * Math.sin(mt * 21) * 0.03) * motionScale;
         const nodY = a.nod * 0.1 + a.beat * 0.05 + E.sad * 0.05;
         const yaw = clamp(a.look.x * 0.5 + a.shake * 0.6, -1, 1);
         const outfitDk = mix(c.color, -0.3), outfitLt = mix(c.color, 0.2);
         const g = amb;
-        const sway = (a.sway || 0) + laughK * 0.35 * Math.sin(t * 10.5), lean = sway * 0.045 - (a.ant || 0) * 0.07;
+        const sway = (a.sway || 0) + laughK * 0.35 * Math.sin(mt * 10.5), lean = sway * 0.045 - (a.ant || 0) * 0.07 * motionScale;
 
         ctx.save(); ctx.translate(0, h * 0.04); ctx.scale(u, u); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
         // course : on court vers la caméra (il grossit un peu), traits de vitesse sur les côtés
@@ -1482,13 +1508,13 @@ const BuiltinCharacter = (() => {
 
         // cheveux longs derrière
         if (c.hair === 'long') {
-            ctx.fillStyle = '#120d0b'; ctx.beginPath();
+            ctx.fillStyle = c.hairColor; ctx.beginPath();
             ctx.moveTo(-1.08, -9.0 - bob); ctx.quadraticCurveTo(-1.55, -7.4, -1.3 + sway * 0.25, -6.5 - bob); ctx.lineTo(1.3 + sway * 0.25, -6.5 - bob);
             ctx.quadraticCurveTo(1.55, -7.4, 1.08, -9.0 - bob); ctx.closePath(); ctx.fill();
         }
 
         // ---- jambes
-        const legL = Math.sin(walk) * (0.3 + 0.5 * runK), legR = -legL;
+        const legL = Math.sin(walk) * (0.3 + 0.5 * runK) * motionScale, legR = -legL;
         const legColor = c.outfit === 'suit' ? outfitDk : c.outfit === 'tee' ? '#27324a' : c.outfit === 'boubou' ? mix(c.color, -0.1) : skin;
         const bareLegs = c.outfit === 'dress';
         [[-0.52, legL, Math.max(0, Math.cos(walk)) * 0.85 * runK], [0.52, legR, Math.max(0, -Math.cos(walk)) * 0.85 * runK]].forEach(([x, dx, lift]) => {
@@ -1541,13 +1567,13 @@ const BuiltinCharacter = (() => {
         ctx.restore();
 
         // ---- tête (pivot au cou)
-        ctx.save(); ctx.translate(lean, -7.1 + bob + nodY); ctx.rotate(tilt); ctx.scale(1.16, 1.16); ctx.translate(0, 7.1);
+        ctx.save(); ctx.translate(lean, -7.1 + bob + nodY); ctx.rotate(tilt); ctx.scale(soft ? 1.2 : 1.16, soft ? 1.18 : 1.16); ctx.translate(0, 7.1);
         const hy = -8.6;
         ctx.fillStyle = skinDk; ctx.beginPath(); ctx.ellipse(-0.98, hy + 0.12, 0.16, 0.26, 0, 0, TAU); ctx.ellipse(0.98, hy + 0.12, 0.16, 0.26, 0, 0, TAU); ctx.fill();   // oreilles
         const hg = ctx.createRadialGradient(-0.3, hy - 0.4, 0.2, 0, hy, 1.35); hg.addColorStop(0, skinLt); hg.addColorStop(1, skin);
         ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(0, hy, 0.96, 1.14, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
         if (c.hair === 'short' || c.hair === 'long') {
-            ctx.fillStyle = '#120d0b'; ctx.beginPath();
+            ctx.fillStyle = c.hairColor; ctx.beginPath();
             ctx.moveTo(-1.0, hy - 0.2); ctx.quadraticCurveTo(-1.15, hy - 1.35, 0, hy - 1.3); ctx.quadraticCurveTo(1.15, hy - 1.35, 1.0, hy - 0.2);
             ctx.quadraticCurveTo(0.95, hy - 0.75, 0.55, hy - 0.82); ctx.quadraticCurveTo(0, hy - 0.62, -0.55, hy - 0.82); ctx.quadraticCurveTo(-0.95, hy - 0.75, -1.0, hy - 0.2); ctx.closePath(); ctx.fill();
         } else if (c.hair === 'bald') {
@@ -1564,7 +1590,7 @@ const BuiltinCharacter = (() => {
         // Frange en mèches séparées : silhouette anime lisible, sans image externe ni allocation par image.
         if (anime && (c.hair === 'short' || c.hair === 'long')) {
             const hair = ctx.createLinearGradient(-0.7, hy - 1.1, 0.75, hy - 0.12);
-            hair.addColorStop(0, '#3b2b4b'); hair.addColorStop(0.38, '#211a29'); hair.addColorStop(1, '#0d1017');
+            hair.addColorStop(0, mix(c.hairColor, 0.18)); hair.addColorStop(0.38, c.hairColor); hair.addColorStop(1, mix(c.hairColor, -0.3));
             ctx.fillStyle = hair; ctx.beginPath();
             ctx.moveTo(-0.96, hy - 0.28);
             ctx.bezierCurveTo(-1.04, hy - 1.02, -0.57, hy - 1.2, -0.12, hy - 1.1);
@@ -1585,25 +1611,25 @@ const BuiltinCharacter = (() => {
         const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98);      // rire : yeux plissés ; sommeil : yeux fermés
         const look = a.eye || a.look;
         [-0.38, 0.38].forEach(x => {
-            const ey = hy + 0.02, eyeRx = anime ? 0.235 : 0.2, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(anime ? 0.28 : 0.24, (anime ? 0.205 : 0.17) * lid);
+            const ey = hy + 0.02, eyeRx = anime ? 0.235 : soft ? 0.22 : 0.2, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(anime ? 0.28 : soft ? 0.26 : 0.24, (anime ? 0.205 : soft ? 0.19 : 0.17) * lid);
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, 0, TAU); ctx.fill();
-            const ir = (anime ? 0.132 : 0.105) * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
+            const ir = (anime ? 0.132 : soft ? 0.118 : 0.105) * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
             const px = x + look.x * 0.06, py = ey + look.y * 0.035;
             const ig = ctx.createRadialGradient(px, py, ir * 0.1, px, py, ir); ig.addColorStop(0, '#6a3a18'); ig.addColorStop(0.65, '#3a1d0c'); ig.addColorStop(1, '#1b0e07');
             ctx.fillStyle = ig; ctx.beginPath(); ctx.ellipse(px, py, ir, Math.min(ir, ry * 0.98), 0, 0, TAU); ctx.fill();
             ctx.fillStyle = '#0a0503'; ctx.beginPath(); ctx.ellipse(px, py, ir * 0.45, Math.min(ir * 0.45, ry * 0.5), 0, 0, TAU); ctx.fill();
             if (anime && lid > 0.35) { ctx.strokeStyle = 'rgba(255,199,120,0.7)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.arc(px, py + ir * 0.16, ir * 0.78, 0.15, Math.PI - 0.15); ctx.stroke(); }
-            if (lid > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + 0.045, py - 0.05, anime ? 0.045 : 0.034, 0, TAU); ctx.fill(); ctx.globalAlpha = 0.78; ctx.beginPath(); ctx.arc(px - 0.045, py + 0.045, anime ? 0.021 : 0.016, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+            if (lid > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + 0.045, py - 0.05, anime ? 0.045 : soft ? 0.04 : 0.034, 0, TAU); ctx.fill(); ctx.globalAlpha = 0.78; ctx.beginPath(); ctx.arc(px - 0.045, py + 0.045, anime ? 0.021 : soft ? 0.019 : 0.016, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
                 if (anime && E.joy + E.love + E.excited + E.proud > 0.75) { ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(px - ir * 0.38, py + ir * 0.32, ir * 0.12, 0, TAU); ctx.fill(); }
             }
             ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.55, eyeRx, ry * 0.5, 0, 0, TAU); ctx.fill();
-            ctx.strokeStyle = anime ? '#180d18' : '#1a0f09'; ctx.lineWidth = anime ? 0.095 : 0.07; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
-            { const so = x < 0 ? -1 : 1; ctx.lineWidth = anime ? 0.05 : 0.04; ctx.beginPath(); ctx.moveTo(x + so * eyeRx * 0.92, ey - ry * 0.35); ctx.lineTo(x + so * eyeRx * 1.35, ey - ry * 0.85); ctx.moveTo(x + so * eyeRx * 0.72, ey - ry * 0.78); ctx.lineTo(x + so * eyeRx * 1.05, ey - ry * 1.2); ctx.stroke();
-              ctx.strokeStyle = skinDk; ctx.lineWidth = 0.03; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.25, eyeRx, ry * 1.45, 0, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.strokeStyle = anime ? '#180d18' : '#1a0f09'; }
+            ctx.strokeStyle = anime || soft ? '#180d18' : '#1a0f09'; ctx.lineWidth = anime ? 0.095 : soft ? 0.082 : 0.07; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+            { const so = x < 0 ? -1 : 1; ctx.lineWidth = anime ? 0.05 : soft ? 0.045 : 0.04; ctx.beginPath(); ctx.moveTo(x + so * eyeRx * 0.92, ey - ry * 0.35); ctx.lineTo(x + so * eyeRx * 1.35, ey - ry * 0.85); ctx.moveTo(x + so * eyeRx * 0.72, ey - ry * 0.78); ctx.lineTo(x + so * eyeRx * 1.05, ey - ry * 1.2); ctx.stroke();
+              ctx.strokeStyle = skinDk; ctx.lineWidth = 0.03; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.25, eyeRx, ry * 1.45, 0, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.strokeStyle = anime || soft ? '#180d18' : '#1a0f09'; }
             if (bl > 0.6) { ctx.beginPath(); ctx.moveTo(x - 0.2, ey); ctx.quadraticCurveTo(x, ey + 0.07, x + 0.2, ey); ctx.stroke(); }
         });
         // sourcils : hauteur, inclinaison et asymétrie selon l'émotion
-        ctx.strokeStyle = '#120d0b'; ctx.lineWidth = anime ? 0.105 : 0.085;
+        ctx.strokeStyle = '#120d0b'; ctx.lineWidth = anime ? 0.105 : soft ? 0.095 : 0.085;
         [-1, 1].forEach(sd => {
             const raise = browRaise + (sd < 0 ? 0.55 : -0.2) * asym;
             const x0 = sd * 0.62, x1 = sd * 0.14, by = hy - 0.36 - 0.17 * raise;
@@ -1615,7 +1641,7 @@ const BuiltinCharacter = (() => {
         ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.beginPath(); ctx.ellipse(0.03, hy + 0.05, 0.05, 0.14, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(30,10,5,0.45)'; ctx.beginPath(); ctx.ellipse(-0.075, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.ellipse(0.105, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.beginPath(); ctx.ellipse(0, hy + 1.0, 0.32, 0.1, 0, 0, TAU); ctx.fill();
-        if (blush > 0.25) { ctx.fillStyle = 'rgba(210,90,70,' + (anime ? 0.34 : 0.28) * blush + ')'; ctx.beginPath(); ctx.ellipse(-0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.ellipse(0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.fill(); if (anime) { ctx.strokeStyle = 'rgba(255,215,205,' + (0.55 * blush) + ')'; ctx.lineWidth = 0.025; [-1, 1].forEach(sd => { for (let j = 0; j < 3; j++) { ctx.beginPath(); ctx.moveTo(sd * (0.49 + j * 0.09), hy + 0.32); ctx.lineTo(sd * (0.48 + j * 0.09), hy + 0.42); ctx.stroke(); } }); } }
+        if (blush > 0.25) { ctx.fillStyle = 'rgba(210,90,70,' + (anime ? 0.34 : soft ? 0.31 : 0.28) * blush + ')'; ctx.beginPath(); ctx.ellipse(-0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.ellipse(0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.fill(); if (anime) { ctx.strokeStyle = 'rgba(255,215,205,' + (0.55 * blush) + ')'; ctx.lineWidth = 0.025; [-1, 1].forEach(sd => { for (let j = 0; j < 3; j++) { ctx.beginPath(); ctx.moveTo(sd * (0.49 + j * 0.09), hy + 0.32); ctx.lineTo(sd * (0.48 + j * 0.09), hy + 0.42); ctx.stroke(); } }); } }
         // bouche : repos selon l'émotion, ou forme de la voyelle quand il parle
         const my = hy + 0.68, lip = mix(skin, -0.38);
         if (open < 0.06) {
@@ -1678,12 +1704,12 @@ const BuiltinCharacter = (() => {
         ctx.save(); ctx.translate(lean, bob * 0.6);
         const sleeve = c.outfit === 'tee' || c.outfit === 'dress' ? c.color : (c.outfit === 'suit' ? outfitDk : outfitLt);
         const longSleeve = c.outfit === 'suit' || c.outfit === 'boubou';
-        const T = ambientTargets(g, t, a.beat, open > 0.02 ? 1 : 0, a);
+        const T = ambientTargets(g, mt, a.beat, open > 0.02 ? 1 : 0, a);
         const drawHand = (x, y, mode, n, sc, sd, rot) => {
             ctx.save(); ctx.translate(x, y); ctx.scale(sc * 1.2, sc * 1.2);
             if (!HAND_UPRIGHT[mode]) ctx.rotate(rot || 0);          // la main prolonge l'avant-bras
             ctx.translate(0, -0.2);                               // le poignet rejoint le bas de la paume, pas son centre
-            paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, t);
+            paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, mt);
             ctx.restore();
         };
 
@@ -3837,11 +3863,13 @@ function loadSettingsUI() {
     setVal('settingModel', c.model || 'gemini-3.6-flash');
     setVal('settingQuality', c.quality || '720');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
-    setVal('settingCharArtStyle', c.charArtStyle === 'classic' ? 'classic' : 'anime');
+    setVal('settingCharArtStyle', c.charArtStyle === 'classic' || c.charArtStyle === 'soft' ? c.charArtStyle : 'anime');
     setVal('settingCharHair', c.charHair || 'short');
+    setVal('settingCharHairColor', c.charHairColor || '#1b1410');
     setVal('settingCharSkin', c.charSkin || '#6b4226');
     setVal('settingCharColor', c.charColor || '#1f3a5f');
     setVal('settingCharFx', c.charFx === 'off' ? 'off' : 'on');
+    setVal('settingCharMotion', ['normal', 'reduced'].includes(c.charMotion) ? c.charMotion : 'system');
     setVal('settingCharSfx', c.charSfx === 'off' ? 'off' : 'on');
     refreshVoiceStatus();
     setVal('settingSpeechifyVoice', c.speechifyVoice || 'adeline');
@@ -3858,9 +3886,11 @@ function saveSettings() {
         charOutfit: getVal('settingCharOutfit'),
         charArtStyle: getVal('settingCharArtStyle', 'anime'),
         charHair: getVal('settingCharHair'),
+        charHairColor: getVal('settingCharHairColor', '#1b1410'),
         charSkin: getVal('settingCharSkin'),
         charColor: getVal('settingCharColor'),
         charFx: getVal('settingCharFx', 'on'),
+        charMotion: getVal('settingCharMotion', 'system'),
         charSfx: getVal('settingCharSfx', 'on'),
     });
     saveSpeechifyFields();
