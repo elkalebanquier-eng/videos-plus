@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.0.9-anime-layer-pilot">
-    <title>Vidéos Plus — VideoStory 3.0.9</title>
-    <meta name="description" content="Vidéos Plus 3.0.9 ajoute un style anime expressif et des histoires à émotions persistantes.">
+    <meta name="videostory-build" content="3.1.0-story-beats">
+    <title>Vidéos Plus — VideoStory 3.1.0</title>
+    <meta name="description" content="Vidéos Plus 3.1.0 améliore la structure narrative, les émotions et les brouillons multilingues.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.0.9">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.1.0">
     <meta property="og:description" content="Crée des vidéos animées dans un style anime expressif, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.0.9">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.1.0">
     <meta name="twitter:description" content="Un personnage anime plus expressif, des émotions continues et l’export vidéo mobile.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -587,7 +587,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.0.9', channel: 'web', publicBuildId: 'videos-plus-3.0.9-anime-layer-pilot' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.1.0', channel: 'web', publicBuildId: 'videos-plus-3.1.0-story-beats' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -1865,17 +1865,22 @@ const LEX = {
     turn: ['mais', 'pourtant', 'cependant', 'soudain', 'jusqu', 'until', 'but', 'however', 'suddenly', 'pero'],
     result: ['resultat', 'aujourd', 'finalement', 'depuis', 'desormais', 'today', 'finally', 'now', 'hoy'],
     topics: {
-        finance: 'argent cash dollar euro fcfa franc million milliard riche fortune pauvre dette salaire invest epargne banque profit benefice prix money dinero'.split(' '),
+        finance: 'argent cash dollar euro fcfa franc million milliard riche fortune pauvre dette salaire invest epargne banque profit benefice prix money dinero deuda ahorro banco'.split(' '),
         business: 'entreprise societe startup patron client marche vente vendre bureau business company empresa ceo directeur fondateur commerce marque concurren strateg valeur'.split(' '),
-        tech: 'techno digital innovation logiciel application appli internet ordinateur intelligence robot smartphone telephone mobile phone iphone android code software reseau'.split(' '),
-        motivation: 'reve courage oser reussir persever discipline travail objectif ambition croire victoire motivation dream effort habitude'.split(' '),
-        story: 'histoire enfance village famille grandir autrefois jadis jeune'.split(' '),
-        health: 'sante medecin malade sport corps manger dormir health doctor'.split(' '),
-        education: 'ecole etudiant apprendre universite cours savoir education learn student diplome'.split(' '),
-        travel: 'voyage avion pays ville monde vol travel plane afrique'.split(' '),
-        love: 'amour coeur mariage couple love heart ami'.split(' '),
+        tech: 'techno digital innovation logiciel application appli internet ordinateur intelligence robot smartphone telephone mobile phone iphone android code software reseau tecnologia aplicacion movil telefono tecnologia'.split(' '),
+        motivation: 'reve courage oser reussir persever discipline travail objectif ambition croire victoire motivation dream effort habitude sueno esfuerzo habito'.split(' '),
+        story: 'histoire infancia village familia grandir autrefois jadis jeune historia crecer joven'.split(' '),
+        health: 'sante medecin malade sport corps manger dormir health doctor salud medico enfermo cuerpo comer dormir'.split(' '),
+        education: 'ecole etudiant apprendre universite cours savoir education learn student diplome escuela estudiante aprender universidad clase conocimiento educacion'.split(' '),
+        travel: 'voyage avion pays ville monde vol travel plane afrique viaje pais ciudad vuelo'.split(' '),
+        love: 'amour coeur mariage couple love heart ami amor corazon pareja amigo'.split(' '),
+        history: 'historique siecle antique ancien empire royaume roi reine guerre independance colonial history century ancient empire king queen war historico siglo antiguo reino guerra'.split(' '),
+        science: 'science scientifique recherche preuve experience laboratoire physique chimie biologie espace astronomie research experiment laboratory physics chemistry biology astronomy ciencia cientifico investigacion experimento laboratorio fisica quimica biologia'.split(' '),
+        comedy: 'humour humouriste blague comique drole rire sketch joke funny comedy humor humorista chiste comedia gracioso risa'.split(' '),
+        sport: 'sport football basket basketball match athlete equipe entrainement coach tournoi olympique tennis boxe deporte futbol baloncesto partido atleta equipo entrenamiento entrenador'.split(' '),
+        food: 'recette cuisine aliment plat ingredient cuire cuisson nourriture chef recipe cooking food receta cocina alimento plato comida cocinar ingrediente'.split(' '),
     },
-    defaultObject: { finance: 'money', business: 'building', tech: 'computer', motivation: 'trophy', story: 'house', health: 'heart', education: 'book', travel: 'globe', love: 'heart' },
+    defaultObject: { finance: 'money', business: 'building', tech: 'computer', motivation: 'trophy', story: 'house', health: 'heart', education: 'book', travel: 'globe', love: 'heart', history: 'book', science: 'bulb', comedy: 'trophy', sport: 'trophy', food: 'heart' },
 };
 
 const OBJECT_RULES = [
@@ -2241,6 +2246,8 @@ class ScenePlanner {
         if (ctx.topic === 'motivation' || pos > 0.5) return 'motivation';
         if (neg > 0.4) return 'suspense';
         if (['business', 'finance', 'tech'].includes(ctx.topic)) return 'business';
+        if (['science', 'history', 'education', 'travel', 'health', 'food'].includes(ctx.topic)) return 'documentary';
+        if (['sport', 'comedy'].includes(ctx.topic)) return 'motivation';
         if (['story', 'love'].includes(ctx.topic)) return 'emotional';
         return 'documentary';
     }
@@ -4025,9 +4032,10 @@ function generateScenes() { return runBrain(false); }
 function autoPilot() { return runBrain(true); }
 
 function writeLocalScript(idea, lang) {
-    // Une demande vide devient une histoire universelle plutôt qu'une erreur ou une phrase vide.
-    idea = String(idea || '').trim() || 'une petite décision qui change une vie';
-    const clean = idea.trim().replace(/[?.!]+$/, '');
+    // Brouillon sans faits inventés : une idée courte reçoit une progression narrative claire.
+    const defaults = { fr: 'une petite décision qui change une vie', en: 'one small decision that changes a life', es: 'una pequeña decisión que cambia una vida' };
+    idea = String(idea || '').trim() || defaults[lang] || defaults.fr;
+    const clean = idea.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').replace(/^[¿¡\s]+/g, '').replace(/[?.!¡¿\s]+$/g, '').trim();
     const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
     const planner = new ScenePlanner();
     const tokens = tokenize(idea);
@@ -4037,35 +4045,83 @@ function writeLocalScript(idea, lang) {
         if (n > best) { best = n; topic = name; }
     }
     if (topic === 'finance') topic = 'business';
-    const isEn = (lang === 'en' || lang === 'es' || planner.detectLanguage(idea) === 'en');
+    if (topic === 'love') topic = 'story';
+    const scriptTopic = ({ science: 'tech', history: 'story', sport: 'motivation', comedy: 'story' })[topic] || topic;
+    const language = ['fr', 'en', 'es'].includes(lang) ? lang : (planner.detectLanguage(idea) || 'fr');
     const T = {
         fr: {
-            hook: /^(comment|pourquoi|quand|combien|que|qu|quel)/i.test(clean) ? cap(clean) + ' ?' : 'Vous connaissez vraiment ' + clean + ' ?',
-            motivation: ['Tout le monde commence au même endroit : au début.', 'Le doute arrive. Les critiques aussi.', 'Mais ceux qui réussissent continuent, jour après jour.', 'Petit à petit, les résultats arrivent.', 'Alors n\'attendez plus. Faites le premier pas dès aujourd\'hui.'],
-            business: ['Tout a commencé avec une simple idée.', 'Mais le marché a changé plus vite que prévu.', 'Beaucoup ont ignoré les signaux d\'alerte.', 'Ceux qui se sont adaptés ont pris la tête du marché.', 'La leçon est simple : adaptez-vous avant qu\'il ne soit trop tard.'],
-            tech: ['La technologie avance plus vite que jamais.', 'Chaque année, de nouveaux outils changent nos habitudes.', 'Mais tout le monde n\'en profite pas de la même façon.', 'Ceux qui apprennent aujourd\'hui prennent une longueur d\'avance.', 'Alors découvrez, testez et partagez.'],
-            story: ['Tout a commencé il y a longtemps.', 'Personne ne croyait que cela pouvait réussir.', 'Mais un jour, tout a changé.', 'Aujourd\'hui, cette histoire inspire beaucoup de monde.', 'Et la vôtre, quelle sera-t-elle ?'],
-            general: ['Voici ce qu\'il faut retenir.', 'D\'abord, comprendre les bases.', 'Ensuite, passer à l\'action.', 'Les résultats viennent avec la régularité.', 'Partagez cette vidéo avec quelqu\'un qui en a besoin.'],
+            hook: s => /^(comment|pourquoi|quand|combien|que|qu|quel|quelle|quels|quelles|ou|est-ce)/.test(norm(s)) ? cap(s) + ' ?' : 'Et si on regardait « ' + s + ' » sous un angle plus clair ?',
+            body: {
+                motivation: ['Tout le monde commence quelque part : par un premier pas.', 'Puis le doute ou les obstacles mettent la décision à l’épreuve.', 'Le déclic arrive quand on choisit une action réaliste plutôt que d’attendre le moment parfait.', 'Les petits progrès finissent par dessiner un chemin.', 'À retenir : avance étape par étape, sans promettre un résultat magique.'],
+                business: ['Commençons par le besoin réel derrière cette idée.', 'Le défi est de vérifier ce que les clients veulent vraiment, au lieu de le supposer.', 'Le tournant vient d’un test simple et d’un retour concret.', 'Ces retours aident à décider quoi garder ou ajuster.', 'À retenir : observe, teste, puis améliore.'],
+                tech: ['Pour comprendre ce sujet, partons de l’usage concret.', 'Un outil peut aider, mais il ne règle pas chaque problème à lui seul.', 'Le déclic est de comparer le besoin, les limites et les choix possibles.', 'On peut alors expliquer ce que la technologie fait — et ce qu’elle ne fait pas.', 'À retenir : vérifie l’usage et les limites avant d’adopter un outil.'],
+                story: ['Toute histoire commence par une personne qui veut quelque chose.', 'Un obstacle vient compliquer son chemin.', 'Un choix ou une rencontre fait alors basculer la situation.', 'La fin montre ce qui a changé et ce que le personnage a appris.', 'À retenir : une bonne histoire relie un choix à une conséquence.'],
+                health: ['La santé dépend du contexte et de la personne.', 'Le risque est de prendre un conseil général pour un diagnostic individuel.', 'Le bon réflexe est de vérifier la source et de demander l’avis d’un professionnel si nécessaire.', 'Cela permet de mieux comprendre les options sans tirer de conclusion hâtive.', 'À retenir : cette vidéo informe, elle ne remplace pas un avis médical.'],
+                education: ['Un apprentissage commence par une question précise.', 'Une notion difficile devient plus claire quand on la découpe en petites étapes.', 'Un exemple concret aide à relier l’idée à la pratique.', 'On vérifie ensuite qu’on peut l’expliquer avec ses propres mots.', 'À retenir : comprendre, essayer, puis réexpliquer.'],
+                travel: ['Un voyage commence par un objectif et une destination.', 'Le trajet dépend aussi du temps, du budget et des besoins de chacun.', 'Comparer ces éléments aide à choisir un plan réaliste.', 'Vérifier les informations locales permet de préparer la suite.', 'À retenir : adapte le voyage à ta situation, pas à une promesse générale.'],
+                general: ['Commençons par préciser ce que cette idée signifie.', 'La difficulté est de séparer les faits, les hypothèses et les opinions.', 'Une question bien posée révèle souvent ce qu’il faut vérifier ensuite.', 'On peut alors tirer une conclusion prudente et utile.', 'À retenir : comprends le contexte avant de décider.'],
+            },
+            bridge: {
+                motivation: 'Le changement se construit par des décisions répétées, pas par une promesse instantanée.',
+                business: 'La suite dépendra des besoins observés, pas d’une certitude inventée.',
+                tech: 'La meilleure solution dépend du besoin et des limites réelles de l’outil.',
+                story: 'Le sens vient du choix du personnage et de ses conséquences.',
+                health: 'Si la situation est personnelle, un professionnel de santé peut aider à l’évaluer.',
+                education: 'La prochaine étape est de pratiquer sur un nouvel exemple.',
+                travel: 'Avant de partir, vérifie les règles et conditions à jour de ta destination.',
+                general: 'Garde la question centrale en tête et vérifie les éléments importants.',
+            },
         },
         en: {
-            hook: /^(how|why|when|what|who)/i.test(clean) ? cap(clean) + '?' : 'Do you really know ' + clean + '?',
-            motivation: ['Everyone starts in the same place: at the beginning.', 'Doubt shows up. So do critics.', 'But those who succeed keep going, day after day.', 'Little by little, the results come.', 'So don\'t wait. Take the first step today.'],
-            business: ['It all started with a simple idea.', 'But the market changed faster than expected.', 'Many ignored the warning signs.', 'Those who adapted took the lead.', 'The lesson is simple: adapt before it\'s too late.'],
-            tech: ['Technology is moving faster than ever.', 'Every year, new tools change our habits.', 'But not everyone benefits the same way.', 'Those who learn today get ahead.', 'So discover, try and share.'],
-            story: ['It all began a long time ago.', 'Nobody believed it could work.', 'But one day, everything changed.', 'Today, this story inspires many people.', 'And yours, what will it be?'],
-            general: ['Here is what you need to remember.', 'First, understand the basics.', 'Then, take action.', 'Results come with consistency.', 'Share this video with someone who needs it.'],
+            hook: s => /^(how|why|when|what|who|where|which)/.test(norm(s)) ? cap(s) + '?' : 'What is worth understanding about "' + s + '"?',
+            body: {
+                motivation: ['Everyone starts somewhere: with a first step.', 'Then doubt or obstacles test that decision.', 'The turning point is choosing a realistic action instead of waiting for a perfect moment.', 'Small steps can gradually make a path visible.', 'Takeaway: keep moving step by step; no outcome is guaranteed.'],
+                business: ['Start with the real need behind the idea.', 'The challenge is to learn what customers want instead of assuming.', 'A small test and honest feedback can change the direction.', 'That feedback helps decide what to keep or improve.', 'Takeaway: observe, test, then refine.'],
+                tech: ['Start with the real-world use of the technology.', 'A tool can help, but it cannot solve every problem by itself.', 'The turning point is comparing the need, the limits, and the available choices.', 'Then it is clearer what the technology can — and cannot — do.', 'Takeaway: check the use case and limits before adopting a tool.'],
+                story: ['Every story begins with someone who wants something.', 'An obstacle makes the path harder.', 'A choice or encounter changes the direction.', 'The ending shows what changed and what the character learned.', 'Takeaway: connect a choice to its consequence.'],
+                health: ['Health depends on the person and the context.', 'A general tip is not the same as an individual diagnosis.', 'Check reliable sources and ask a qualified professional when needed.', 'That helps people understand options without rushing to conclusions.', 'Takeaway: this video is information, not medical advice.'],
+                education: ['Learning starts with a clear question.', 'A difficult idea becomes easier when broken into steps.', 'A concrete example connects the idea to practice.', 'Then check whether you can explain it in your own words.', 'Takeaway: understand, try, and explain it back.'],
+                travel: ['A trip starts with a goal and a destination.', 'The route also depends on time, budget, and personal needs.', 'Comparing those factors helps build a realistic plan.', 'Checking local information prepares you for the next step.', 'Takeaway: fit the trip to your situation, not a broad promise.'],
+                general: ['First, clarify what the idea means.', 'The challenge is separating facts, assumptions, and opinions.', 'A better question often reveals what should be checked next.', 'Then you can draw a careful, useful conclusion.', 'Takeaway: understand the context before deciding.'],
+            },
+            bridge: {
+                motivation: 'Progress comes from repeated choices, not an instant promise.',
+                business: 'The next move should follow observed needs, not invented certainty.',
+                tech: 'The best solution depends on the real need and the tool’s limits.',
+                story: 'Meaning comes from the character’s choice and its consequences.',
+                health: 'For a personal situation, a qualified health professional can help assess it.',
+                education: 'The next step is to practise with another example.',
+                travel: 'Before departure, check current rules and conditions at the destination.',
+                general: 'Keep the central question in view and verify the important details.',
+            },
+        },
+        es: {
+            hook: s => /^(como|por que|cuando|cuanto|que|quien|donde|cual)/.test(norm(s)) ? '¿' + cap(s) + '?' : '¿Qué conviene entender sobre «' + s + '»?',
+            body: {
+                motivation: ['Todo el mundo empieza en algún punto: con un primer paso.', 'Después, las dudas o los obstáculos ponen a prueba esa decisión.', 'El cambio llega al elegir una acción realista en vez de esperar el momento perfecto.', 'Los pequeños avances pueden abrir un camino.', 'Idea clave: avanza paso a paso; ningún resultado está garantizado.'],
+                business: ['Empecemos por la necesidad real detrás de la idea.', 'El reto es averiguar qué quieren los clientes, en vez de suponerlo.', 'Una prueba pequeña y una opinión sincera pueden cambiar el rumbo.', 'Esa información ayuda a decidir qué mantener o mejorar.', 'Idea clave: observa, prueba y mejora.'],
+                tech: ['Empecemos por el uso concreto de esta tecnología.', 'Una herramienta puede ayudar, pero no resuelve todos los problemas.', 'El cambio está en comparar la necesidad, los límites y las opciones.', 'Así queda más claro lo que la tecnología puede hacer y lo que no.', 'Idea clave: comprueba el uso y sus límites antes de adoptarla.'],
+                story: ['Toda historia empieza con alguien que quiere algo.', 'Un obstáculo complica el camino.', 'Una decisión o un encuentro cambia el rumbo.', 'El final muestra qué cambió y qué aprendió el personaje.', 'Idea clave: conecta una decisión con sus consecuencias.'],
+                health: ['La salud depende de cada persona y su contexto.', 'Un consejo general no sustituye un diagnóstico individual.', 'Conviene revisar fuentes fiables y consultar a un profesional cuando haga falta.', 'Así se entienden las opciones sin sacar conclusiones apresuradas.', 'Idea clave: este vídeo informa, no ofrece un diagnóstico médico.'],
+                education: ['Aprender empieza con una pregunta clara.', 'Una idea difícil se entiende mejor cuando se divide en pasos.', 'Un ejemplo concreto conecta la idea con la práctica.', 'Después, comprueba si puedes explicarla con tus propias palabras.', 'Idea clave: comprende, practica y explícalo.'],
+                travel: ['Un viaje empieza con un objetivo y un destino.', 'La ruta también depende del tiempo, el presupuesto y las necesidades.', 'Comparar estos factores ayuda a preparar un plan realista.', 'Consultar la información local ayuda a preparar el siguiente paso.', 'Idea clave: adapta el viaje a tu situación, no a una promesa general.'],
+                general: ['Primero, aclaremos qué significa esta idea.', 'El reto es separar hechos, suposiciones y opiniones.', 'Una buena pregunta revela qué conviene comprobar.', 'Así se puede llegar a una conclusión prudente y útil.', 'Idea clave: entiende el contexto antes de decidir.'],
+            },
+            bridge: {
+                motivation: 'El progreso nace de decisiones repetidas, no de una promesa inmediata.',
+                business: 'El siguiente paso depende de necesidades observadas, no de certezas inventadas.',
+                tech: 'La mejor solución depende de la necesidad y de los límites reales de la herramienta.',
+                story: 'El sentido nace de las decisiones del personaje y sus consecuencias.',
+                health: 'Para una situación personal, consulta con un profesional de salud cualificado.',
+                education: 'El siguiente paso es practicar con otro ejemplo.',
+                travel: 'Antes de salir, comprueba las reglas y condiciones actuales del destino.',
+                general: 'Mantén la pregunta central y verifica los detalles importantes.',
+            },
         },
     };
-    const L = T[isEn ? 'en' : 'fr'];
-    const body = L[['motivation', 'business', 'tech', 'story'].includes(topic) ? topic : (topic === 'love' ? 'story' : 'general')];
-    const bridge = {
-        motivation: 'La différence ne vient pas d’un grand miracle, mais de petits choix répétés avec patience.',
-        business: 'Le vrai avantage est de voir le changement avant les autres et de décider avec lucidité.',
-        tech: 'Le bon outil aide, mais c’est la manière de l’utiliser qui crée le résultat.',
-        story: 'Ce qui semblait impossible est devenu possible grâce à une décision prise au bon moment.',
-        general: 'Retenez surtout cette idée et appliquez-la à votre propre situation dès maintenant.',
-    }[topic] || 'Retenez surtout cette idée et appliquez-la à votre propre situation dès maintenant.';
-    return [L.hook, ...body.slice(0, -1), bridge, body[body.length - 1]].join(' ');
+    const L = T[language], body = L.body[scriptTopic] || L.body.general;
+    const bridge = L.bridge[scriptTopic] || L.bridge.general;
+    return [L.hook(clean), ...body.slice(0, -1), bridge, body[body.length - 1]].join(' ');
 }
 
 async function llmBrain({ idea, script, options, cfg }) {
@@ -4075,7 +4131,7 @@ async function llmBrain({ idea, script, options, cfg }) {
     const anims = ANIMATIONS.map(a => a.id).join(', ');
     const task = script
         ? 'Use exactly this script (do not rewrite it, only split it into scenes of 1-2 short sentences):\n"""\n' + script.slice(0, 6000) + '\n"""'
-        : 'Write a narrated script about: "' + idea.slice(0, 300) + '". Target 45-60 seconds (100-135 spoken words). Write a strong hook in the first sentence, then a clear arc (context, tension, turning point, lesson, call to action). Use simple spoken language for a West African audience. Make 7-10 scenes, normally 8-18 words per scene, never rush the narration, and end with a concrete call to action. Split it into scenes of 1-2 short sentences.';
+        : 'Write a narrated script about: "' + idea.slice(0, 300) + '". Target 45-60 seconds (100-135 spoken words). Build a clear arc (honest hook, context, tension, turning point, payoff, takeaway, and at most one relevant call to action). Open a curiosity question and answer it before the ending; do not use clickbait, pressure, or a promise the story cannot keep. Do not invent real-world names, statistics, quotes, medical claims, causes, or outcomes that were not supplied or are not well-established. Every scene must add a new fact, action, or emotional beat; remove filler and repeated ideas. Use simple spoken language for a West African audience. Make 7-10 scenes, normally 8-18 words per scene, never rush the narration, and split it into scenes of 1-2 short sentences.';
     const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. First build a private semantic model of each sentence: subject, literal action, object, time, cause, consequence, uncertainty, negation, metaphor, contrast and emotional intensity. Then choose visuals that make the meaning obvious in the first second.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +

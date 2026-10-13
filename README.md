@@ -1,6 +1,8 @@
-# Vidéos Plus — VideoStory 3.0.9
+# Vidéos Plus — VideoStory 3.1.0
 
-VideoStory 3.0.9 transforme des histoires en vidéos animées avec une direction artistique cartoon, un mode Anime pilote, un cerveau narratif universel, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.1.0 transforme des histoires en vidéos animées avec une direction artistique cartoon, un mode Anime pilote, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+
+Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
 ## Fonctionnalités
 
@@ -8,6 +10,7 @@ VideoStory 3.0.9 transforme des histoires en vidéos animées avec une direction
 - Actions du personnage déclenchées par le récit : courir, tomber, rire, sauter, danser, pleurer, trembler et dormir, avec expressions, mouvements, effets visuels et bruitages associés.
 - Compréhension sémantique renforcée : négations, contrastes, actions littérales et sujet de l’action sont pris en compte avant de choisir le jeu du personnage.
 - Réalisateur IA contextuel : il modélise le sujet, l’action, la cause, la conséquence, l’hypothèse et l’arc émotionnel avant de choisir un geste, puis filtre les gestes corporels non littéraux, négatifs ou hypothétiques.
+- Structure d’histoire plus captivante : accroche honnête, question résolue, progression sans scènes de remplissage et conclusion utile ; les consignes IA évitent les promesses invérifiables, le clickbait et la pression artificielle.
 - Réactions d’attention : sourire profond, clin d’œil complice, retournement, regard caméra, célébration et changements d’expression synchronisés aux moments clés.
 - Mise en scène des lieux : église, mosquée, marché et puits sont reconnus ; le personnage marche vers la destination, s’arrête devant elle et peut puiser de l’eau avec un geste et un bruitage synchronisés.
 - Interface et décors cartoon premium : grille technique retirée, badge éditorial nettoyé, paysages doux, nuages, collines et profondeur visuelle autour du personnage.
