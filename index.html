@@ -2241,7 +2241,7 @@ class ScenePlanner {
         const el = (o) => scene.elements.push({ rotation: 0, opacity: 1, visible: true, ...o });
 
         if (L === 'hero') {
-            el({ id: 'char-' + id, type: 'character', assetId: plan.charId, pose: plan.pose, position: { x: 0.5, y: 0.62 }, size: { width: 0.5, height: 0.5 }, zIndex: 10, entrance: { ...charEnter, delay: same ? 0.05 : D(dChar) } });
+            el({ id: 'char-' + id, type: 'character', assetId: plan.charId, pose: plan.pose, position: { x: 0.5, y: 0.67 }, size: { width: 0.5, height: 0.5 }, zIndex: 10, entrance: { ...charEnter, delay: same ? 0.05 : D(dChar) } });
             plan.objects.forEach((o, i) => {
                 const isLocation = location && o === location.id;
                 const position = isLocation ? { x: 0.78, y: 0.36 } : { x: plan.objects.length === 1 ? 0.72 : 0.28 + i * 0.44, y: 0.3 };
@@ -2258,9 +2258,9 @@ class ScenePlanner {
             const big = L === 'bigtext';
             el({
                 id: 'text-' + id, type: 'text', content: plan.keyText,
-                fontFamily: 'Inter, sans-serif', fontSize: big ? 120 : 58, fontWeight: 800, color: '#FFFFFF',
+                fontFamily: 'Inter, sans-serif', fontSize: big ? 120 : 52, fontWeight: 800, color: '#FFFFFF',
                 backgroundColor: big ? null : 'rgba(0,0,0,0.6)',
-                position: { x: 0.5, y: big ? 0.36 : 0.12 }, size: { width: 0.85, height: 0.12 }, zIndex: 20,
+                position: { x: 0.5, y: big ? 0.36 : 0.12 }, size: { width: 0.85, height: big ? 0.18 : 0.1 }, zIndex: 20,
                 animation: { type: ent.text, duration: 0.5, delay: D(dText) },
             });
         }
@@ -3076,7 +3076,7 @@ class CanvasRenderer {
         const ease=EASE.outCubic(clamp(t/.38,0,1));
         // Badge éditorial : ne jamais afficher les marqueurs internes « étape » du moteur.
         const rawBeat = String(scene.socialBeat || '').trim();
-        const beat = /^(?:étape|etape)\s*\d+/i.test(rawBeat) ? 'MOMENT CLÉ' : (rawBeat || 'MOMENT CLÉ');
+        const beat = /^(?:étape|etape)\s*\d+/i.test(rawBeat) ? 'MOMENT CLÉ' : rawBeat.toUpperCase() === 'HOOK' ? 'ACCROCHE' : rawBeat.toUpperCase() === 'CTA' ? 'À VOUS DE JOUER' : (rawBeat || 'MOMENT CLÉ');
         ctx.save(); ctx.globalAlpha=ease; ctx.fillStyle='rgba(255,255,255,.94)'; ctx.strokeStyle=accent; ctx.lineWidth=2*k;
         const bw=Math.min(W*.72,360*k), bh=36*k, bx=(W-bw)/2, by=22*k;
         ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,14*k); ctx.fill(); ctx.stroke();
@@ -3104,7 +3104,9 @@ class CanvasRenderer {
         ctx.restore();
         }
         // mot-clé en bas, distinct des sous-titres
-        const label=(scene.keyText||'').slice(0,22); if(label){ctx.save();const w=Math.min(W*.86,520*k),h=62*k;const x=(W-w)/2,y=H*.70;ctx.globalAlpha=clamp((p-.08)*4,0,1);ctx.fillStyle='#fff';ctx.strokeStyle=accent;ctx.lineWidth=4*k;ctx.beginPath();ctx.roundRect(x,y,w,h,14*k);ctx.fill();ctx.stroke();ctx.fillStyle='#111936';ctx.font='900 '+(24*k)+'px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,W/2,y+h/2);ctx.restore();}
+        const key = String(scene.keyText || '').trim();
+        const alreadyShown = key && (scene.elements || []).some(e => e.type === 'text' && e.visible !== false && String(e.content || '').trim() === key);
+        const label = alreadyShown ? '' : key.slice(0,22); if(label){ctx.save();const w=Math.min(W*.86,520*k),h=62*k;const x=(W-w)/2,y=H*.70;ctx.globalAlpha=clamp((p-.08)*4,0,1);ctx.fillStyle='#fff';ctx.strokeStyle=accent;ctx.lineWidth=4*k;ctx.beginPath();ctx.roundRect(x,y,w,h,14*k);ctx.fill();ctx.stroke();ctx.fillStyle='#111936';ctx.font='900 '+(24*k)+'px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,W/2,y+h/2);ctx.restore();}
         // Aucun curseur de progression interne dans la vidéo : le montage reste propre.
     }
 
