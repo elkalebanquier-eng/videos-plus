@@ -1,6 +1,6 @@
-# Vidéos Plus — VideoStory 3.2.1
+# Vidéos Plus — VideoStory 3.2.2
 
-VideoStory 3.2.1 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.2.2 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
@@ -18,8 +18,11 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Analyse multi-domaines : le réalisateur distingue sujet, action, cause, conséquence, négation, hypothèse, métaphore et arc émotionnel dans les histoires personnelles, éducatives, scientifiques, commerciales ou fictives.
 - Personnage vectoriel expressif avec regard, respiration, clignements et gestes synchronisés au rythme de la parole, aux pauses et aux accents.
 - Mains retravaillées : doigts plus fins et distincts, pouce placé du bon côté sur chaque main, ombrage léger de la paume et rotation du poignet moins extrême pour éviter les poses tordues.
+- Profil « Présentation professionnelle » sélectionné par défaut : mouvements plus sobres, bras moins tendus, poignets stabilisés et gestes simples limités pour garder une posture lisible.
+- Raccords de scènes continus sans fondu croisé du même personnage : une coupe courte remplace la superposition qui créait des bras et des mains fantômes.
 - Export 1080p recommandé par défaut : rendu du personnage suréchantillonné et animé à 30 i/s, sans réduire la qualité à cause des ralentissements de l’aperçu.
 - Débit d’encodage vidéo adapté à la résolution (jusqu’à environ 8 Mbit/s en 1080p portrait/paysage) et audio AAC WebCodecs amélioré à 128 kbit/s; choix 720p conservé pour les appareils limités.
+- Si le chemin de secours mesure qu’un appareil ne peut pas suivre le rendu 1080p, il teste le 720p puis peut descendre à 540p si nécessaire pour éviter une vidéo saccadée; il l’indique à l’écran sans changer la préférence enregistrée.
 - Trois rendus sélectionnables : Anime expressif, Cartoon doux aux traits plus arrondis, ou Classique.
 - Personnage personnalisable : tenue, coiffure, couleur des cheveux, carnation et couleur de la tenue.
 - Mouvements adaptés au confort : suivi des préférences « réduire les animations » du téléphone, réglage manuel pour mouvements doux, ou animation normale; les expressions et le synchronisme de parole restent actifs.

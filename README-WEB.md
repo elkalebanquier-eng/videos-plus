@@ -1,6 +1,6 @@
-# Vidéos Plus — version web 3.2.1
+# Vidéos Plus — version web 3.2.2
 
-`index.html` contient VideoStory 3.2.1, avec des mains redessinées (doigts affinés, pouce placé selon le côté, flexion du poignet adoucie), un rendu du personnage suréchantillonné à 30 i/s à l’export, un débit vidéo amélioré en 1080p et un débit AAC WebCodecs de 128 kbit/s. La résolution recommandée est 1080p; 720p reste disponible pour les appareils limités. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
+`index.html` contient VideoStory 3.2.2 : mains redessinées (doigts affinés, pouce placé selon le côté, flexion du poignet adoucie), profil de mouvements professionnels par défaut et raccords sans fondu croisé lorsque le même personnage continue. Le rendu export suréchantillonné à 30 i/s, le débit vidéo 1080p et l’AAC WebCodecs à 128 kbit/s restent disponibles selon les encodeurs de l’appareil. La résolution recommandée est 1080p; 720p reste disponible pour les appareils limités. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
 
 ## Déploiement et Speechify
 
@@ -10,7 +10,7 @@ Dans l’app, ouvre **Paramètres → Charger mes voix** pour vérifier l’acc�
 
 Les exports sonores de **2 minutes ou plus** utilisent par prudence le chemin d’enregistrement compatible plutôt que le muxage AAC WebCodecs, afin d’éviter les pistes audio absentes ou coupées sur certains appareils. Le format final (MP4/WebM) dépend des capacités du navigateur. Pour un export long, garde l’application au premier plan jusqu’à la fin.
 
-L’export haute qualité peut être plus lent et consommer davantage de mémoire sur téléphone; sélectionne **Paramètres → Qualité de l’export vidéo → 720p** si l’appareil chauffe, manque de mémoire ou interrompt l’export.
+L’export haute qualité peut être plus lent et consommer davantage de mémoire sur téléphone. Le chemin de secours teste le coût du rendu, essaie le 720p puis peut passer en 540p si nécessaire pour éviter une vidéo saccadée; un message l’indique et la préférence enregistrée ne change pas. Sélectionne aussi **Paramètres → Qualité de l’export vidéo → 720p** si l’appareil chauffe, manque de mémoire ou interrompt l’export.
 
 ## Changer soi-même le lien Vercel
 
