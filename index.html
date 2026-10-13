@@ -532,8 +532,36 @@ async function saveBlobToDevice(blob, filename) {
     const link = document.createElement('a');
     link.href = url; link.download = filename; link.rel = 'noopener'; link.style.display = 'none';
     document.body.appendChild(link); link.click(); link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 30 * 60 * 1000);
+    // Après un long export le navigateur peut bloquer le téléchargement automatique (geste utilisateur perdu) :
+    // on propose toujours un bouton manuel pour que le MP4 ne soit jamais perdu.
+    offerManualDownload(url, blob, filename);
     return true;
+}
+function offerManualDownload(url, blob, filename) {
+    try {
+        const old = document.getElementById('dlFallbackBar'); if (old) old.remove();
+        const bar = document.createElement('div'); bar.id = 'dlFallbackBar';
+        bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:100000;background:#1f2937;color:#fff;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 30px rgba(0,0,0,.45);font:14px system-ui,sans-serif';
+        const msg = document.createElement('span'); msg.style.flex = '1 1 100%';
+        msg.textContent = '✅ Vidéo prête (' + (blob.size / 1048576).toFixed(1) + ' Mo). Si le téléchargement n’a pas démarré :';
+        const btnCss = 'background:#6366f1;color:#fff;border:0;border-radius:10px;padding:9px 14px;font:600 14px system-ui,sans-serif;text-decoration:none;cursor:pointer';
+        const a = document.createElement('a'); a.href = url; a.download = filename; a.textContent = '⬇️ Télécharger'; a.style.cssText = btnCss;
+        bar.append(msg, a);
+        try {
+            const file = new File([blob], filename, { type: blob.type || 'video/mp4' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                const sh = document.createElement('button'); sh.textContent = '📤 Partager'; sh.style.cssText = btnCss;
+                sh.onclick = () => navigator.share({ files: [file], title: filename }).catch(() => {});
+                bar.append(sh);
+            }
+        } catch (_) { /* partage indisponible */ }
+        const x = document.createElement('button'); x.textContent = '✕'; x.setAttribute('aria-label', 'Fermer');
+        x.style.cssText = 'background:transparent;color:#fff;border:1px solid #fff5;border-radius:10px;padding:9px 12px;font:14px system-ui,sans-serif;margin-left:auto;cursor:pointer';
+        x.onclick = () => bar.remove(); bar.append(x);
+        document.body.appendChild(bar);
+        setTimeout(() => { if (bar.isConnected) bar.remove(); }, 90000);
+    } catch (e) { console.warn('Bouton de téléchargement manuel indisponible', e); }
 }
 let exportStartedAt = 0;
 function showLoading(text, showProgress = false) {
@@ -5106,23 +5134,37 @@ const WCExport = (() => {
     const FPS = 30, SR = 44100;
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const yieldNow = () => new Promise(res => { const c = new MessageChannel(); c.port1.onmessage = () => { c.port1.close(); res(); }; c.port2.postMessage(0); });
+    // Anti-blocage : si l'encodeur ou le rendu ne répond plus, on lève une erreur (=> nouvel essai / mode compatible)
+    const withTimeout = (p, ms, label) => new Promise((res, rej) => {
+        const t = setTimeout(() => rej(Object.assign(new Error('Délai dépassé : ' + label), { code: 'WC_TIMEOUT' })), ms);
+        Promise.resolve(p).then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
+    });
+    const waitQueue = async (encoder, max, getErr, label) => {
+        let last = encoder.encodeQueueSize, t0 = performance.now();
+        while (encoder.encodeQueueSize > max) {
+            const f = getErr(); if (f) throw f;
+            if (encoder.encodeQueueSize < last) { last = encoder.encodeQueueSize; t0 = performance.now(); }
+            if (performance.now() - t0 > 20000) throw Object.assign(new Error('Encodeur bloqué (' + label + ')'), { code: 'WC_TIMEOUT' });
+            await sleep(4);
+        }
+    };
     const toU8 = d => d instanceof ArrayBuffer ? new Uint8Array(d.slice(0)) : new Uint8Array(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength));
 
-    function dims(project) {
+    function dims(project, lite) {
         const cfg = Settings.get();
         const base = RESOLUTIONS[project.format] || RESOLUTIONS['9:16'];
         const sc = cfg.quality === '720' ? 2 / 3 : 1;
         const W = Math.round(base.width * sc / 2) * 2, H = Math.round(base.height * sc / 2) * 2;
-        return { W, H, bitrate: exportVideoBitrate(W, H, cfg.quality) };
+        return { W, H, bitrate: Math.round(exportVideoBitrate(W, H, cfg.quality) * (lite ? 0.6 : 1)) };
     }
 
     // Renvoie { codec, aacOK } si l'appareil sait encoder du H.264, sinon null (=> ancien mode).
-    async function plan(project) {
+    async function plan(project, lite) {
         try {
             if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof MessageChannel === 'undefined') return null;
-            const { W, H, bitrate } = dims(project);
+            const { W, H, bitrate } = dims(project, lite);
             let codec = '';
-            for (const c of ['avc1.640028', 'avc1.4d0028', 'avc1.42E028']) {
+            for (const c of (lite ? ['avc1.42E028', 'avc1.4d0028'] : ['avc1.640028', 'avc1.4d0028', 'avc1.42E028'])) {
                 try {
                     const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
                     if (r && r.supported) { codec = c; break; }
@@ -5136,7 +5178,7 @@ const WCExport = (() => {
                     aacOK = !!(r && r.supported);
                 }
             } catch (_) { aacOK = false; }
-            return { codec, aacOK };
+            return { codec, aacOK, lite: !!lite };
         } catch (e) { return null; }
     }
 
@@ -5160,7 +5202,7 @@ const WCExport = (() => {
         if (project.music) MusicEngine.start(project.music, 0, total, oc.destination, oc);
         if (useVoice) VoiceStudio.scheduleExport(project, oc, oc.destination, 0.05);
         ActingSfx.schedule(project, oc, oc.destination, 0.05, 0);
-        const buf = await oc.startRendering();
+        const buf = await withTimeout(oc.startRendering(), 60000 + total * 1500, 'calcul du son');
         MusicEngine.stop(); VoiceStudio.stopExport(); ActingSfx.stop();
         return normalizePcm(buf.getChannelData(0), useVoice);
     }
@@ -5184,16 +5226,16 @@ const WCExport = (() => {
             const ad = new AudioData({ format: 'f32-planar', sampleRate: SR, numberOfFrames: n, numberOfChannels: 1, timestamp: Math.round(i * 1e6 / SR), data: part });
             enc.encode(ad); ad.close();
             if (err) throw err;
-            if (enc.encodeQueueSize > 8) await sleep(2); else if (k % 64 === 0) await yieldNow();
+            if (enc.encodeQueueSize > 8) await waitQueue(enc, 8, () => err, 'audio'); else if (k % 64 === 0) await yieldNow();
         }
-        await enc.flush();
+        await withTimeout(enc.flush(), 60000, 'finalisation du son');
         if (err) throw err;
         try { enc.close(); } catch (_) { /* déjà fermé */ }
         mux.setAsc(asc || Uint8Array.of(0x12, 0x08)); // AAC-LC, 44,1 kHz, mono
     }
 
     async function run(project, pl, useVoice, hasAudio, onStatus) {
-        const { W, H, bitrate } = dims(project);
+        const { W, H, bitrate } = dims(project, pl.lite);
         const timeline = new TimelineEngine(project.scenes);
         const total = timeline.getTotalDuration();
         const frames = Math.max(1, Math.round(total * FPS));
@@ -5229,19 +5271,21 @@ const WCExport = (() => {
                 if (fatal) throw fatal;
                 const t = Math.min(i / FPS, Math.max(0, total - 0.001));
                 const r = timeline.getSceneAtTime(t);
-                if (r) await renderer.renderScene(r.scene, r.timeInScene);
+                if (r) { try { await withTimeout(renderer.renderScene(r.scene, r.timeInScene), 8000, 'dessin de la scène'); } catch (e) { if (e.code !== 'WC_TIMEOUT') throw e; /* on garde l'image précédente */ } }
                 const vf = new VideoFrame(renderer.canvas, { timestamp: Math.round(i * 1e6 / FPS), duration: frameUs });
                 enc.v.encode(vf, { keyFrame: i % (FPS * 2) === 0 });
                 vf.close();
-                while (enc.v.encodeQueueSize > 4) { if (fatal) throw fatal; await sleep(4); }
+                if (enc.v.encodeQueueSize > 4) await waitQueue(enc.v, 4, () => fatal, 'vidéo');
                 if (i % 5 === 0) updateProgress(i / frames);
                 if (i % 2 === 0) await yieldNow();
             }
-            await enc.v.flush();
+            await withTimeout(enc.v.flush(), 60000 + frames * 30, 'finalisation vidéo');
             if (fatal) throw fatal;
             try { enc.v.close(); } catch (_) { /* déjà fermé */ }
             updateProgress(1);
-            return { blob: mux.finish(), W, H, withAudio, frames };
+            const out = mux.finish();
+            if (!out || out.size < 1024) throw new Error('MP4 vide');
+            return { blob: out, W, H, withAudio, frames };
         } catch (e) {
             try { if (enc.v && enc.v.state !== 'closed') enc.v.close(); } catch (_) {}
             try { if (enc.a && enc.a.state !== 'closed') enc.a.close(); } catch (_) {}
@@ -5305,7 +5349,8 @@ async function exportVideo() {
     // Par prudence, les vidéos sonores longues empruntent l’enregistreur temps réel,
     // plus compatible que le muxage AAC WebCodecs sur certains appareils.
     const longAudioCompatibilityMode = durationSeconds >= 120 && wantsAudio && typeof MediaRecorder !== 'undefined';
-    const wcPlan = longAudioCompatibilityMode ? null : detectedWcPlan;
+    // Les vidéos longues restent en MP4 (WebCodecs) : le mode WebM n'est qu'un dernier recours.
+    const wcPlan = detectedWcPlan;
     const requestedLongExport = durationSeconds > 300;
     let directWriter = null;
     let directWriterCancelled = false;
@@ -5348,7 +5393,7 @@ async function exportVideo() {
     }
     showLoading('Export en cours... garde l’écran allumé', true);
     updateProgress(0);
-    try { await Character.prepare(state.project); } catch (e) { console.warn('Personnage', e); }
+    try { await Promise.race([Character.prepare(state.project), new Promise(r => setTimeout(r, 15000))]); } catch (e) { console.warn('Personnage', e); }
     // --- Export MP4 moderne (WebCodecs) : vrai MP4 H.264/AAC, 30 i/s constantes, durée correcte ---
     if (wcPlan) {
         const hasAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
@@ -5356,11 +5401,21 @@ async function exportVideo() {
             console.warn('Encodeur AAC absent : mode compatible');
         } else {
             let res = null;
-            try {
-                res = await WCExport.run(state.project, wcPlan, useVoice, hasAudio, txt => showLoading(txt, true));
-            } catch (e) {
-                console.warn('Export MP4 moderne échoué, mode compatible', e);
-                if (e && e.code === 'VOICE_EXPORT_INVALID') { hideLoading(); showToast(e.message, 'error'); return; }
+            for (let attempt = 0; attempt < 2 && !res; attempt++) {
+                const plan = attempt === 0 ? wcPlan : await WCExport.plan(state.project, true);
+                if (!plan || (hasAudio && !plan.aacOK)) break;
+                try {
+                    res = await WCExport.run(state.project, plan, useVoice, hasAudio, txt => showLoading(txt, true));
+                } catch (e) {
+                    console.warn('Export MP4 moderne échoué (essai ' + (attempt + 1) + ')', e);
+                    if (e && e.code === 'VOICE_EXPORT_INVALID') { hideLoading(); showToast(e.message, 'error'); return; }
+                    if (attempt === 0) showToast('Nouvel essai MP4 en mode sécurisé…', 'error');
+                    showLoading('Export MP4 (mode sécurisé)... garde l\'écran allumé', true);
+                    updateProgress(0);
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+            if (!res) {
                 showToast('MP4 moderne indisponible sur cet appareil : mode compatible…', 'error');
                 showLoading('Export en cours... garde l\'écran allumé', true);
                 updateProgress(0);
