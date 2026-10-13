@@ -5512,8 +5512,8 @@ async function exportVideo() {
             } else { chunks.push(e.data); recordedBytes += e.data.size || 0; }
         };
         const recordingComplete = new Promise((resolve, reject) => {
-            // La finalisation peut prendre longtemps sur Android pour un fichier de 5 à 10 minutes.
-            const finalizeTimeout = Math.max(120000, Math.min(900000, total * 5000));
+            // Laisser un peu de marge aux appareils lents sans bloquer une courte vidéo pendant 2 minutes.
+            const finalizeTimeout = Math.max(15000, Math.min(120000, total * 5000));
             const timer = setTimeout(() => reject(new Error('Délai de finalisation dépassé après ' + Math.round(finalizeTimeout / 1000) + ' s')), finalizeTimeout);
             mediaRecorder.onerror = e => { recorderError = e; clearTimeout(timer); reject(new Error('Enregistreur vidéo indisponible')); };
             mediaRecorder.onstop = () => { clearTimeout(timer); if (recorderError) reject(recorderError); else resolve(nativeStream || directWriter ? null : new Blob(chunks, { type: actualMime })); };
