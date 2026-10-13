@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.3.0-pastel-clay-interface">
-    <title>Vidéos Plus — VideoStory 3.3.0</title>
-    <meta name="description" content="Vidéos Plus 3.3.0 : crée des dessins animés à partir de texte dans une interface pastel tactile, avec un personnage expressif et un export mobile.">
+    <meta name="videostory-build" content="3.3.1-audio-export-guard">
+    <title>Vidéos Plus — VideoStory 3.3.1</title>
+    <meta name="description" content="Vidéos Plus 3.3.1 : narration vérifiée et mix audio renforcé à l’export, dans le studio pastel tactile.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,11 +16,11 @@
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.0">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.1">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.0">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.1">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -197,7 +197,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.0">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.1">
 </head>
 <body>
 
@@ -598,7 +598,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.0', channel: 'web', publicBuildId: 'videos-plus-3.3.0-pastel-clay-interface' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.1', channel: 'web', publicBuildId: 'videos-plus-3.3.1-audio-export-guard' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -2434,6 +2434,15 @@ const VoiceStudio = (() => {
     const engineOn = () => true; // La clé reste uniquement côté serveur dans SPEECHIFY_API_KEY.
     const supported = () => !!(window.AudioContext || window.webkitAudioContext);
     const clean = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 2000);
+    function bufferPeak(buffer) {
+        let peak = 0;
+        for (let c = 0; c < buffer.numberOfChannels; c++) {
+            const data = buffer.getChannelData(c);
+            for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+        }
+        return peak;
+    }
+    function voiceExportError(message) { const e = new Error(message); e.code = 'VOICE_EXPORT_INVALID'; return e; }
     function b64ToArrayBuffer(b64) {
         const bin = atob(b64), out = new Uint8Array(bin.length);
         for (let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
@@ -2451,6 +2460,7 @@ const VoiceStudio = (() => {
             if (!j.audio_data) throw new Error('Speechify n’a pas renvoyé de données audio.');
             let buf;
             try { buf = await getAudioCtx().decodeAudioData(b64ToArrayBuffer(j.audio_data)); } catch (e) { throw new Error('Speechify : audio reçu mais illisible sur cet appareil.'); }
+            if (!buf || !buf.length || bufferPeak(buf) < 0.001) throw voiceExportError('Speechify a renvoyé une narration silencieuse. Réessaie la génération avant l’export.');
             cache.set(key, buf); try { SyncBrain.register(input, buf); SyncBrain.setMarks(input, j.speech_marks, buf.duration); } catch (_) {}
             return buf;
         });
@@ -2473,18 +2483,21 @@ const VoiceStudio = (() => {
         chip('🎙️ Création de la voix Speechify…'); synth(scene.narration).then(b=>{chip(null);const off=stillCurrent();if(b&&off!==null)playBuffer(scene,b,off);}).catch(e=>{chip(null);showToast(e.message,'error');});
         return true;
     }
+    function narrationCount(project) { return (project && project.scenes || []).filter(s => clean(s.narration)).length; }
     async function prepareProject(project,onProgress) {
-        if(!engineOn()) return {done:0,changed:false}; let done=0; const scenes=project.scenes.filter(s=>clean(s.narration));
-        for(const sc of scenes){const b=await synth(sc.narration);done++;if(onProgress)onProgress(done,scenes.length);if(b){const need=Math.ceil((b.duration/1.12+.5)*10)/10;if(need>sc.duration+.05){sc.duration=need;sc.duration=Math.min(sc.duration,30);}}}
-        return {done,changed:false};
+        const scenes = (project && project.scenes || []).filter(s => clean(s.narration));
+        if(!engineOn()) return {done:0,total:scenes.length,changed:false};
+        let done=0,changed=false;
+        for(const sc of scenes){const b=await synth(sc.narration);if(!b)throw voiceExportError('Une narration n’a pas pu être préparée.');done++;if(onProgress)onProgress(done,scenes.length);const need=Math.ceil((b.duration/1.12+.5)*10)/10;if(need>sc.duration+.05){sc.duration=Math.min(need,30);changed=true;}}
+        return {done,total:scenes.length,changed};
     }
     async function prefetch(project,onChanged){ if(!project||!engineOn())return; try{await prepareProject(project,(i,n)=>chip('🎙️ Speechify '+i+'/'+n));chip(null);if(onChanged)onChanged();}catch(e){chip(null);console.warn(e);} }
-    function scheduleExport(project,actx,dest,t0){let start=0,n=0;project.scenes.forEach(sc=>{const key=modelFor()+'|'+voiceFor()+'|'+clean(sc.narration),b=cache.get(key);if(b){const src=actx.createBufferSource();src.buffer=b;src.playbackRate.value=rateFor(sc,b);src.connect(dest);src.start(t0+start+.15);exportSources.push(src);n++;}start+=sc.duration;});return n;}
+    function scheduleExport(project,actx,dest,t0){let start=0,n=0;const expected=narrationCount(project);(project.scenes||[]).forEach(sc=>{const text=clean(sc.narration);if(text){const key=modelFor()+'|'+voiceFor()+'|'+text,b=cache.get(key);if(b){const peak=bufferPeak(b);if(peak<0.001)throw voiceExportError('La voix préparée est silencieuse; l’export a été arrêté.');const src=actx.createBufferSource(),gain=actx.createGain();src.buffer=b;src.playbackRate.value=rateFor(sc,b);gain.gain.value=Math.min(6,Math.max(1,0.7/peak));src.connect(gain);gain.connect(dest);src.start(t0+start+.15);exportSources.push(src);n++;}}start+=sc.duration;});if(n!==expected)throw voiceExportError('Narration manquante dans la piste audio ('+n+'/'+expected+' scènes). L’export silencieux a été bloqué.');return n;}
     function stopExport(){exportSources.forEach(s=>{try{s.stop();}catch(_){}});exportSources=[];}
     function chip(text,action){const el=document.getElementById('voiceChip');if(!el)return;if(!text){el.style.display='none';el.onclick=null;return;}el.textContent=text;el.style.display='block';el.style.cursor=action?'pointer':'default';el.onclick=action||null;}
     function offerChip(project){if(!engineOn())chip('🎙️ Configure Speechify dans Paramètres',()=>showScreen('settingsScreen'));else chip(null);}
     async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Speechify est momentanément indisponible côté serveur. Réessaie plus tard.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
-    return {listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,LABEL};
+    return {listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,narrationCount,LABEL};
 })();
 
 // ===== CERVEAU DE SYNCHRO : regarde l'histoire et l'audio pour caler sous-titres, bouche et bras =====
@@ -5060,6 +5073,17 @@ const WCExport = (() => {
     }
 
     // Tout le son de la vidéo (musique + voix + bruitages) calculé hors temps réel, mono 44,1 kHz.
+    function normalizePcm(pcm, requireVoice) {
+        let peak = 0;
+        for (let i = 0; i < pcm.length; i++) peak = Math.max(peak, Math.abs(pcm[i]));
+        if (requireVoice && peak < 0.0005) { const e = new Error('La narration a été planifiée, mais le mix rendu est silencieux. Aucun fichier muet n’a été enregistré.'); e.code = 'VOICE_EXPORT_INVALID'; throw e; }
+        if (peak > 0 && peak < 0.708) {
+            const gain = Math.min(8, 0.708 / peak);
+            if (gain > 1.001) for (let i = 0; i < pcm.length; i++) pcm[i] *= gain;
+        }
+        return pcm;
+    }
+
     async function renderAudio(project, total, useVoice, hasAudio) {
         const len = Math.ceil((total + 0.3) * SR);
         if (!hasAudio) return new Float32Array(len);
@@ -5070,7 +5094,7 @@ const WCExport = (() => {
         ActingSfx.schedule(project, oc, oc.destination, 0.05, 0);
         const buf = await oc.startRendering();
         MusicEngine.stop(); VoiceStudio.stopExport(); ActingSfx.stop();
-        return buf.getChannelData(0);
+        return normalizePcm(buf.getChannelData(0), useVoice);
     }
 
     async function encodeAudio(pcm, mux, encRef) {
@@ -5105,7 +5129,7 @@ const WCExport = (() => {
         const timeline = new TimelineEngine(project.scenes);
         const total = timeline.getTotalDuration();
         const frames = Math.max(1, Math.round(total * FPS));
-        const withAudio = !!pl.aacOK;
+        const withAudio = !!pl.aacOK && !!hasAudio;
         const mux = Mp4Mux.create({ width: W, height: H, fps: FPS, sampleRate: SR, channels: 1, withAudio });
         const enc = { v: null, a: null };
         let fatal = null, lock = null;
@@ -5239,17 +5263,23 @@ async function exportVideo() {
     showLoading(requestedLongExport ? 'Export long en cours… ne ferme pas l’application' : 'Export en cours... garde l\'écran allumé', true);
     updateProgress(0);
     let useVoice = false;
-    if (VoiceStudio.engineOn() && VoiceStudio.supported()) {
-        {
-            try {
-                const r = await VoiceStudio.prepareProject(state.project, (i, n) => { showLoading('Voix naturelle : ' + i + '/' + n + '…', true); updateProgress(i / n); });
-                if (r.changed) refreshAfterVoice();
-                useVoice = r.done > 0;
-            } catch (e) { console.warn('Voix export', e); showToast('Voix indisponible : export sans voix', 'error'); }
-            showLoading('Export en cours... garde l\'écran allumé', true);
-            updateProgress(0);
+    const expectedVoiceCount = VoiceStudio.narrationCount(state.project);
+    if (expectedVoiceCount > 0) {
+        try {
+            if (!VoiceStudio.engineOn() || !VoiceStudio.supported()) throw new Error('la synthèse vocale n’est pas prise en charge sur cet appareil.');
+            const r = await VoiceStudio.prepareProject(state.project, (i, n) => { showLoading('Voix naturelle : ' + i + '/' + n + '…', true); updateProgress(i / n); });
+            if (r.changed) refreshAfterVoice();
+            if (r.done !== expectedVoiceCount || r.total !== expectedVoiceCount) throw new Error('une ou plusieurs scènes n’ont pas reçu leur voix.');
+            useVoice = true;
+        } catch (e) {
+            console.warn('Voix export', e);
+            hideLoading();
+            showToast('Export annulé : narration non vérifiée. ' + (e.message || 'Vérifie la connexion Speechify puis réessaie.'), 'error');
+            return;
         }
     }
+    showLoading('Export en cours... garde l’écran allumé', true);
+    updateProgress(0);
     try { await Character.prepare(state.project); } catch (e) { console.warn('Personnage', e); }
     // --- Export MP4 moderne (WebCodecs) : vrai MP4 H.264/AAC, 30 i/s constantes, durée correcte ---
     if (wcPlan) {
@@ -5262,6 +5292,7 @@ async function exportVideo() {
                 res = await WCExport.run(state.project, wcPlan, useVoice, hasAudio, txt => showLoading(txt, true));
             } catch (e) {
                 console.warn('Export MP4 moderne échoué, mode compatible', e);
+                if (e && e.code === 'VOICE_EXPORT_INVALID') { hideLoading(); showToast(e.message, 'error'); return; }
                 showToast('MP4 moderne indisponible sur cet appareil : mode compatible…', 'error');
                 showLoading('Export en cours... garde l\'écran allumé', true);
                 updateProgress(0);
@@ -5273,7 +5304,7 @@ async function exportVideo() {
                     const fname = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
                     const saved = await saveBlobToDevice(res.blob, fname);
                     hideLoading();
-                    if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 30 i/s' + (hasAudio ? ', avec son' : ', sans son') + ')');
+                    if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 30 i/s' + (useVoice ? ', narration incluse' : hasAudio ? ', son inclus' : ', sans son') + ')');
                 } catch (e) {
                     console.error('Enregistrement', e);
                     hideLoading();
@@ -5340,16 +5371,26 @@ async function exportVideo() {
 
         // Piste audio : la voix Speechify est un AudioBuffer et doit passer par
         // MediaStreamDestination ; la voix native du navigateur, elle, ne peut pas être capturée.
-        let audioDest = null;
+        let audioDest = null, audioMix = null;
+        const wantsExportAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
         try {
             const actx = getAudioCtx();
-            const wantsExportAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
             if (actx && wantsExportAudio) {
                 await actx.resume();
+                if (actx.state !== 'running') throw new Error('le moteur audio est resté suspendu.');
                 audioDest = actx.createMediaStreamDestination();
-                audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+                const audioTrack = audioDest.stream.getAudioTracks()[0];
+                if (!audioTrack) throw new Error('aucune piste audio n’a été créée.');
+                audioTrack.enabled = true;
+                stream.addTrack(audioTrack);
+                const compressor = actx.createDynamicsCompressor();
+                compressor.threshold.value = -18; compressor.knee.value = 18; compressor.ratio.value = 4;
+                compressor.attack.value = 0.003; compressor.release.value = 0.25;
+                audioMix = actx.createGain(); audioMix.gain.value = 1.5;
+                audioMix.connect(compressor); compressor.connect(audioDest);
             }
-        } catch (e) { console.warn('Audio export indisponible', e); audioDest = null; }
+        } catch (e) { console.warn('Audio export indisponible', e); audioDest = null; audioMix = null; }
+        if (wantsExportAudio && !audioDest) throw new Error('Export interrompu : la piste audio n’a pas pu être activée sur cet appareil.');
 
         const mime = audioDest ? (pickAudioRecorderMime() || pickRecorderMime()) : pickRecorderMime();
         let mediaRecorder;
@@ -5396,10 +5437,10 @@ async function exportVideo() {
         mediaRecorder.start(1000);
         if (manualFrameCapture && videoTrack) videoTrack.requestFrame();
         let voiceN = 0;
-        if (audioDest && state.project.music) MusicEngine.start(state.project.music, 0, total, audioDest);
-        if (audioDest && useVoice) voiceN = VoiceStudio.scheduleExport(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05);
-        if (audioDest) ActingSfx.schedule(state.project, getAudioCtx(), audioDest, getAudioCtx().currentTime + 0.05, 0);
-        if (useVoice && voiceN === 0) throw new Error('Narration Speechify préparée mais absente de la piste audio exportée');
+        if (audioDest && state.project.music) MusicEngine.start(state.project.music, 0, total, audioMix || audioDest);
+        if (audioDest && useVoice) voiceN = VoiceStudio.scheduleExport(state.project, getAudioCtx(), audioMix || audioDest, getAudioCtx().currentTime + 0.05);
+        if (audioDest) ActingSfx.schedule(state.project, getAudioCtx(), audioMix || audioDest, getAudioCtx().currentTime + 0.05, 0);
+        if (useVoice && voiceN !== expectedVoiceCount) { const e = new Error('La narration n’a pas été intégrée pour toutes les scènes.'); e.code = 'VOICE_EXPORT_INVALID'; throw e; }
 
         // Horloge déterministe : aucune image ni scène n’est sautée à l’export.
         // L’aperçu et le fichier téléchargé suivent exactement la même timeline.
@@ -5462,7 +5503,7 @@ async function exportVideo() {
         VoiceStudio.stopExport();
         if (stream) stream.getTracks().forEach(tr => tr.stop());
         hideLoading();
-        showToast('Export interrompu. Vérifie l’espace disponible puis réessaie.', 'error');
+        showToast(error && error.code === 'VOICE_EXPORT_INVALID' ? error.message : 'Export interrompu. Vérifie l’espace disponible puis réessaie.', 'error');
     }
 }
 

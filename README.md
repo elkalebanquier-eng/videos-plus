@@ -1,6 +1,6 @@
-# Vidéos Plus — VideoStory 3.3.0
+# Vidéos Plus — VideoStory 3.3.1
 
-VideoStory 3.3.0 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Son interface adopte désormais un style pastel tactile, inspiré du claymorphism, avec une mascotte 3D et des raccourcis adaptés au mobile. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.3.1 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Son interface adopte désormais un style pastel tactile, inspiré du claymorphism, avec une mascotte 3D et des raccourcis adaptés au mobile. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
@@ -30,6 +30,7 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Modèle « Pilote anime — émotions » pour tester une histoire courte qui passe de la peur à l’espoir puis à la fierté.
 - Transitions émotionnelles liées aux retournements du récit et intensité des gestes modulée au fil des scènes.
 - Narration Speechify et synchronisation avec le récit.
+- Export audio renforcé : contrôle que chaque scène narrée possède un buffer vocal exploitable, normalisation du mix et blocage explicite d’un export muet.
 - Export vidéo dans le navigateur; le conteneur (MP4/WebM) dépend des encodeurs disponibles sur l’appareil.
 - Pour les vidéos sonores de 2 minutes ou plus, sélection automatique du chemin d’export compatible afin de préserver la piste audio sur les appareils concernés.
 - Proxy Vercel sécurisé `/api/speechify` : la clé reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
