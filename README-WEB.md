@@ -1,6 +1,6 @@
-# Vidéos Plus — version web 3.3.2
+# Vidéos Plus — version web 3.3.3
 
-`index.html` contient VideoStory 3.3.2 et charge `pastel-theme.css` : interface pastel tactile sur tous les écrans, accueil mobile avec mascotte 3D, cartes de projets assorties et icône PWA coordonnée. Les illustrations transparentes sont optimisées en WebP. Le mix audio est normalisé; chaque narration est vérifiée avant planification. Speechify est demandé en WAV PCM pour éviter les échecs de décodage MP3 signalés sur certaines WebView Android. L’export est interrompu avec un message explicite si une voix manque ou est silencieuse. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
+`index.html` contient VideoStory 3.3.3 et charge `pastel-theme.css` : interface pastel tactile sur tous les écrans, accueil mobile avec mascotte 3D, cartes de projets assorties et icône PWA coordonnée. Les illustrations transparentes sont optimisées en WebP. Le mix audio est normalisé; chaque narration est vérifiée avant planification. Speechify est demandé en PCM brut signé 16 bits à 24 kHz; le client convertit directement les échantillons en `AudioBuffer` sans décodeur de conteneur du navigateur, pour contourner les incompatibilités des WebView Android. L’export est interrompu avec un message explicite si une voix manque ou est silencieuse. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
 
 ## Déploiement et Speechify
 
