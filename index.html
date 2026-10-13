@@ -2830,16 +2830,16 @@ class CanvasRenderer {
         return c;
     }
 
-    async renderScene(scene, t, _inner) {
+    renderScene(scene, t, _inner) {
         const list = (typeof state !== 'undefined' && state.project && state.project.scenes) || [];
         const idx = list.indexOf(scene);
         const prev = (!_inner && idx > 0) ? list[idx - 1] : null;
         const tr = scene.transition || { type: 'fade', duration: 0.4 };
         const trDur = prev ? clamp(tr.duration || 0.4, 0.2, 0.9) : 0;
         if (prev && t < trDur) {
-            await this.renderTransition(prev, scene, idx, list.length, t, trDur, tr.type || 'fade');
+            this.renderTransition(prev, scene, idx, list.length, t, trDur, tr.type || 'fade');
         } else {
-            await this.drawSceneContent(scene, t, idx, list.length);
+            this.drawSceneContent(scene, t, idx, list.length);
             if (idx === 0 && t < 0.35) {
                 this.ctx.fillStyle = 'rgba(0,0,0,' + (1 - t / 0.35) + ')';
                 this.ctx.fillRect(0, 0, this.width, this.height);
@@ -2847,13 +2847,13 @@ class CanvasRenderer {
         }
     }
 
-    async renderTransition(prev, scene, idx, n, t, dur, type) {
+    renderTransition(prev, scene, idx, n, t, dur, type) {
         const ctx = this.ctx, W = this.width, H = this.height;
         const p = clamp(t / dur, 0, 1), e = EASE.inOutCubic(p);
         if (!this.sub) this.sub = new CanvasRenderer(W, H);
-        await this.sub.drawSceneContent(prev, prev.duration + t, idx - 1, n);
+        this.sub.drawSceneContent(prev, prev.duration + t, idx - 1, n);
         const pc = this.sub.canvas;
-        await this.drawSceneContent(scene, t, idx, n);
+        this.drawSceneContent(scene, t, idx, n);
         if (type === 'push') {
             if (!this.tmp) this.tmp = this.aux();
             const tctx = this.tmp.getContext('2d');
@@ -2903,7 +2903,7 @@ class CanvasRenderer {
         }
     }
 
-    async drawSceneContent(scene, t, idx, n) {
+    drawSceneContent(scene, t, idx, n) {
         const ctx = this.ctx, W = this.width, H = this.height, k = this.k;
         const style = (typeof state !== 'undefined' && state.project && state.project.style) || 'explainer';
         const dur = Math.max(scene.duration, 0.1);
@@ -2933,7 +2933,7 @@ class CanvasRenderer {
         const sorted = [...scene.elements].sort((a, b) => a.zIndex - b.zIndex);
         for (const element of sorted) {
             if (!element.visible) continue;
-            await this.renderElement(element, t, scene);
+            this.renderElement(element, t, scene);
         }
         ctx.restore();
 
@@ -3160,7 +3160,7 @@ class CanvasRenderer {
     }
 
     // ---------- Éléments ----------
-    async renderElement(element, time, scene) {
+    renderElement(element, time, scene) {
         const ctx = this.ctx, k = this.k;
         let animState = { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 };
         if (element.entrance) animState = this.getAnimationState(element.entrance, time);
