@@ -506,26 +506,6 @@ function showToast(message, type = 'success') {
 
 async function saveBlobToDevice(blob, filename) {
     if (!blob || !blob.size) throw new Error('Fichier vidéo vide');
-    // Les navigateurs modernes peuvent écrire directement sur disque sans créer une seconde copie.
-    if (typeof window.showSaveFilePicker === 'function') {
-        try {
-            const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'Vidéo', accept: { [(blob.type || 'video/webm').split(';')[0]]: ['.' + (filename.split('.').pop() || 'webm')] } }] });
-            const writable = await handle.createWritable();
-            const reader = blob.stream().getReader();
-            try {
-                while (true) {
-                    const part = await reader.read();
-                    if (part.done) break;
-                    await writable.write(part.value);
-                }
-                await writable.close();
-                return true;
-            } catch (e) { try { await writable.abort(); } catch (_) {} throw e; }
-        } catch (e) {
-            if (e && e.name === 'AbortError') return false;
-            console.warn('Écriture directe indisponible, fallback téléchargement', e);
-        }
-    }
     // Android/WebView : écriture native en morceaux de 96 Ko, conversion base64 faite par le navigateur (rapide, peu de mémoire).
     if (window.AndroidBridge && typeof window.AndroidBridge.beginFile === 'function') {
         try {
