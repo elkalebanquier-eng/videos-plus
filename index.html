@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.2.0-character-comfort">
-    <title>Vidéos Plus — VideoStory 3.2.0</title>
-    <meta name="description" content="Vidéos Plus 3.2.0 ajoute un style cartoon doux, plus de personnalisation et des mouvements adaptés à chacun.">
+    <meta name="videostory-build" content="3.2.1-character-hq-export">
+    <title>Vidéos Plus — VideoStory 3.2.1</title>
+    <meta name="description" content="Vidéos Plus 3.2.1 améliore la netteté du personnage et la qualité des exports vidéo 1080p.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.2.0">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.2.1">
     <meta property="og:description" content="Crée des vidéos animées dans un style anime ou cartoon doux, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.2.0">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.2.1">
     <meta name="twitter:description" content="Un personnage personnalisable, plus doux en mouvement, des émotions continues et l’export mobile.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -348,7 +348,7 @@
             <div class="form-group"><label>Clé API Gemini</label><input type="password" id="settingKey" placeholder="Colle ta clé ici (optionnel)" autocomplete="off" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <div class="form-group"><label>Modèle Gemini</label><input type="text" id="settingModel" placeholder="gemini-3.6-flash" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">Sans carte bancaire : crée une clé gratuite sur aistudio.google.com. Avec l'offre gratuite, Google peut réutiliser les textes envoyés. Si le modèle change de nom ou si le réseau échoue, le cerveau local prend le relais automatiquement.</p>
-            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · rapide et fluide</option><option value="1080">1080p · plus net, plus lourd</option></select></div>
+            <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · plus rapide, pour appareils limités</option><option value="1080">1080p · meilleure qualité (recommandé)</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">L’export 1080p utilise un encodage plus net et un rendu du personnage plus fin; il peut prendre plus de temps.</p></div>
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
             <div class="form-group"><label>Personnage : couleur des cheveux</label><select id="settingCharHairColor"><option value="#1b1410">Noir</option><option value="#4b2e22">Brun</option><option value="#865632">Châtain</option><option value="#b27835">Cuivré</option><option value="#c8aa68">Blond</option><option value="#8d909b">Gris argenté</option></select></div>
@@ -589,7 +589,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.2.0', channel: 'web', publicBuildId: 'videos-plus-3.2.0-character-comfort' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.2.1', channel: 'web', publicBuildId: 'videos-plus-3.2.1-character-hq-export' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -1246,7 +1246,7 @@ const BuiltinCharacter = (() => {
         return LY;
     }
     const unit = (w, h) => Math.min(h * 0.94 / 10.2, (w || h) * 1.0 / 3.6);
-    let lite = false, slow = 0, reducedMotionQuery = null;
+    let lite = false, slow = 0, reducedMotionQuery = null, exportQuality = false;
     function prefersReducedMotion() {
         if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
         if (!reducedMotionQuery) reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -1254,7 +1254,7 @@ const BuiltinCharacter = (() => {
     }
     // le moteur d'export / de lecture signale chaque intervalle entre deux images : si le téléphone peine, les effets s'allègent tout seuls
     function noteFrame(ms) {
-        if (lite) return false;
+        if (lite || exportQuality) return false;
         slow = ms > 55 ? slow + 1 : Math.max(0, slow - 1);
         if (slow >= 12) { lite = true; return true; }
         return false;
@@ -1279,7 +1279,7 @@ const BuiltinCharacter = (() => {
         const systemReduced = appSettings.charMotion !== 'normal' && prefersReducedMotion();
         const motionScale = appSettings.charMotion === 'reduced' || systemReduced ? 0.45 : 1;
         const a = applyMotionComfort(ActingBrain.at(scene, time, pose), motionScale);
-        const fx = !lite && appSettings.charFx !== 'off';
+        const fx = (exportQuality || !lite) && appSettings.charFx !== 'off';
         const u = unit(w, h);
         ctx.save();
         // coup de caméra léger sur les moments forts
@@ -1300,13 +1300,14 @@ const BuiltinCharacter = (() => {
         const lift = clamp(a.e.excited * 0.4 + (a.ambient === 'walking' ? 0.2 : 0), 0, 0.5);
         ctx.fillStyle = 'rgba(0,0,0,' + (0.32 - lift * 0.15).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(0, h * 0.045, 1.9 * u * (1 - lift * 0.3), 0.3 * u, 0, 0, TAU); ctx.fill();
         if (!fx) { render(ctx, w, h, time, a, LipSync.open(scene, time, pose), LipSync.vowel(scene, time), pose, { noShadow: true }); ctx.restore(); return true; }
-        // mode « pro » : le personnage est dessiné dans un calque (contour encre + éclairage), à 15 images/s comme en animation « à deux »
-        const S = zoom * cz > 1.25 ? 1.5 : 1;          // en gros plan, le calque est dessiné plus fin pour rester net
+        // Aperçu à 15 i/s pour la fluidité; export suréchantillonné et recalculé à 30 i/s.
+        const S = exportQuality ? (zoom * cz > 1.25 ? 2 : 1.5) : (zoom * cz > 1.25 ? 1.5 : 1);
         const Wo = Math.ceil(h * 0.86 * S), Ho = Math.ceil(h * 1.08 * S), ax = Wo / 2, ay = Math.round(Ho * 0.9);
-        const L = layers(Wo, Ho), twos = Math.floor(time * 15 + 1e-6), appearance = (appSettings.charArtStyle || 'anime') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charHairColor || '#1b1410') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f') + '~' + (appSettings.charMotion || 'system') + '~' + motionScale, key = twos + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
+        const renderFps = exportQuality ? 30 : 15, frameIndex = Math.floor(time * renderFps + 1e-6);
+        const L = layers(Wo, Ho), appearance = (appSettings.charArtStyle || 'anime') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charHairColor || '#1b1410') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f') + '~' + (appSettings.charMotion || 'system') + '~' + motionScale, key = frameIndex + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
         if (L.key !== key) {
             L.key = key;
-            const tq = twos / 15, aq = applyMotionComfort(ActingBrain.at(scene, tq, pose), motionScale);
+            const tq = frameIndex / renderFps, aq = applyMotionComfort(ActingBrain.at(scene, tq, pose), motionScale);
             const o = L.off.getContext('2d'), d = Math.max(2, Math.round(h * 0.0055 * S));
             o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, Wo, Ho);
             o.save(); o.translate(ax, ay); o.scale(S, S); render(o, w, h, tq, aq, LipSync.open(scene, tq, pose), LipSync.vowel(scene, tq), pose, { noShadow: true }); o.restore();
@@ -1377,31 +1378,34 @@ const BuiltinCharacter = (() => {
     }
     // ---- mains : silhouette en deux passes (encre puis peau) pour que paume et doigts ne forment qu'une seule forme propre
     // le dessin est fait « doigts vers le haut » ; render() le tourne ensuite dans l'axe de l'avant-bras
-    const HAND_UPRIGHT = { thumbs: 1, hold: 1 };
+    const HAND_UPRIGHT = { thumbs: 1 };
     function handSpec(mode, n, sd, t) {
-        const base = [-0.165, -0.055, 0.055, 0.165];                     // position des 4 doigts sur le haut de la paume
-        const mkF = (spread, lens, wd, raised, bend) => base.map((ox, i) => ({
-            ox, oy: -0.17 + Math.abs(i - 1.5) * 0.02, ang: spread * (i - 1.5) / 1.5, len: (raised ? raised[i] : 1) ? lens[i] : 0.06, wd: wd || 0.14, bend: (bend || 0) * (i - 1.5)
+        const thSide = -sd; // les doigts sont ordonnés de l’index (côté pouce) à l’auriculaire
+        const base = [0.22, 0.075, -0.075, -0.22].map(x => x * thSide);
+        const widths = [0.055, 0.066, 0.062, 0.052];
+        const mkF = (spread, lens, raised, bend) => base.map((ox, i) => ({
+            ox, oy: -0.17 + Math.abs(i - 1.5) * 0.018, ang: -thSide * spread * (i - 1.5) / 1.5,
+            len: (raised ? raised[i] : 1) ? lens[i] : 0.06, wd: widths[i], bend: (bend || 0) * (i - 1.5)
         }));
-        const L4 = [0.23, 0.29, 0.27, 0.2], thSide = -sd;                // pouce côté intérieur
-        const thumb = (ang, len, wd) => ({ ox: thSide * 0.19, oy: 0.06, ang: thSide * ang, len: len || 0.2, wd: wd || 0.16, bend: -thSide * 0.25 });
-        const S = { palm: { rx: 0.25, ry: 0.25, cy: 0 }, fingers: [], thumb: null, detail: 'palm' };
+        const L4 = [0.29, 0.35, 0.31, 0.23];
+        const thumb = (ang, len, wd) => ({ ox: thSide * 0.2, oy: 0.04, ang: thSide * ang, len: len || 0.2, wd: wd || 0.085, bend: -thSide * 0.18 });
+        const S = { palm: { rx: 0.28, ry: 0.24, cy: 0 }, fingers: [], thumb: null, detail: 'palm' };
         switch (mode) {
-            case 'palm': S.fingers = mkF(0.42, L4, 0.14, null, 0.1); S.thumb = thumb(0.95, 0.21); break;
-            case 'open': { const wv = Math.sin(t * 9) * 0.08; S.fingers = mkF(0.85 + wv, [0.29, 0.35, 0.33, 0.25], 0.14, null, 0.15); S.thumb = thumb(1.1, 0.23); S.detail = 'spread'; break; }
-            case 'flat': S.fingers = mkF(0.1, [0.3, 0.36, 0.34, 0.27], 0.14, null, 0); S.thumb = thumb(0.65, 0.2); S.detail = 'tight'; break;
-            case 'fingers': { const m = clamp(n || 1, 1, 5), up = [0, 1, 2, 3].map(i => i < Math.min(m, 4)); S.fingers = mkF(0.16, [0.34, 0.4, 0.38, 0.3], 0.14, up, 0.05); S.thumb = m >= 5 ? thumb(0.9, 0.22) : thumb(0.25, 0.1); S.detail = 'tight'; break; }
-            case 'point': case 'pointup': case 'pointdown': case 'shush': S.fingers = mkF(0.0, [0.42, 0.2, 0.2, 0.2], 0.14, [1, 0, 0, 0], 0); S.thumb = thumb(0.35, 0.12); S.detail = 'fist'; break;
-            case 'thumbs': S.fingers = mkF(0.0, [0.2, 0.2, 0.2, 0.2], 0.14, [0, 0, 0, 0], 0); S.thumb = { ox: -0.15, oy: -0.1, ang: 0, len: 0.34, wd: 0.17, bend: 0 }; S.detail = 'fist'; break;
-            case 'fist': case 'hold': S.fingers = mkF(0.0, [0.2, 0.2, 0.2, 0.2], 0.14, [0, 0, 0, 0], 0); S.thumb = { ox: thSide * 0.17, oy: 0.0, ang: thSide * 1.25, len: 0.14, wd: 0.15, bend: 0 }; S.detail = 'fist'; break;
-            default: S.fingers = mkF(0.14, [0.22, 0.27, 0.25, 0.19], 0.14, null, 0.25); S.thumb = thumb(0.5, 0.19); S.detail = 'relax';   // main détendue
+            case 'palm': S.fingers = mkF(0.3, L4, null, 0.06); S.thumb = thumb(0.82, 0.21); break;
+            case 'open': { const wv = Math.sin(t * 9) * 0.035; S.fingers = mkF(0.62 + wv, [0.29, 0.35, 0.31, 0.24], null, 0.08); S.thumb = thumb(0.98, 0.23); S.detail = 'spread'; break; }
+            case 'flat': S.fingers = mkF(0.08, [0.3, 0.36, 0.32, 0.25], null, 0); S.thumb = thumb(0.58, 0.19); S.detail = 'tight'; break;
+            case 'fingers': { const m = clamp(n || 1, 1, 5), up = [0, 1, 2, 3].map(i => i < Math.min(m, 4)); S.fingers = mkF(0.1, [0.31, 0.37, 0.33, 0.25], up, 0.025); S.thumb = m >= 5 ? thumb(0.78, 0.21) : thumb(0.22, 0.1); S.detail = 'tight'; break; }
+            case 'point': case 'pointup': case 'pointdown': case 'shush': S.fingers = mkF(0.04, [0.4, 0.2, 0.2, 0.2], [1, 0, 0, 0], 0); S.thumb = thumb(0.3, 0.11); S.detail = 'fist'; break;
+            case 'thumbs': S.fingers = mkF(0.03, [0.2, 0.2, 0.2, 0.2], [0, 0, 0, 0], 0); S.thumb = { ox: thSide * 0.19, oy: -0.06, ang: thSide * 0.38, len: 0.34, wd: 0.09, bend: 0 }; S.detail = 'fist'; break;
+            case 'fist': case 'hold': S.fingers = mkF(0.02, [0.2, 0.2, 0.2, 0.2], [0, 0, 0, 0], 0); S.thumb = { ox: thSide * 0.17, oy: 0.0, ang: thSide * 1.05, len: 0.13, wd: 0.085, bend: 0 }; S.detail = 'fist'; break;
+            default: S.fingers = mkF(0.12, [0.23, 0.28, 0.26, 0.2], null, 0.12); S.thumb = thumb(0.45, 0.18); S.detail = 'relax';
         }
         return S;
     }
     function paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, t) {
         // Le côté réel doit être transmis à handSpec : sinon le pouce et les doigts
         // sont toujours construits comme une main droite avant le miroir graphique.
-        const S = handSpec(mode, n, sd, t), pw = 0.07;
+        const S = handSpec(mode, n, sd, t), pw = 0.035;
         const stroke = (f, color, width) => {
             ctx.save(); ctx.translate(f.ox, f.oy); ctx.rotate(f.ang); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round';
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(f.bend * 0.1, -f.len * 0.5, f.bend * 0.17, -f.len); ctx.stroke(); ctx.restore();
@@ -1415,13 +1419,16 @@ const BuiltinCharacter = (() => {
         all.forEach(f => stroke(f, skin, f.wd));                                          // passe 2 : peau
         ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(0, S.palm.cy, S.palm.rx, S.palm.ry, 0, 0, TAU); ctx.fill();
         // détails : creux de la paume, séparations entre doigts collés, articulations du poing
-        if (S.detail === 'palm' || S.detail === 'spread' || S.detail === 'tight') { ctx.globalAlpha = 0.35; ctx.fillStyle = skinLt; ctx.beginPath(); ctx.ellipse(-0.03, -0.03, 0.11, 0.1, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
-        ctx.strokeStyle = INK; ctx.lineWidth = 0.028; ctx.lineCap = 'round';
-        if (S.detail === 'tight' || S.detail === 'relax' || S.detail === 'palm') {
-            for (let i = 0; i < 3; i++) { const a = S.fingers[i], b = S.fingers[i + 1], len = Math.min(a.len, b.len); if (len < 0.15) continue; ctx.beginPath(); ctx.moveTo((a.ox + b.ox) / 2, (a.oy + b.oy) / 2 - 0.02); ctx.lineTo((a.ox + b.ox) / 2 + (a.ang + b.ang) * 0.5 * len * 0.8, (a.oy + b.oy) / 2 - len * 0.8); ctx.stroke(); }
+        const palmLight = ctx.createLinearGradient(-0.2, -0.22, 0.2, 0.25);
+        palmLight.addColorStop(0, skinLt); palmLight.addColorStop(0.58, skin); palmLight.addColorStop(1, skinDk);
+        ctx.fillStyle = palmLight; ctx.beginPath(); ctx.ellipse(-0.015, -0.005, S.palm.rx - 0.025, S.palm.ry - 0.025, 0, 0, TAU); ctx.fill();
+        if (S.detail === 'palm' || S.detail === 'spread' || S.detail === 'tight') {
+            ctx.strokeStyle = 'rgba(35,18,20,0.28)'; ctx.lineWidth = 0.018; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-0.13, 0.06); ctx.quadraticCurveTo(0, 0.13, 0.13, 0.06); ctx.stroke();
         }
         if (S.detail === 'fist') {                                        // doigts repliés : 4 articulations
-            S.fingers.forEach(f => { if (f.len > 0.25) return; ctx.beginPath(); ctx.arc(f.ox, -0.19, 0.045, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); });
+            ctx.strokeStyle = 'rgba(35,18,20,0.32)'; ctx.lineWidth = 0.018; ctx.lineCap = 'round';
+            S.fingers.forEach(f => { if (f.len > 0.25) return; ctx.beginPath(); ctx.arc(f.ox, -0.16, 0.032, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke(); });
         }
         ctx.restore();
     }
@@ -1707,7 +1714,10 @@ const BuiltinCharacter = (() => {
         const T = ambientTargets(g, mt, a.beat, open > 0.02 ? 1 : 0, a);
         const drawHand = (x, y, mode, n, sc, sd, rot) => {
             ctx.save(); ctx.translate(x, y); ctx.scale(sc * 1.2, sc * 1.2);
-            if (!HAND_UPRIGHT[mode]) ctx.rotate(rot || 0);          // la main prolonge l'avant-bras
+            if (!HAND_UPRIGHT[mode]) {
+                const wristFlex = mode === 'point' || mode === 'pointup' || mode === 'pointdown' || mode === 'hold' ? 0.94 : 0.76;
+                ctx.rotate((rot || 0) * wristFlex);                 // le poignet accompagne l’avant-bras sans se casser
+            }
             ctx.translate(0, -0.2);                               // le poignet rejoint le bas de la paume, pas son centre
             paintHand(ctx, mode, n, sd, skin, skinLt, skinDk, mt);
             ctx.restore();
@@ -1781,9 +1791,10 @@ const BuiltinCharacter = (() => {
         ctx.restore();
         return true;
     }
-    function reset() { lite = false; slow = 0; if (LY) LY.key = ''; }
+    function reset() { lite = false; slow = 0; exportQuality = false; if (LY) LY.key = ''; }
+    function setExportQuality(enabled) { const next = !!enabled; if (exportQuality !== next) { exportQuality = next; lite = false; slow = 0; if (LY) LY.key = ''; } }
     async function prepare() { return true; }
-    return { draw, render, paintHand, reset, prepare, noteFrame, isLite: () => lite, init: () => Promise.resolve(true), SKINS };
+    return { draw, render, paintHand, reset, prepare, noteFrame, setExportQuality, isLite: () => lite, init: () => Promise.resolve(true), SKINS };
 })();
 
 // ===== BRUITAGES DU PERSONNAGE : sons synthétisés, calés sur ses gestes et ses icônes =====
@@ -1872,6 +1883,7 @@ const ActingSfx = (() => {
 const Character = {
     draw: (ctx, w, h, time, scene, pose) => BuiltinCharacter.draw(ctx, w, h, time, scene, pose),
     prepare: project => BuiltinCharacter.prepare(project),
+    setExportQuality: enabled => BuiltinCharacter.setExportQuality(enabled),
     reset() { BuiltinCharacter.reset(); },
 };
 
@@ -3861,7 +3873,7 @@ function loadSettingsUI() {
     setVal('settingAI', c.ai || 'local');
     setVal('settingKey', c.key || '');
     setVal('settingModel', c.model || 'gemini-3.6-flash');
-    setVal('settingQuality', c.quality || '720');
+    setVal('settingQuality', c.quality || '1080');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
     setVal('settingCharArtStyle', c.charArtStyle === 'classic' || c.charArtStyle === 'soft' ? c.charArtStyle : 'anime');
     setVal('settingCharHair', c.charHair || 'short');
@@ -4991,9 +5003,9 @@ const WCExport = (() => {
     function dims(project) {
         const cfg = Settings.get();
         const base = RESOLUTIONS[project.format] || RESOLUTIONS['9:16'];
-        const sc = cfg.quality === '1080' ? 1 : 2 / 3;
+        const sc = cfg.quality === '720' ? 2 / 3 : 1;
         const W = Math.round(base.width * sc / 2) * 2, H = Math.round(base.height * sc / 2) * 2;
-        return { W, H, bitrate: W * H > 1200000 ? 5000000 : 3000000 };
+        return { W, H, bitrate: exportVideoBitrate(W, H, cfg.quality) };
     }
 
     // Renvoie { codec, aacOK } si l'appareil sait encoder du H.264, sinon null (=> ancien mode).
@@ -5012,7 +5024,7 @@ const WCExport = (() => {
             let aacOK = false;
             try {
                 if (typeof AudioEncoder !== 'undefined' && typeof AudioData !== 'undefined' && (window.OfflineAudioContext || window.webkitOfflineAudioContext)) {
-                    const r = await AudioEncoder.isConfigSupported({ codec: 'mp4a.40.2', sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
+                    const r = await AudioEncoder.isConfigSupported({ codec: 'mp4a.40.2', sampleRate: SR, numberOfChannels: 1, bitrate: 128000 });
                     aacOK = !!(r && r.supported);
                 }
             } catch (_) { aacOK = false; }
@@ -5044,7 +5056,7 @@ const WCExport = (() => {
             error: e => { err = e; },
         });
         encRef.a = enc;
-        enc.configure({ codec: 'mp4a.40.2', sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
+        enc.configure({ codec: 'mp4a.40.2', sampleRate: SR, numberOfChannels: 1, bitrate: 128000 });
         const step = 4096;
         for (let i = 0, k = 0; i < pcm.length; i += step, k++) {
             const n = Math.min(step, pcm.length - i);
@@ -5079,6 +5091,7 @@ const WCExport = (() => {
             }
             onStatus('Création de la vidéo…');
             updateProgress(0);
+            Character.setExportQuality(true);
             const renderer = new CanvasRenderer(W, H);
             let gotCfg = false, lastTs = -1;
             enc.v = new VideoEncoder({
@@ -5116,6 +5129,7 @@ const WCExport = (() => {
             MusicEngine.stop(); ActingSfx.stop(); VoiceStudio.stopExport();
             throw e;
         } finally {
+            Character.setExportQuality(false);
             try { if (lock) await lock.release(); } catch (_) {}
         }
     }
@@ -5136,6 +5150,12 @@ function pickAudioRecorderMime() {
     const list = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+
+function exportVideoBitrate(width, height, quality) {
+    const pixelsPerSecond = width * height * 30;
+    const minimum = quality === '720' ? 3000000 : 6000000;
+    return Math.max(minimum, Math.round(pixelsPerSecond * 0.13));
 }
 
 function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n, s) => n + Number(s.duration || 0), 0); }
@@ -5242,9 +5262,10 @@ async function exportVideo() {
     try {
         const cfg = Settings.get();
         const base = RESOLUTIONS[state.project.format] || RESOLUTIONS['9:16'];
-        const sc = cfg.quality === '1080' ? 1 : 2 / 3;
+        const sc = cfg.quality === '720' ? 2 / 3 : 1;
         const W = Math.round(base.width * sc / 2) * 2;
         const H = Math.round(base.height * sc / 2) * 2;
+        Character.setExportQuality(true);
         const exportRenderer = new CanvasRenderer(W, H);
         const exportTimeline = new TimelineEngine(state.project.scenes);
         const total = exportTimeline.getTotalDuration();
@@ -5267,10 +5288,11 @@ async function exportVideo() {
 
         const mime = audioDest ? (pickAudioRecorderMime() || pickRecorderMime()) : pickRecorderMime();
         let mediaRecorder;
-        const recorderOptions = { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: W * H > 1000000 ? 4200000 : 2800000, audioBitsPerSecond: 96000 };
+        const videoBitrate = exportVideoBitrate(W, H, cfg.quality);
+        const recorderOptions = { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: videoBitrate, audioBitsPerSecond: 160000 };
         try { mediaRecorder = new MediaRecorder(stream, recorderOptions); }
         catch (e) {
-            try { mediaRecorder = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: 2400000, audioBitsPerSecond: 64000 }); }
+            try { mediaRecorder = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: Math.max(2400000, Math.round(videoBitrate * 0.72)), audioBitsPerSecond: 96000 }); }
             catch (e2) { mediaRecorder = new MediaRecorder(stream); }
         }
         activeRecorder = mediaRecorder;
@@ -5342,6 +5364,7 @@ async function exportVideo() {
         ActingSfx.stop();
         VoiceStudio.stopExport();
         stream.getTracks().forEach(tr => tr.stop());
+        Character.setExportQuality(false);
         if (nativeStream) {
             await nativeWriteQueue;
             if (nativeWriteError || !window.AndroidBridge.finishFile()) throw (nativeWriteError || new Error('enregistrement incomplet'));
@@ -5363,6 +5386,7 @@ async function exportVideo() {
         showToast((ext === 'mp4' ? 'MP4 prête' : 'Vidéo WebM prête — cet appareil ne propose pas l’encodeur MP4') + ' (' + ext + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec musique') : ', sans audio') + ')');
     } catch (error) {
         console.error('Export error:', error);
+        Character.setExportQuality(false);
         try { if (activeRecorder && activeRecorder.state !== 'inactive') activeRecorder.stop(); } catch (_) {}
         try { if (nativeStream && window.AndroidBridge && window.AndroidBridge.cancelFile) window.AndroidBridge.cancelFile(); } catch (_) {}
         try { if (directWriter) await directWriter.abort(); } catch (_) {}

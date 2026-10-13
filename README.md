@@ -1,6 +1,6 @@
-# Vidéos Plus — VideoStory 3.2.0
+# Vidéos Plus — VideoStory 3.2.1
 
-VideoStory 3.2.0 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.2.1 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
 
 Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
@@ -17,6 +17,9 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Création sans texte obligatoire : si l’idée et le script sont vides, le cerveau démarre avec une histoire universelle cohérente.
 - Analyse multi-domaines : le réalisateur distingue sujet, action, cause, conséquence, négation, hypothèse, métaphore et arc émotionnel dans les histoires personnelles, éducatives, scientifiques, commerciales ou fictives.
 - Personnage vectoriel expressif avec regard, respiration, clignements et gestes synchronisés au rythme de la parole, aux pauses et aux accents.
+- Mains retravaillées : doigts plus fins et distincts, pouce placé du bon côté sur chaque main, ombrage léger de la paume et rotation du poignet moins extrême pour éviter les poses tordues.
+- Export 1080p recommandé par défaut : rendu du personnage suréchantillonné et animé à 30 i/s, sans réduire la qualité à cause des ralentissements de l’aperçu.
+- Débit d’encodage vidéo adapté à la résolution (jusqu’à environ 8 Mbit/s en 1080p portrait/paysage) et audio AAC WebCodecs amélioré à 128 kbit/s; choix 720p conservé pour les appareils limités.
 - Trois rendus sélectionnables : Anime expressif, Cartoon doux aux traits plus arrondis, ou Classique.
 - Personnage personnalisable : tenue, coiffure, couleur des cheveux, carnation et couleur de la tenue.
 - Mouvements adaptés au confort : suivi des préférences « réduire les animations » du téléphone, réglage manuel pour mouvements doux, ou animation normale; les expressions et le synchronisme de parole restent actifs.
@@ -27,6 +30,6 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Pour les vidéos sonores de 2 minutes ou plus, sélection automatique du chemin d’export compatible afin de préserver la piste audio sur les appareils concernés.
 - Proxy Vercel sécurisé `/api/speechify` : la clé reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
 
-Les styles s’appuient sur le dessin Canvas et le cache de rendu existants : aucun fichier image distant ni moteur d’encodage serveur supplémentaire. Les bras sont articulés par calcul procédural et les poses suivent le récit, mais ce personnage reste une animation vectorielle 2D légère — pas encore un rig professionnel image par image.
+Les styles s’appuient sur le dessin Canvas et le cache de rendu existants : aucun fichier image distant ni moteur d’encodage serveur supplémentaire. En aperçu, le personnage reste optimisé pour les téléphones; l’export utilise des calques plus fins à 30 i/s. Les bras sont articulés par calcul procédural et les poses suivent le récit, mais ce personnage reste une animation vectorielle 2D — pas encore un rig professionnel image par image ni un personnage 3D.
 
 Les pushes sur `main` déclenchent le déploiement Vercel. La configuration Speechify et les étapes pour modifier le domaine sont dans [README-WEB.md](README-WEB.md).
