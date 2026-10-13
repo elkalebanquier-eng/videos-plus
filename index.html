@@ -5388,37 +5388,11 @@ async function exportVideo() {
     try {
         const cfg = Settings.get();
         const base = RESOLUTIONS[state.project.format] || RESOLUTIONS['9:16'];
-        let sc = cfg.quality === '720' ? 2 / 3 : 1;
-        let W = Math.round(base.width * sc / 2) * 2;
-        let H = Math.round(base.height * sc / 2) * 2;
-        if (sc === 1 && state.project.scenes.length) {
-            Character.setExportQuality(true);
-            const probe = new CanvasRenderer(W, H);
-            const samples = state.project.scenes.slice(0, Math.min(4, state.project.scenes.length));
-            const probeStart = performance.now();
-            for (const scene of samples) await probe.renderScene(scene, Math.min(0.45, scene.duration * 0.35));
-            const msPerFrame = (performance.now() - probeStart) / Math.max(1, samples.length);
-            Character.setExportQuality(false);
-            if (msPerFrame > 36) {
-                sc = 2 / 3;
-                W = Math.round(base.width * sc / 2) * 2;
-                H = Math.round(base.height * sc / 2) * 2;
-                Character.setExportQuality(true);
-                const probe720 = new CanvasRenderer(W, H);
-                const probe720Start = performance.now();
-                for (const scene of samples) await probe720.renderScene(scene, Math.min(0.45, scene.duration * 0.35));
-                const msPerFrame720 = (performance.now() - probe720Start) / Math.max(1, samples.length);
-                Character.setExportQuality(false);
-                if (msPerFrame720 > 23) {
-                    sc = 0.5;
-                    W = Math.round(base.width * sc / 2) * 2;
-                    H = Math.round(base.height * sc / 2) * 2;
-                    showToast('Pour éviter une vidéo saccadée, l’export passe automatiquement en 540p sur cet appareil.', 'error');
-                } else {
-                    showToast('Pour garder une animation fluide sur cet appareil, l’export passe automatiquement en 720p.', 'error');
-                }
-            }
-        }
+        // La résolution choisie reste celle de l’utilisateur : l’ancienne version
+        // produisait de meilleures vidéos parce qu’elle ne baissait pas sans prévenir en 540p.
+        const sc = cfg.quality === '720' ? 2 / 3 : 1;
+        const W = Math.round(base.width * sc / 2) * 2;
+        const H = Math.round(base.height * sc / 2) * 2;
         Character.setExportQuality(true);
         const exportRenderer = new CanvasRenderer(W, H);
         const exportTimeline = new TimelineEngine(state.project.scenes);
