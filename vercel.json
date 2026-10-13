@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/index.html?build=videos-plus-v3-0-2-actions-rhythm-long-audio-safe-export" }
+    { "source": "/", "destination": "/index.html?build=videos-plus-v3-3-4-pro-branding-long-audio-safe-export" }
   ],
   "headers": [
     {

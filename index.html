@@ -271,7 +271,7 @@
                     <button class="header-btn" onclick="showScreen('homeScreen')">←</button>
                     <h1 id="editorTitle" style="font-size: 16px;">Projet</h1>
                 </div>
-                <button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter</button>
+                <div style="display:flex;align-items:center;gap:8px"><button id="lastVideoBtn" class="header-btn" style="display:none;font-size:20px" onclick="reopenLastExport()" aria-label="Ma dernière vidéo">🎞️</button><button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter MP4</button></div>
             </header>
             <div class="editor-main">
                 <div class="preview-area">
@@ -360,12 +360,23 @@
             <div class="form-group"><label>Qualité de l’export vidéo</label><select id="settingQuality"><option value="720">720p · plus rapide, pour appareils limités</option><option value="1080">1080p · meilleure qualité (recommandé)</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">L’export 1080p utilise un encodage plus net et un rendu du personnage plus fin; il peut prendre plus de temps.</p></div>
             <div class="form-group"><label>Personnage : tenue</label><select id="settingCharOutfit"><option value="suit">Costume-cravate</option><option value="boubou">Boubou</option><option value="dress">Robe</option><option value="tee">T-shirt</option></select></div>
             <div class="form-group"><label>Personnage : coiffure</label><select id="settingCharHair"><option value="short">Cheveux courts</option><option value="bald">Rasé</option><option value="wrap">Foulard</option><option value="long">Cheveux longs</option></select></div>
+            <div class="form-group"><label>Personnage : lunettes</label><select id="settingCharGlasses"><option value="none">Sans lunettes</option><option value="round">Rondes · fines, dorées</option><option value="square">Rectangulaires · noires</option></select></div>
             <div class="form-group"><label>Personnage : couleur des cheveux</label><select id="settingCharHairColor"><option value="#1b1410">Noir</option><option value="#4b2e22">Brun</option><option value="#865632">Châtain</option><option value="#b27835">Cuivré</option><option value="#c8aa68">Blond</option><option value="#8d909b">Gris argenté</option></select></div>
             <div class="form-group"><label>Personnage : peau</label><select id="settingCharSkin"><option value="#4a2c1a">Ébène</option><option value="#6b4226">Brun foncé</option><option value="#8d5524">Brun</option><option value="#c68642">Caramel</option><option value="#f1c27d">Clair</option></select></div>
-            <div class="form-group"><label>Personnage : style du dessin</label><select id="settingCharArtStyle"><option value="soft">Cartoon doux · traits simples (recommandé)</option><option value="anime">Anime · frange en mèches et yeux brillants</option><option value="classic">Classique · rendu d’origine</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Choisis le rendu qui te plaît; tes autres réglages du personnage restent conservés.</p></div>
+            <div class="form-group"><label>Personnage : style du dessin</label><select id="settingCharArtStyle"><option value="pro">Avancé · ombrage, reflets, plis, détails fins (recommandé)</option><option value="soft">Cartoon doux · traits simples</option><option value="anime">Très animé · très grands yeux étoilés, ombres franches, mèches brillantes, joues rosées</option><option value="classic">Classique · rendu d’origine</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Choisis le rendu qui te plaît; tes autres réglages du personnage restent conservés.</p></div>
             <div class="form-group"><label>Personnage : couleur de la tenue</label><input type="color" id="settingCharColor" value="#1f3a5f"></div>
             <div class="form-group"><label>Personnage : effets</label><select id="settingCharFx"><option value="on">Pro : contours, lumière, ombre</option><option value="off">Léger : pour téléphone lent</option></select></div>
             <div class="form-group"><label>Personnage : mouvements</label><select id="settingCharMotion"><option value="professional">Présentation professionnelle · gestes sobres (recommandé)</option><option value="system">Selon les préférences de ton téléphone</option><option value="normal">Animation expressive</option><option value="reduced">Mouvements très doux et réduits</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Le mode professionnel privilégie des gestes calmes, avec des transitions douces; les expressions et la parole restent animées.</p></div>
+            <div class="form-group"><label>🏷️ Ma marque (bandeau, logo, intro/outro)</label>
+                <input type="text" id="brandName" placeholder="Ton nom ou nom de chaîne" maxlength="40" oninput="Brand.saveFromUI()" style="margin-bottom:8px">
+                <input type="text" id="brandTitle" placeholder="Titre (ex : Créateur de contenu)" maxlength="60" oninput="Brand.saveFromUI()" style="margin-bottom:8px">
+                <input type="text" id="brandCta" placeholder="Message de fin (ex : Abonne-toi)" maxlength="30" oninput="Brand.saveFromUI()" style="margin-bottom:8px">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="color" id="brandColor" oninput="Brand.saveFromUI()" style="width:48px;height:38px;padding:0;border:0"><span style="font-size:13px;color:var(--text-muted)">Couleur de la marque</span></div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><input type="file" accept="image/*" onchange="Brand.pickLogo(this)" style="flex:1;min-width:0"><button type="button" class="header-btn" onclick="Brand.clearLogo()">✕ Logo</button></div>
+                <p id="brandLogoState" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></p>
+                <label style="display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="brandIntro" checked style="width:auto" onchange="Brand.saveFromUI()">Intro animée au début</label>
+                <label style="display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer;margin-top:6px"><input type="checkbox" id="brandOutro" checked style="width:auto" onchange="Brand.saveFromUI()">Écran de fin avec message</label></div>
+            <button class="btn-primary" type="button" onclick="applyProPreset()" style="width:100%;justify-content:center;margin:4px 0 16px">✨ Appliquer le style Présentateur Pro</button>
             <div class="form-group"><label>Personnage : bruitages</label><select id="settingCharSfx"><option value="on">Activés (applaudissements, ding…)</option><option value="off">Coupés</option></select></div>
 <div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
                         <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
@@ -532,37 +543,50 @@ async function saveBlobToDevice(blob, filename) {
     const link = document.createElement('a');
     link.href = url; link.download = filename; link.rel = 'noopener'; link.style.display = 'none';
     document.body.appendChild(link); link.click(); link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30 * 60 * 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 2 * 60 * 60 * 1000);
     // Après un long export le navigateur peut bloquer le téléchargement automatique (geste utilisateur perdu) :
     // on propose toujours un bouton manuel pour que le MP4 ne soit jamais perdu.
     offerManualDownload(url, blob, filename);
     return true;
 }
 function offerManualDownload(url, blob, filename) {
-    try {
-        const old = document.getElementById('dlFallbackBar'); if (old) old.remove();
-        const bar = document.createElement('div'); bar.id = 'dlFallbackBar';
-        bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:100000;background:#1f2937;color:#fff;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 30px rgba(0,0,0,.45);font:14px system-ui,sans-serif';
-        const msg = document.createElement('span'); msg.style.flex = '1 1 100%';
-        msg.textContent = '✅ Vidéo prête (' + (blob.size / 1048576).toFixed(1) + ' Mo). Si le téléchargement n’a pas démarré :';
-        const btnCss = 'background:#6366f1;color:#fff;border:0;border-radius:10px;padding:9px 14px;font:600 14px system-ui,sans-serif;text-decoration:none;cursor:pointer';
-        const a = document.createElement('a'); a.href = url; a.download = filename; a.textContent = '⬇️ Télécharger'; a.style.cssText = btnCss;
-        bar.append(msg, a);
-        try {
-            const file = new File([blob], filename, { type: blob.type || 'video/mp4' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                const sh = document.createElement('button'); sh.textContent = '📤 Partager'; sh.style.cssText = btnCss;
-                sh.onclick = () => navigator.share({ files: [file], title: filename }).catch(() => {});
-                bar.append(sh);
-            }
-        } catch (_) { /* partage indisponible */ }
-        const x = document.createElement('button'); x.textContent = '✕'; x.setAttribute('aria-label', 'Fermer');
-        x.style.cssText = 'background:transparent;color:#fff;border:1px solid #fff5;border-radius:10px;padding:9px 12px;font:14px system-ui,sans-serif;margin-left:auto;cursor:pointer';
-        x.onclick = () => bar.remove(); bar.append(x);
-        document.body.appendChild(bar);
-        setTimeout(() => { if (bar.isConnected) bar.remove(); }, 90000);
-    } catch (e) { console.warn('Bouton de téléchargement manuel indisponible', e); }
+    window.__lastExport = { url, blob, filename };
+    const b = document.getElementById('lastVideoBtn'); if (b) b.style.display = '';
+    showExportSheet();
 }
+function reopenLastExport() { if (window.__lastExport) showExportSheet(); else showToast('Aucune vidéo exportée pour le moment', 'error'); }
+function showExportSheet() {
+    const L = window.__lastExport; if (!L) return;
+    const { url, blob, filename } = L, isMp4 = /mp4/i.test(blob.type || '') || /\.mp4$/i.test(filename);
+    const old = document.getElementById('dlFallbackBar'); if (old) old.remove();
+    const wrap = document.createElement('div'); wrap.id = 'dlFallbackBar';
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(5,8,22,.78);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;font:14px system-ui,sans-serif;color:#fff';
+    const card = document.createElement('div');
+    card.style.cssText = 'width:100%;max-width:460px;background:#18203d;border:1px solid rgba(210,225,255,.16);border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;max-height:94vh;overflow:auto';
+    const title = document.createElement('div'); title.style.cssText = 'font-weight:800;font-size:18px';
+    title.textContent = '✅ Ta vidéo est prête';
+    const vid = document.createElement('video'); vid.src = url; vid.controls = true; vid.playsInline = true; vid.preload = 'metadata';
+    vid.style.cssText = 'width:100%;max-height:46vh;background:#000;border-radius:14px;object-fit:contain';
+    const info = document.createElement('div'); info.style.cssText = 'color:rgba(235,241,255,.68);font-size:13px';
+    info.textContent = filename + ' · ' + (blob.size / 1048576).toFixed(1) + ' Mo' + (isMp4 ? ' · MP4' : ' · WebM (le MP4 n’est pas disponible sur cet appareil)');
+    const css = 'display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:15px 16px;font:700 16px system-ui,sans-serif;text-decoration:none;cursor:pointer;color:#fff;';
+    const dl = document.createElement('a'); dl.href = url; dl.download = filename; dl.textContent = isMp4 ? '⬇️ Télécharger le MP4' : '⬇️ Télécharger la vidéo';
+    dl.style.cssText = css + 'background:linear-gradient(135deg,#6c63ff,#ff6b9d);box-shadow:0 6px 22px rgba(108,99,255,.45)';
+    dl.onclick = () => showToast('Téléchargement lancé · regarde dans tes Téléchargements');
+    const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:10px';
+    try {
+        const file = new File([blob], filename, { type: blob.type || 'video/mp4' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            const sh = document.createElement('button'); sh.textContent = '📤 Partager'; sh.style.cssText = css + 'flex:1;background:#2a3566';
+            sh.onclick = () => navigator.share({ files: [file], title: filename }).catch(() => {}); row.append(sh);
+        }
+    } catch (_) {}
+    const x = document.createElement('button'); x.textContent = 'Fermer'; x.style.cssText = css + 'flex:1;background:transparent;border:1px solid rgba(255,255,255,.25)';
+    x.onclick = () => { vid.pause(); wrap.remove(); }; row.append(x);
+    wrap.onclick = e => { if (e.target === wrap) { vid.pause(); wrap.remove(); } };
+    card.append(title, vid, info, dl, row); wrap.append(card); document.body.appendChild(wrap);
+}
+function videoFileBase() { const t = String((state.project && state.project.title) || 'video').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase(); return (t || 'video').slice(0, 60); }
 let exportStartedAt = 0;
 function showLoading(text, showProgress = false) {
     document.getElementById('loadingText').textContent = text;
@@ -767,6 +791,16 @@ const ActingBrain = (() => {
     const IDEA = compile('idee astuce =solution trouve =eureka');
     // expressions de plusieurs mots (cherchées dans le texte sans accents) : émotion, geste ou geste de tête
     const PHRASES = [
+        { re: /\b(?:pourquoi|comment|et si|saviez[ -]vous|savez[ -]vous|est[ -]ce que|que se passe[ -]t[ -]il)\b/, gesture: 'chin', emo: 'think' },
+        { re: /\b(?:le lendemain|des annees plus tard|quelques (?:jours|semaines|mois|annees) plus tard|ce jour la|il y a \w+ ans)\b/, emo: 'think', look: [0.8, -0.7] },
+        { re: /\b(?:du coup|resultat|c.est pour ca|a cause de|grace a)\b/, gesture: 'present', emo: 'think' },
+        { re: /\b(?:\d+ ?(?:%|pour cent)|plus de \d+|des millions|des milliers|\d+ fois)\b/, emo: 'surprise', gesture: 'up' },
+        { re: /\b(?:abonne\w*|partage\w*|commente\w*|clique\w*|rejoins|rejoignez|n.oublie\w* pas)\b/, gesture: 'beckon', emo: 'excited', look: [0, 0] },
+        { re: /\b(?:retiens|retenez|la cle|le secret|l.essentiel|le plus important|la regle d.or)\b/, gesture: 'present', emo: 'proud', look: [0, 0] },
+        { re: /\b(?:attention|danger\w*|arnaque\w*|piege\w*|mefie\w*|mefiez)\b/, gesture: 'stop', emo: 'fear' },
+        { re: /\b(?:ca a marche|j.ai reussi|nous avons reussi|premiere vente|victoire|succes)\b/, gesture: 'thumbs', emo: 'proud' },
+        { re: /\b(?:j.ai echoue|echec|tout perdu|j.ai perdu)\b/, gesture: 'down', emo: 'sad' },
+        { re: /\b(?:d.un cote|de l.autre|contrairement|alors que)\b/, gesture: 'present', emo: 'think' },
         { re: /\b(?:(?:je|tu) cours|(?:il|elle|on) court|courons|courez|courent|courais|courait|courions|couraient|courir(?! (?:un|le|des) risques?| apres)|couru|courut|courra\w*|courrai\w*|sprint\w*|senfui\w*|detale\w*|a toute (?:vitesse|allure)|a toutes jambes|en courant|prend la fuite)\b/, gesture: 'run', emo: 'excited' },
         { re: /\b(?:(?:je|jai|il|elle|on|tu|nous|vous|ils|elles|lui|ca) (?:\w+ ){0,2}?(?:tomb\w*|trebuch\w*|gliss\w*|effondr\w*)(?! (?:amoureu\w*|enceinte|malade|daccord|en panne|en amour|en depression|dans le piege|dans la depression|sur\b|a pic))|trebuch\w*|glissade|faux pas|casse la figure)\b/, gesture: 'fall', emo: 'surprise' },
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:saute|sautons|sautez|sautent|sautait|sauter|bondit|bondissent|bondir|fait un bond|fait des bonds)\b|\b(?:saute|sauter|bondit|bondir) de joie\b/, gesture: 'jump', emo: 'excited' },
@@ -780,6 +814,8 @@ const ActingBrain = (() => {
         { re: /peut.?etre|qui sait|je ne sais pas|sais pas|on ne sait/, gesture: 'shrug', emo: 'doubt' },
         { re: /il etait une fois|il y a longtemps|autrefois/, gesture: 'present', emo: 'think', look: [0.8, -0.7] },
         { re: /tout a coup|soudain|d.un seul coup|brusquement/, emo: 'surprise' },
+        { re: /\b(?:crie|crient|criait|criaient|crions|criez|crier|hurle|hurlent|hurlait|hurler|secrie|secrient|sexclame|sexclament|beugle|beuglent)\b/, emo: 'surprise', gesture: 'wide' },   // il crie : bouche ouverte, sourcils levés, bras ouverts
+        { re: /\b(?:he{3,}|hey+|ohh+|ahh+|aie+|ouch)\b/, emo: 'surprise' },   // interjections : « Héééé ! », « Aïe ! », « Ohhh »
         { re: /heureusement|enfin|ouf|soulage/, emo: 'joy' },
         { re: /malheureusement|helas|helas|hélas|par malheur/, emo: 'sad' },
         { re: /a ma grande surprise|qui l.aurait cru|incroyable mais vrai/, emo: 'surprise' },
@@ -823,6 +859,19 @@ const ActingBrain = (() => {
     const cache = new WeakMap();
 
     const hasAny = (ps, fn) => ps.some(fn);
+    const CTA_RE = /\b(?:abonne\w*|partage\w*|commente\w*|rejoin\w*|clique\w*|n.oublie\w*|a bientot|au revoir|merci)\b/;
+    const CONFLICT_RE = /\b(?:mais|probleme\w*|difficile\w*|echec|peur|erreur\w*|danger\w*|crise|impossible)\b/;
+    function roleOf(scene) {
+        if (scene.role) return scene.role;
+        try {
+            const l = (state.project && state.project.scenes) || [], i = l.indexOf(scene); if (i < 0 || l.length < 2) return '';
+            const t = String(scene.narration || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            if (i === 0) return 'hook';
+            if (i === l.length - 1) return CTA_RE.test(t) ? 'cta' : 'result';
+            if (CONFLICT_RE.test(t)) return 'conflict';
+        } catch (_) {}
+        return '';
+    }
     function scoreWords(c, i0, i1) {
         const sc = {}; EMOS.forEach(k => sc[k] = 0);
         for (let i = i0; i < i1; i++) { const ps = parts(c.ws[i]); EMOS.forEach(k => { if (hasAny(ps, EMO[k])) { if (negAt(c, i)) { const o = NEG_OPP[k]; if (o) sc[o] += 0.8; } else sc[k] += 1; } }); }
@@ -837,9 +886,11 @@ const ActingBrain = (() => {
             if (/\?\s*$/.test(txt)) sc.think += 0.9;
             if (/!/.test(txt)) { if (scene.mood === 'negative' && sc.sad < 1) sc.angry += 0.5; else sc.excited += 0.55; }
             if (/\.\.\.|…/.test(txt)) sc.doubt += 0.4;
-            if (scene.role === 'cta') { sc.excited += 0.7; sc.joy += 0.4; }
+            if (roleOf(scene) === 'cta') { sc.excited += 0.7; sc.joy += 0.4; }
+            if (roleOf(scene) === 'conflict') { sc.fear += 0.3; sc.sad += 0.3; }
+            if (roleOf(scene) === 'result') { sc.proud += 0.5; sc.joy += 0.3; }
         }
-        if (first && scene.role === 'hook') sc.surprise += 0.6;
+        if (first && roleOf(scene) === 'hook') sc.surprise += 0.6;
         let best = null, bs = 0; EMOS.forEach(k => { if (sc[k] > bs) { bs = sc[k]; best = k; } });
         const base = {}; EMOS.forEach(k => base[k] = 0);
         if (best && bs >= 0.6) base[best] = clamp(0.45 + 0.2 * bs, 0.45, 0.95);
@@ -1220,19 +1271,23 @@ const BuiltinCharacter = (() => {
     const HALO_RGB = { sad: '98,174,255', fear: '106,222,210', angry: '255,102,112', love: '255,123,183', joy: '255,205,112', excited: '255,184,94', proud: '255,218,125', surprise: '190,151,255', doubt: '165,174,204', think: '171,186,221' };
     const cfg = () => {
         const c = Settings.get();
-        return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', hairColor: c.charHairColor || '#1b1410', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f', artStyle: c.charArtStyle === 'classic' ? 'classic' : c.charArtStyle === 'anime' ? 'anime' : 'soft' };
+        return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', glasses: c.charGlasses === 'round' || c.charGlasses === 'square' ? c.charGlasses : 'none', hairColor: c.charHairColor || '#1b1410', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f', artStyle: c.charArtStyle === 'classic' ? 'classic' : c.charArtStyle === 'anime' ? 'anime' : c.charArtStyle === 'soft' ? 'soft' : 'pro' };
     };
     const mix = (hex, amt) => tint(hex, amt, 1);
     function ik(sx, sy, hx, hy, l1, l2, sd, out) {
         let dx = hx - sx, dy = hy - sy, d = Math.hypot(dx, dy) || 0.001;
+        // main écartée sur le côté : on garantit une portée minimale, sinon le bras (2,85 de long) se replie en Z contre le buste
+        if (sd * hx > 1.95 && d < 2.4) { const f = 2.4 / d; dx *= f; dy *= f; d = 2.4; hx = sx + dx; hy = sy + dy; }
         const maxd = l1 + l2 - 0.18;                 // garde un coude légèrement fléchi, même sur les gestes d’extension
         if (d > maxd) { const f = maxd / d; dx *= f; dy *= f; d = maxd; hx = sx + dx; hy = sy + dy; }
         const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d), hh = Math.sqrt(Math.max(0, l1 * l1 - a * a));
         const mx = sx + dx * a / d, my = sy + dy * a / d;
         const c1 = { x: mx - dy / d * hh, y: my + dx / d * hh }, c2 = { x: mx + dy / d * hh, y: my - dx / d * hh };
-        const outer = (sd * c1.x) > (sd * c2.x) ? c1 : c2;
-        // coude vers le bas ; bras presque tendu vers le bas => coude légèrement vers l'extérieur (les deux solutions sont presque à égalité, le choix ne doit pas osciller)
-        const e = out ? outer : (Math.abs(c1.y - c2.y) < 0.35 ? outer : (c1.y > c2.y ? c1 : c2));
+        // le coude va toujours vers le bas ET vers l'extérieur du corps : on note chaque solution (y vers le bas + x vers l'extérieur) et on garde la meilleure.
+        // Avant, le coude pouvait tomber dans le buste : le bras faisait un Z et son contour traversait la veste.
+        const side = sd * hx > 1.5;      // main écartée sur le côté : le coude ne doit pas rentrer dans le buste ; main devant la poitrine : le coude descend naturellement
+        const score = c => c.y + (out ? 1.2 : side ? 0.6 : 0.15) * sd * c.x - (side && sd * c.x < 1.15 ? 4 * (1.15 - sd * c.x) : 0);
+        const e = score(c1) >= score(c2) ? c1 : c2;
         return { ex: e.x, ey: e.y, hx, hy };
     }
     function grad(ctx, x0, y0, x1, y1, a, b) { const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; }
@@ -1330,7 +1385,7 @@ const BuiltinCharacter = (() => {
         const S = exportQuality ? (zoom * cz > 1.25 ? 2 : 1.5) : (zoom * cz > 1.25 ? 1.5 : 1);
         const Wo = Math.ceil(h * 0.86 * S), Ho = Math.ceil(h * 1.08 * S), ax = Wo / 2, ay = Math.round(Ho * 0.9);
         const renderFps = exportQuality ? 30 : 15, frameIndex = Math.floor(time * renderFps + 1e-6);
-        const L = layers(Wo, Ho), appearance = (appSettings.charArtStyle || 'soft') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charHairColor || '#1b1410') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f') + '~' + (appSettings.charMotion || 'professional') + '~' + motionScale, key = frameIndex + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
+        const L = layers(Wo, Ho), appearance = (appSettings.charArtStyle || 'pro') + '~' + (appSettings.charOutfit || 'suit') + '~' + (appSettings.charHair || 'short') + '~' + (appSettings.charGlasses || 'none') + '~' + (appSettings.charHairColor || '#1b1410') + '~' + (appSettings.charSkin || '#6b4226') + '~' + (appSettings.charColor || '#1f3a5f') + '~' + (appSettings.charMotion || 'professional') + '~' + motionScale, key = frameIndex + '|' + (scene && scene.id) + '|' + h + '|' + w + '|' + S + '|' + (scene && scene.narration ? scene.narration.length : 0) + '|' + appearance;
         if (L.key !== key) {
             L.key = key;
             const tq = frameIndex / renderFps, aq = applyMotionComfort(ActingBrain.at(scene, tq, pose), motionScale);
@@ -1341,7 +1396,9 @@ const BuiltinCharacter = (() => {
             o.globalCompositeOperation = 'source-atop';
             const lg = o.createLinearGradient(Wo * 0.12, 0, Wo * 0.88, 0);
             lg.addColorStop(0, 'rgba(255,248,230,0.10)'); lg.addColorStop(0.5, 'rgba(0,0,0,0)'); lg.addColorStop(1, 'rgba(15,5,45,0.30)');
-            o.fillStyle = lg; o.fillRect(0, 0, Wo, Ho); o.globalCompositeOperation = 'source-over';
+            o.fillStyle = lg; o.fillRect(0, 0, Wo, Ho);
+            if (cfg().artStyle === 'pro') { const vg = o.createLinearGradient(0, 0, 0, Ho); vg.addColorStop(0, 'rgba(255,244,225,0.12)'); vg.addColorStop(0.55, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,5,35,0.2)'); o.fillStyle = vg; o.fillRect(0, 0, Wo, Ho); }
+            o.globalCompositeOperation = 'source-over';
             // contour encre autour de la silhouette
             const l = L.ol.getContext('2d'); l.setTransform(1, 0, 0, 1, 0, 0); l.globalCompositeOperation = 'source-over'; l.clearRect(0, 0, Wo, Ho);
             [[-d, -d], [d, -d], [-d, d], [d, d]].forEach(p => l.drawImage(L.off, p[0], p[1]));
@@ -1405,20 +1462,21 @@ const BuiltinCharacter = (() => {
     // ---- mains : silhouette en deux passes (encre puis peau) pour que paume et doigts ne forment qu'une seule forme propre
     // le dessin est fait « doigts vers le haut » ; render() le tourne ensuite dans l'axe de l'avant-bras
     const HAND_UPRIGHT = { thumbs: 1 };
+    let PRO_HANDS = false;
     function handSpec(mode, n, sd, t) {
         const thSide = -sd; // les doigts sont ordonnés de l’index (côté pouce) à l’auriculaire
         const base = [0.22, 0.075, -0.075, -0.22].map(x => x * thSide);
-        const widths = [0.066, 0.075, 0.071, 0.061];
+        const widths = [0.084, 0.092, 0.088, 0.076];
         const mkF = (spread, lens, raised, bend) => base.map((ox, i) => ({
-            ox, oy: -0.17 + Math.abs(i - 1.5) * 0.018, ang: -thSide * spread * (i - 1.5) / 1.5,
-            len: (raised ? raised[i] : 1) ? lens[i] : 0.06, wd: widths[i], bend: (bend || 0) * (i - 1.5)
+            ox, oy: -0.13 + Math.abs(i - 1.5) * 0.02, ang: -thSide * spread * (i - 1.5) / 1.5,
+            len: (raised ? raised[i] : 1) ? lens[i] * 0.88 : 0.07, wd: widths[i], bend: (bend || 0) * (i - 1.5)
         }));
         const L4 = [0.26, 0.30, 0.27, 0.21];
-        const thumb = (ang, len, wd) => ({ ox: thSide * 0.2, oy: 0.04, ang: thSide * ang, len: len || 0.2, wd: wd || 0.085, bend: -thSide * 0.18 });
-        const S = { palm: { rx: 0.30, ry: 0.25, cy: 0 }, fingers: [], thumb: null, detail: 'palm' };
+        const thumb = (ang, len, wd) => ({ ox: thSide * 0.23, oy: 0.07, ang: thSide * ang, len: len || 0.2, wd: wd || 0.108, bend: -thSide * 0.14 });
+        const S = { palm: { rx: 0.29, ry: 0.24, cy: 0.01 }, fingers: [], thumb: null, detail: 'palm' };
         switch (mode) {
             case 'palm': S.fingers = mkF(0.22, L4, null, 0.04); S.thumb = thumb(0.76, 0.19); break;
-            case 'open': { const wv = Math.sin(t * 5) * 0.015; S.fingers = mkF(0.42 + wv, [0.26, 0.30, 0.27, 0.21], null, 0.045); S.thumb = thumb(0.82, 0.2); S.detail = 'spread'; break; }
+            case 'open': { const wv = Math.sin(t * 5) * 0.015; S.fingers = mkF(0.3 + wv, [0.26, 0.30, 0.27, 0.21], null, 0.03); S.thumb = thumb(0.9, 0.22); S.detail = 'spread'; break; }
             case 'flat': S.fingers = mkF(0.04, [0.26, 0.31, 0.28, 0.22], null, 0); S.thumb = thumb(0.5, 0.17); S.detail = 'tight'; break;
             case 'fingers': { const m = clamp(n || 1, 1, 5), up = [0, 1, 2, 3].map(i => i < Math.min(m, 4)); S.fingers = mkF(0.06, [0.27, 0.32, 0.29, 0.22], up, 0.02); S.thumb = m >= 5 ? thumb(0.68, 0.19) : thumb(0.2, 0.09); S.detail = 'tight'; break; }
             case 'point': case 'pointup': case 'pointdown': case 'shush': S.fingers = mkF(0.03, [0.36, 0.2, 0.2, 0.2], [1, 0, 0, 0], 0); S.thumb = thumb(0.28, 0.1); S.detail = 'fist'; break;
@@ -1444,6 +1502,7 @@ const BuiltinCharacter = (() => {
         ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, S.palm.cy, S.palm.rx + pw / 2, S.palm.ry + pw / 2, 0, 0, TAU); ctx.fill();
         all.forEach(f => stroke(f, skin, f.wd));                                          // passe 2 : peau
         ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(0, S.palm.cy, S.palm.rx, S.palm.ry, 0, 0, TAU); ctx.fill();
+        if (PRO_HANDS) { ctx.fillStyle = 'rgba(255,255,255,0.28)'; all.forEach(f => { if (f.len < (S.detail === 'fist' ? 0.3 : 0.15)) return; ctx.save(); ctx.translate(f.ox, f.oy); ctx.rotate(f.ang); ctx.beginPath(); ctx.ellipse(f.bend * 0.17, -f.len + f.wd * 0.55, f.wd * 0.3, f.wd * 0.38, 0, 0, TAU); ctx.fill(); ctx.restore(); }); }
         // détails : creux de la paume, séparations entre doigts collés, articulations du poing
         const palmLight = ctx.createLinearGradient(-0.2, -0.22, 0.2, 0.25);
         palmLight.addColorStop(0, skinLt); palmLight.addColorStop(0.58, skin); palmLight.addColorStop(1, skinDk);
@@ -1461,10 +1520,11 @@ const BuiltinCharacter = (() => {
 
     function render(ctx, w, h, time, a, open, vow, pose, opts) {
         opts = opts || {};
-        const c = cfg(), t = time, E = a.e, anime = c.artStyle === 'anime', soft = c.artStyle === 'soft';
+        const c = cfg(), t = time, E = a.e, anime = c.artStyle === 'anime', pro = c.artStyle === 'pro', soft = c.artStyle === 'soft' || pro;
         const motionScale = Number.isFinite(a.motionScale) ? clamp(a.motionScale, 0.2, 1) : 1, mt = t * motionScale;
         const u = unit(w, h);
         const skin = c.skin, skinDk = mix(skin, -0.22), skinLt = mix(skin, 0.16);
+        PRO_HANDS = pro;
         const amb = a.ambient || pose || 'standing';
         const gh = a.gesture ? gestureHands(a.gesture, a.gp, mt, a.n, a.gside, a.prop) : null;
         const gk = gh ? clamp(a.gw, 0, 1.12) * motionScale : 0;
@@ -1553,8 +1613,10 @@ const BuiltinCharacter = (() => {
         [[-0.52, legL, Math.max(0, Math.cos(walk)) * 0.85 * runK], [0.52, legR, Math.max(0, -Math.cos(walk)) * 0.85 * runK]].forEach(([x, dx, lift]) => {
             ctx.strokeStyle = bareLegs ? skin : legColor; ctx.lineWidth = 0.78;
             ctx.beginPath(); ctx.moveTo(x * 0.8, -4.4); ctx.lineTo(x + dx, -0.45 - lift); ctx.stroke();
+            if (pro && !bareLegs) { ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.moveTo(x * 0.8, -4.1); ctx.lineTo(x + dx, -0.8 - lift); ctx.stroke(); }
             ctx.fillStyle = c.outfit === 'tee' ? '#f4f4f4' : '#15110f';          // chaussures
             ctx.beginPath(); ctx.ellipse(x + dx + 0.12, -0.2 - lift, 0.62, 0.26, 0, 0, TAU); ctx.fill();
+            if (pro) { ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.beginPath(); ctx.ellipse(x + dx, -0.3 - lift, 0.3, 0.07, -0.1, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x + dx - 0.5, -0.1 - lift, 1.2, 0.07); }
         });
 
         // ---- buste (légèrement mobile)
@@ -1581,9 +1643,12 @@ const BuiltinCharacter = (() => {
             ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(-1.0, hip + 0.1, 2.0, 0.22);     // ceinture
         } else {
             ctx.fillStyle = grad(ctx, 0, sh, 0, hip, c.outfit === 'tee' ? outfitLt : outfitLt, c.outfit === 'tee' ? c.color : c.color); torso(); ctx.fill();
+            if (pro && c.outfit === 'suit') { ctx.save(); torso(); ctx.clip(); ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 0.02; for (let px = -1.25; px <= 1.25; px += 0.25) { ctx.beginPath(); ctx.moveTo(px, sh - 0.15); ctx.lineTo(px * 1.05, hip); ctx.stroke(); } ctx.restore(); }
             if (c.outfit === 'suit') {                                                        // chemise + cravate + revers
                 ctx.fillStyle = '#f5f5f5'; ctx.beginPath(); ctx.moveTo(-0.5, sh - 0.1); ctx.lineTo(0.5, sh - 0.1); ctx.lineTo(0, sh + 1.5); ctx.closePath(); ctx.fill();
-                ctx.save(); ctx.translate(0, sh + 0.1); ctx.rotate(sway * 0.2); ctx.translate(0, -(sh + 0.1)); ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.moveTo(-0.14, sh + 0.1); ctx.lineTo(0.14, sh + 0.1); ctx.lineTo(0.2, sh + 1.5); ctx.lineTo(0, sh + 1.9); ctx.lineTo(-0.2, sh + 1.5); ctx.closePath(); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.04; ctx.stroke(); ctx.restore();
+                ctx.save(); ctx.translate(0, sh + 0.1); ctx.rotate(sway * 0.2); ctx.translate(0, -(sh + 0.1)); ctx.fillStyle = grad(ctx, -0.2, sh, 0.2, sh + 1.9, '#a02a3c', '#5a1020'); ctx.beginPath(); ctx.moveTo(-0.14, sh + 0.1); ctx.lineTo(0.14, sh + 0.1); ctx.lineTo(0.2, sh + 1.5); ctx.lineTo(0, sh + 1.9); ctx.lineTo(-0.2, sh + 1.5); ctx.closePath(); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.04; ctx.stroke();
+                if (pro) { ctx.fillStyle = '#7d1a2b'; ctx.beginPath(); ctx.moveTo(-0.17, sh + 0.02); ctx.lineTo(0.17, sh + 0.02); ctx.lineTo(0.11, sh + 0.3); ctx.lineTo(-0.11, sh + 0.3); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 0.03; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(-0.12, sh + 0.55 + k * 0.26); ctx.lineTo(0.12, sh + 0.43 + k * 0.26); ctx.stroke(); } ctx.fillStyle = '#d8dde6'; ctx.fillRect(-0.14, sh + 0.98, 0.28, 0.04); }
+                ctx.restore();
                 ctx.fillStyle = outfitDk; ctx.beginPath(); ctx.moveTo(-0.5, sh - 0.1); ctx.lineTo(-0.15, sh + 1.7); ctx.lineTo(-1.0, sh + 1.4); ctx.closePath(); ctx.fill();
                 ctx.beginPath(); ctx.moveTo(0.5, sh - 0.1); ctx.lineTo(0.15, sh + 1.7); ctx.lineTo(1.0, sh + 1.4); ctx.closePath(); ctx.fill();
                 if (anime) {
@@ -1593,7 +1658,41 @@ const BuiltinCharacter = (() => {
                 }
             }
         }
+        if (pro) {
+            ctx.save();
+            if (!full) {
+                torso(); ctx.clip();
+                ctx.fillStyle = 'rgba(10,6,40,0.22)'; ctx.beginPath(); ctx.moveTo(0.55, sh - 0.2); ctx.quadraticCurveTo(0.9, (sh + hip) / 2, 0.7, hip + 0.1); ctx.lineTo(1.5, hip + 0.1); ctx.lineTo(1.5, sh - 0.2); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 0.07; ctx.beginPath(); ctx.moveTo(-1.18, sh + 0.3); ctx.lineTo(-1.0, hip - 0.1); ctx.stroke();
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.04;
+                [[-0.9, sh + 1.9, -0.4, sh + 2.3], [0.9, sh + 1.8, 0.45, sh + 2.3], [-0.8, hip - 0.5, -0.3, hip - 0.1]].forEach(f => { ctx.beginPath(); ctx.moveTo(f[0], f[1]); ctx.quadraticCurveTo((f[0] + f[2]) / 2, f[1] + 0.2, f[2], f[3]); ctx.stroke(); });
+            } else {
+                ctx.strokeStyle = 'rgba(0,0,0,0.16)'; ctx.lineWidth = 0.05;
+                [-1.1, -0.5, 0.5, 1.1].forEach(x => { ctx.beginPath(); ctx.moveTo(x * 0.7, sh + 2.2); ctx.quadraticCurveTo(x * 1.1 + sway * 0.1, -2.6, x * 1.45 + sway * 0.1, -0.8); ctx.stroke(); });
+            }
+            ctx.restore();
+            if (c.outfit === 'suit') {
+                ctx.fillStyle = '#fff'; ctx.strokeStyle = INK; ctx.lineWidth = 0.04;
+                [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(s * 0.15, sh - 0.12); ctx.lineTo(s * 0.62, sh - 0.1); ctx.lineTo(s * 0.34, sh + 0.42); ctx.closePath(); ctx.fill(); ctx.stroke(); });
+                ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.moveTo(-0.05, sh + 0.5); ctx.lineTo(-0.06, sh + 1.4); ctx.stroke();
+                ctx.fillStyle = '#f5f5f5'; ctx.beginPath(); ctx.moveTo(-0.95, sh + 1.05); ctx.lineTo(-0.62, sh + 1.0); ctx.lineTo(-0.66, sh + 1.2); ctx.lineTo(-0.9, sh + 1.22); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(0, sh + 1.95); ctx.lineTo(0, hip - 0.1); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,224,155,0.95)'; [sh + 2.2, sh + 2.7].forEach(y => { ctx.beginPath(); ctx.arc(0.07, y, 0.06, 0, TAU); ctx.fill(); });
+                // finitions présentateur : ombre sous le col, surpiqûres des revers, pin's, pochette en pointes
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.16)'; ctx.beginPath(); ctx.moveTo(-0.5, sh - 0.08); ctx.quadraticCurveTo(0, sh + 0.2, 0.5, sh - 0.08); ctx.lineTo(0.42, sh + 0.02); ctx.quadraticCurveTo(0, sh + 0.3, -0.42, sh + 0.02); ctx.closePath(); ctx.fill();
+                ctx.setLineDash([0.05, 0.05]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 0.022;
+                [-1, 1].forEach(sd2 => { ctx.beginPath(); ctx.moveTo(sd2 * 0.92, sh + 1.34); ctx.lineTo(sd2 * 0.2, sh + 1.62); ctx.stroke(); });
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#c9a24b'; ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 0.015; ctx.beginPath(); ctx.arc(0.7, sh + 0.55, 0.055, 0, TAU); ctx.fill(); ctx.stroke();
+                ctx.strokeStyle = '#15110f'; ctx.lineWidth = 0.02; ctx.beginPath(); ctx.moveTo(0.36, sh + 0.7); ctx.quadraticCurveTo(0.2, sh + 1.4, 0.3, hip - 0.15); ctx.stroke();   // micro-cravate : câble
+                ctx.fillStyle = '#1b1b1f'; ctx.beginPath(); ctx.ellipse(0.37, sh + 0.64, 0.045, 0.07, 0.25, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillRect(0.355, sh + 0.6, 0.012, 0.05);
+                ctx.fillStyle = '#a02a3c'; ctx.beginPath(); ctx.moveTo(-0.9, sh + 1.05); ctx.lineTo(-0.83, sh + 0.9); ctx.lineTo(-0.76, sh + 1.03); ctx.lineTo(-0.68, sh + 0.92); ctx.lineTo(-0.64, sh + 1.02); ctx.closePath(); ctx.fill();
+                ctx.restore();
+            }
+        }
         if (!full) { ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-1.1, hip - 0.1, 2.2, 0.16); }  // ceinture
+        if (pro && !full) { ctx.fillStyle = '#d9c27a'; ctx.fillRect(-0.12, hip - 0.1, 0.24, 0.16); ctx.strokeStyle = INK; ctx.lineWidth = 0.025; ctx.strokeRect(-0.12, hip - 0.1, 0.24, 0.16); }
 
         // cou
         { const ng = ctx.createLinearGradient(0, sh - 0.62, 0, sh + 0.08); ng.addColorStop(0, mix(skin, -0.5)); ng.addColorStop(0.55, skinDk); ng.addColorStop(1, skinDk); ctx.fillStyle = ng; ctx.beginPath(); ctx.roundRect(-0.27, sh - 0.62, 0.54, 0.7, 0.2); ctx.fill(); }
@@ -1605,6 +1704,14 @@ const BuiltinCharacter = (() => {
         ctx.fillStyle = skinDk; ctx.beginPath(); ctx.ellipse(-0.98, hy + 0.12, 0.16, 0.26, 0, 0, TAU); ctx.ellipse(0.98, hy + 0.12, 0.16, 0.26, 0, 0, TAU); ctx.fill();   // oreilles
         const hg = ctx.createRadialGradient(-0.3, hy - 0.4, 0.2, 0, hy, 1.35); hg.addColorStop(0, skinLt); hg.addColorStop(1, skin);
         ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(0, hy, 0.96, 1.14, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
+        if (pro) {
+            ctx.save(); ctx.beginPath(); ctx.ellipse(0, hy, 0.96, 1.14, 0, 0, TAU); ctx.clip();
+            const jg = ctx.createLinearGradient(0, hy + 0.5, 0, hy + 1.2); jg.addColorStop(0, 'rgba(0,0,0,0)'); jg.addColorStop(1, 'rgba(20,6,10,0.26)'); ctx.fillStyle = jg; ctx.fillRect(-1.1, hy + 0.4, 2.2, 0.9);
+            const sg2 = ctx.createLinearGradient(0.1, 0, 1, 0); sg2.addColorStop(0, 'rgba(20,6,10,0)'); sg2.addColorStop(1, 'rgba(20,6,10,0.22)'); ctx.fillStyle = sg2; ctx.fillRect(0.1, hy - 1.2, 1, 2.4);
+            ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.ellipse(-0.45, hy - 0.25, 0.28, 0.5, 0.2, 0, TAU); ctx.fill();
+            ctx.restore();
+            ctx.fillStyle = 'rgba(15,5,8,0.28)'; ctx.beginPath(); ctx.ellipse(0, hy + 1.1, 0.5, 0.13, 0, 0, TAU); ctx.fill();
+        }
         if (c.hair === 'short' || c.hair === 'long') {
             ctx.fillStyle = c.hairColor; ctx.beginPath();
             ctx.moveTo(-1.0, hy - 0.2); ctx.quadraticCurveTo(-1.15, hy - 1.35, 0, hy - 1.3); ctx.quadraticCurveTo(1.15, hy - 1.35, 1.0, hy - 0.2);
@@ -1637,30 +1744,58 @@ const BuiltinCharacter = (() => {
             ctx.beginPath(); ctx.moveTo(-0.73, hy - 0.96); ctx.quadraticCurveTo(-0.48, hy - 0.78, -0.5, hy - 0.55); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(-0.16, hy - 1.02); ctx.quadraticCurveTo(0.1, hy - 0.82, 0.1, hy - 0.55); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0.5, hy - 0.9); ctx.quadraticCurveTo(0.72, hy - 0.77, 0.69, hy - 0.58); ctx.stroke();
+            // anime avancé : anneau de lumière, mèches qui encadrent le visage, ahoge
+            ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.moveTo(-0.62, hy - 0.86); ctx.quadraticCurveTo(0, hy - 1.14, 0.62, hy - 0.86); ctx.quadraticCurveTo(0, hy - 1.0, -0.62, hy - 0.86); ctx.fill();
+            ctx.fillStyle = mix(c.hairColor, -0.4); ctx.globalAlpha = 0.45; [-0.42, 0.02, 0.43].forEach(tx => { ctx.beginPath(); ctx.moveTo(tx - 0.2, hy - 0.62); ctx.lineTo(tx, hy - 0.4); ctx.lineTo(tx + 0.2, hy - 0.62); ctx.closePath(); ctx.fill(); }); ctx.globalAlpha = 1;   // ombres franches (cel shading)
+            ctx.fillStyle = c.hairColor; [-1, 1].forEach(sl => { ctx.beginPath(); ctx.moveTo(sl * 0.93, hy - 0.3); ctx.quadraticCurveTo(sl * 1.1, hy + 0.4, sl * 0.9, hy + 0.98); ctx.quadraticCurveTo(sl * 0.86, hy + 0.4, sl * 0.78, hy - 0.12); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#180d18'; ctx.lineWidth = 0.035; ctx.stroke(); });
+            ctx.strokeStyle = c.hairColor; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.moveTo(0.02, hy - 1.1); ctx.bezierCurveTo(0.0, hy - 1.5, 0.32, hy - 1.5, 0.22, hy - 1.3); ctx.stroke();
+        }
+        if (pro && (c.hair === 'short' || c.hair === 'long')) {
+            ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = mix(c.hairColor, 0.34); ctx.globalAlpha = 0.5; ctx.lineWidth = 0.07;
+            ctx.beginPath(); ctx.moveTo(-0.7, hy - 1.0); ctx.quadraticCurveTo(-0.1, hy - 1.28, 0.7, hy - 1.0); ctx.stroke();
+            ctx.globalAlpha = 0.3; ctx.lineWidth = 0.035;
+            for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(i * 0.2, hy - 1.22 + Math.abs(i) * 0.06); ctx.quadraticCurveTo(i * 0.26 + sway * 0.03, hy - 0.95, i * 0.3, hy - 0.7); ctx.stroke(); }
+            ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.moveTo(-0.55, hy - 0.82); ctx.quadraticCurveTo(0, hy - 0.62, 0.55, hy - 0.82); ctx.lineTo(0.55, hy - 0.7); ctx.quadraticCurveTo(0, hy - 0.5, -0.55, hy - 0.7); ctx.closePath(); ctx.fill();
+            ctx.restore();
         }
         // visage (les traits glissent un peu quand la tête se tourne)
         ctx.save(); ctx.translate(yaw * 0.16, 0);
         const bl0 = a.blink !== undefined ? a.blink : (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
         const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98);      // rire : yeux plissés ; sommeil : yeux fermés
-        const look = a.eye || a.look;
+        const look0 = a.eye || a.look, look = pro ? { x: look0.x + Math.sin(t * 2.3) * 0.04, y: look0.y + Math.sin(t * 1.7 + 1) * 0.03 } : look0;
         [-0.38, 0.38].forEach(x => {
-            const ey = hy + 0.02, eyeRx = anime ? 0.235 : soft ? 0.22 : 0.2, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(anime ? 0.28 : soft ? 0.26 : 0.24, (anime ? 0.205 : soft ? 0.19 : 0.17) * lid);
+            const ey = hy + 0.02, eyeRx = anime ? 0.27 : soft ? 0.22 : 0.2, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(anime ? 0.34 : soft ? 0.26 : 0.24, (anime ? 0.25 : soft ? 0.19 : 0.17) * lid);
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, 0, TAU); ctx.fill();
-            const ir = (anime ? 0.132 : soft ? 0.118 : 0.105) * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
+            const ir = (anime ? 0.165 : soft ? 0.118 : 0.105) * (E.surprise + E.fear > 0.5 ? 0.82 : 1) * Math.min(1, lid + 0.15);
             const px = x + look.x * 0.06, py = ey + look.y * 0.035;
-            const ig = ctx.createRadialGradient(px, py, ir * 0.1, px, py, ir); ig.addColorStop(0, '#6a3a18'); ig.addColorStop(0.65, '#3a1d0c'); ig.addColorStop(1, '#1b0e07');
+            const ig = ctx.createRadialGradient(px, py, ir * 0.1, px, py, ir); if (anime) { ig.addColorStop(0, '#9af0ff'); ig.addColorStop(0.5, '#2f86d8'); ig.addColorStop(1, '#14275f'); } else { ig.addColorStop(0, '#6a3a18'); ig.addColorStop(0.65, '#3a1d0c'); ig.addColorStop(1, '#1b0e07'); }
             ctx.fillStyle = ig; ctx.beginPath(); ctx.ellipse(px, py, ir, Math.min(ir, ry * 0.98), 0, 0, TAU); ctx.fill();
             ctx.fillStyle = '#0a0503'; ctx.beginPath(); ctx.ellipse(px, py, ir * 0.45, Math.min(ir * 0.45, ry * 0.5), 0, 0, TAU); ctx.fill();
-            if (anime && lid > 0.35) { ctx.strokeStyle = 'rgba(255,199,120,0.7)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.arc(px, py + ir * 0.16, ir * 0.78, 0.15, Math.PI - 0.15); ctx.stroke(); }
+            if (anime && lid > 0.35) { ctx.strokeStyle = 'rgba(160,240,255,0.75)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.arc(px, py + ir * 0.16, ir * 0.78, 0.15, Math.PI - 0.15); ctx.stroke(); }
             if (lid > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + 0.045, py - 0.05, anime ? 0.045 : soft ? 0.04 : 0.034, 0, TAU); ctx.fill(); ctx.globalAlpha = 0.78; ctx.beginPath(); ctx.arc(px - 0.045, py + 0.045, anime ? 0.021 : soft ? 0.019 : 0.016, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
                 if (anime && E.joy + E.love + E.excited + E.proud > 0.75) { ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(px - ir * 0.38, py + ir * 0.32, ir * 0.12, 0, TAU); ctx.fill(); }
             }
+            if (anime && lid > 0.45) {   // anime avancé : ombre de la paupière sur l'iris, lueur basse, éclats multiples
+                ctx.save(); ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, 0, TAU); ctx.clip();
+                const lsh = ctx.createLinearGradient(0, ey - ry, 0, ey); lsh.addColorStop(0, 'rgba(20,10,50,0.6)'); lsh.addColorStop(1, 'rgba(20,10,50,0)'); ctx.fillStyle = lsh; ctx.fillRect(x - eyeRx, ey - ry, eyeRx * 2, ry);
+                const llo = ctx.createRadialGradient(px, py + ir * 0.55, 0, px, py + ir * 0.55, ir * 0.75); llo.addColorStop(0, 'rgba(170,245,255,0.6)'); llo.addColorStop(1, 'rgba(170,245,255,0)'); ctx.fillStyle = llo; ctx.fillRect(px - ir, py, ir * 2, ir);
+                ctx.restore();
+                ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.beginPath(); ctx.arc(px - ir * 0.5, py + ir * 0.5, ir * 0.1, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(px + ir * 0.62, py + ir * 0.12, ir * 0.06, 0, TAU); ctx.fill();
+                if (lid > 0.6) { const sx = px - ir * 0.18, sy = py - ir * 0.62, sr = ir * 0.2; ctx.beginPath(); ctx.moveTo(sx, sy - sr); ctx.quadraticCurveTo(sx, sy, sx + sr, sy); ctx.quadraticCurveTo(sx, sy, sx, sy + sr); ctx.quadraticCurveTo(sx, sy, sx - sr, sy); ctx.quadraticCurveTo(sx, sy, sx, sy - sr); ctx.fill(); }   // éclat en étoile
+            }
             ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.55, eyeRx, ry * 0.5, 0, 0, TAU); ctx.fill();
-            ctx.strokeStyle = anime || soft ? '#180d18' : '#1a0f09'; ctx.lineWidth = anime ? 0.095 : soft ? 0.082 : 0.07; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+            ctx.strokeStyle = anime || soft ? '#180d18' : '#1a0f09'; ctx.lineWidth = anime ? 0.125 : soft ? 0.082 : 0.07; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
             { const so = x < 0 ? -1 : 1; ctx.lineWidth = anime ? 0.05 : soft ? 0.045 : 0.04; ctx.beginPath(); ctx.moveTo(x + so * eyeRx * 0.92, ey - ry * 0.35); ctx.lineTo(x + so * eyeRx * 1.35, ey - ry * 0.85); ctx.moveTo(x + so * eyeRx * 0.72, ey - ry * 0.78); ctx.lineTo(x + so * eyeRx * 1.05, ey - ry * 1.2); ctx.stroke();
               ctx.strokeStyle = skinDk; ctx.lineWidth = 0.03; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.25, eyeRx, ry * 1.45, 0, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.strokeStyle = anime || soft ? '#180d18' : '#1a0f09'; }
             if (bl > 0.6) { ctx.beginPath(); ctx.moveTo(x - 0.2, ey); ctx.quadraticCurveTo(x, ey + 0.07, x + 0.2, ey); ctx.stroke(); }
+            if (pro && lid > 0.3) {
+                ctx.save(); const so2 = x < 0 ? -1 : 1; ctx.strokeStyle = '#180d18'; ctx.lineWidth = 0.035;
+                for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(x + so2 * eyeRx * (0.55 + k * 0.22), ey - ry * (0.95 - k * 0.1)); ctx.lineTo(x + so2 * eyeRx * (0.7 + k * 0.3), ey - ry * (1.5 - k * 0.1) - 0.04); ctx.stroke(); }
+                ctx.strokeStyle = 'rgba(0,0,0,0.16)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, 0.15, Math.PI - 0.15); ctx.stroke();
+                ctx.restore();
+            }
         });
+        if (anime) { [-1, 1].forEach(sc2 => { const bg = ctx.createRadialGradient(sc2 * 0.62, hy + 0.52, 0, sc2 * 0.62, hy + 0.52, 0.26); bg.addColorStop(0, 'rgba(255,120,140,0.22)'); bg.addColorStop(1, 'rgba(255,120,140,0)'); ctx.fillStyle = bg; ctx.fillRect(sc2 * 0.62 - 0.26, hy + 0.26, 0.52, 0.52); }); }   // joues rosées anime
         // sourcils : hauteur, inclinaison et asymétrie selon l'émotion
         ctx.strokeStyle = '#120d0b'; ctx.lineWidth = anime ? 0.105 : soft ? 0.095 : 0.085;
         [-1, 1].forEach(sd => {
@@ -1670,11 +1805,22 @@ const BuiltinCharacter = (() => {
             ctx.beginPath(); ctx.moveTo(x0, yOut); ctx.quadraticCurveTo((x0 + x1) / 2, by - 0.08 - 0.05 * raise, x1, yIn); ctx.stroke();
         });
         // nez et joues
-        ctx.strokeStyle = skinDk; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.moveTo(-0.07, hy + 0.3); ctx.quadraticCurveTo(0, hy + 0.42, 0.1, hy + 0.32); ctx.stroke();
+        if (c.glasses !== 'none') {   // lunettes : montures + reflet léger, par-dessus les yeux
+            ctx.save(); ctx.lineJoin = 'round'; ctx.strokeStyle = c.glasses === 'round' ? '#c9a24b' : '#15110f'; ctx.lineWidth = c.glasses === 'round' ? 0.035 : 0.06;
+            [-0.38, 0.38].forEach(gx => { ctx.beginPath(); if (c.glasses === 'round') ctx.ellipse(gx, hy + 0.02, 0.3, 0.27, 0, 0, TAU); else ctx.roundRect(gx - 0.31, hy - 0.22, 0.62, 0.42, 0.09); ctx.fillStyle = 'rgba(190,225,255,0.12)'; ctx.fill(); ctx.stroke(); });
+            ctx.beginPath(); ctx.moveTo(-0.08, hy + 0.0); ctx.quadraticCurveTo(0, hy - 0.06, 0.08, hy + 0.0); ctx.moveTo(-0.69, hy - 0.02); ctx.lineTo(-0.93, hy - 0.04); ctx.moveTo(0.69, hy - 0.02); ctx.lineTo(0.93, hy - 0.04); ctx.stroke();
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 0.025; [-0.38, 0.38].forEach(gx => { ctx.beginPath(); ctx.moveTo(gx - 0.17, hy - 0.12); ctx.lineTo(gx - 0.04, hy - 0.17); ctx.stroke(); });
+            ctx.restore();
+        }
+        ctx.strokeStyle = skinDk; ctx.lineWidth = anime ? 0.025 : 0.06; ctx.beginPath(); ctx.moveTo(-0.07, hy + 0.3); ctx.quadraticCurveTo(0, hy + 0.42, 0.1, hy + 0.32); ctx.stroke();
         ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.beginPath(); ctx.ellipse(0.03, hy + 0.05, 0.05, 0.14, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(30,10,5,0.45)'; ctx.beginPath(); ctx.ellipse(-0.075, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.ellipse(0.105, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.beginPath(); ctx.ellipse(0, hy + 1.0, 0.32, 0.1, 0, 0, TAU); ctx.fill();
         if (blush > 0.25) { ctx.fillStyle = 'rgba(210,90,70,' + (anime ? 0.34 : soft ? 0.31 : 0.28) * blush + ')'; ctx.beginPath(); ctx.ellipse(-0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.ellipse(0.62, hy + 0.38, 0.2, 0.12, 0, 0, TAU); ctx.fill(); if (anime) { ctx.strokeStyle = 'rgba(255,215,205,' + (0.55 * blush) + ')'; ctx.lineWidth = 0.025; [-1, 1].forEach(sd => { for (let j = 0; j < 3; j++) { ctx.beginPath(); ctx.moveTo(sd * (0.49 + j * 0.09), hy + 0.32); ctx.lineTo(sd * (0.48 + j * 0.09), hy + 0.42); ctx.stroke(); } }); } }
+        if (pro) {
+            ctx.fillStyle = 'rgba(20,6,10,0.16)'; ctx.beginPath(); ctx.moveTo(0.1, hy); ctx.quadraticCurveTo(0.22, hy + 0.2, 0.16, hy + 0.38); ctx.lineTo(0.08, hy + 0.34); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = 'rgba(20,6,10,0.18)'; ctx.lineWidth = 0.03; [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(s * 0.2, hy + 0.5); ctx.quadraticCurveTo(s * 0.3, hy + 0.7, s * 0.28, hy + 0.88); ctx.stroke(); });
+        }
         // bouche : repos selon l'émotion, ou forme de la voyelle quand il parle
         const my = hy + 0.68, lip = mix(skin, -0.38);
         if (open < 0.06) {
@@ -1699,6 +1845,7 @@ const BuiltinCharacter = (() => {
             ctx.fillStyle = '#c2555c'; ctx.beginPath(); ctx.ellipse(0, my + ry * 0.35 + ry * 0.5, rx * 0.55, ry * 0.4, 0, 0, TAU); ctx.fill();
             ctx.strokeStyle = lip; ctx.lineWidth = 0.07; ctx.beginPath(); ctx.ellipse(0, my + ry * 0.35, rx, ry, 0, 0, TAU); ctx.stroke();
         }
+        if (pro && open < 0.06 && mouthO <= 0.3) { ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.beginPath(); ctx.ellipse(0, my + 0.1 - 0.06 * curve, 0.1, 0.02, 0, 0, TAU); ctx.fill(); }
         // larmes de rire qui giclent vers l'extérieur
         if (laughK > 0.3) { [-1, 1].forEach((k, i) => { const q = (t * 1.7 + i * 0.5) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q) * laughK).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(k * (0.5 + 0.4 * q), hy + 0.12 + 0.5 * q, 0.07, 0.11, k * 0.5, 0, TAU); ctx.fill(); }); }
         // larmes quand il est triste ou pleure, goutte de sueur quand il a peur
@@ -1741,7 +1888,7 @@ const BuiltinCharacter = (() => {
         const drawHand = (x, y, mode, n, sc, sd, rot) => {
             ctx.save(); ctx.translate(x, y); ctx.scale(sc * 1.2, sc * 1.2);
             if (!HAND_UPRIGHT[mode]) {
-                const wristFlex = mode === 'point' || mode === 'pointup' || mode === 'pointdown' || mode === 'hold' ? 0.62 : 0.55;
+                const wristFlex = mode === 'point' || mode === 'pointup' || mode === 'pointdown' || mode === 'hold' ? 0.96 : 0.9;
                 ctx.rotate((rot || 0) * wristFlex);                 // le poignet accompagne l’avant-bras sans se casser
             }
             ctx.translate(0, -0.2);                               // le poignet rejoint le bas de la paume, pas son centre
@@ -1794,20 +1941,26 @@ const BuiltinCharacter = (() => {
             const gt = gh ? (sd < 0 ? gh.L : gh.R) : null;
             const tg = gt ? { x: b.x + (gt.x - b.x) * gk, y: b.y + (gt.y - b.y) * gk, mode: gk > 0.35 ? gt.mode : b.mode, n: gt.n, s: gt.s || 1, out: gt.out } : { x: b.x, y: b.y, mode: b.mode, n: 0, s: 1 };
             const arm = ik(sx, sy, tg.x, tg.y, 1.45, 1.4, sd, tg.out);
+            const fdx = arm.hx - arm.ex, fdy = arm.hy - arm.ey, fL = Math.hypot(fdx, fdy) || 1, fux = fdx / fL, fuy = fdy / fL;
+            const wk = c.outfit === 'suit' ? 0.56 : 0;                 // distance poignet : la manche s'arrête là, puis manchette blanche, poignet, main
+            const wx = arm.hx - fux * wk, wy = arm.hy - fuy * wk;
             const rU0 = wide ? 0.48 : 0.29, rU1 = wide ? 0.42 : 0.25, rL1 = wide ? 0.34 : (longSleeve ? 0.2 : 0.19);
             const sg = ctx.createLinearGradient(sx, sy, arm.hx, arm.hy); sg.addColorStop(0, sleeveTop); sg.addColorStop(1, sleeveBot);
             const foreFill = longSleeve ? sg : skin;
             // 1) encre : le trait s'arrête à l'épaule, la manche sort du buste sans cercle dessiné sur la poitrine
             ctx.strokeStyle = INK; ctx.lineWidth = 0.1; ctx.lineCap = 'butt';
             limbPath(sx, sy, rU0, arm.ex, arm.ey, rU1, false); ctx.stroke();
-            limbPath(arm.ex, arm.ey, rU1, arm.hx, arm.hy, rL1, false); ctx.stroke();
+            limbPath(arm.ex, arm.ey, rU1, wx, wy, rL1, false); ctx.stroke();
             // 2) couleur : haut du bras, puis avant-bras
             ctx.fillStyle = sg; limbPath(sx, sy, rU0, arm.ex, arm.ey, rU1, true); ctx.fill();
-            ctx.fillStyle = foreFill; limbPath(arm.ex, arm.ey, rU1, arm.hx, arm.hy, rL1, true); ctx.fill();
-            if (c.outfit === 'suit') {          // poignet de chemise : une bande nette, pas plus large que la manche
-                const dx = arm.hx - arm.ex, dy = arm.hy - arm.ey, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, cw = rL1 * 2 + 0.02;
+            ctx.fillStyle = foreFill; limbPath(arm.ex, arm.ey, rU1, wx, wy, rL1, true); ctx.fill();
+            if (pro && longSleeve) { ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 0.04; ctx.lineCap = 'round'; [0.1, 0.22].forEach(o2 => { ctx.beginPath(); ctx.moveTo(arm.ex - rU1 * 0.8, arm.ey + o2); ctx.quadraticCurveTo(arm.ex, arm.ey + o2 + 0.08, arm.ex + rU1 * 0.8, arm.ey + o2); ctx.stroke(); }); }
+            if (c.outfit === 'suit') {          // manche de veste -> manchette blanche -> poignet -> main, collés les uns aux autres
+                const ux = fux, uy = fuy, cw = rL1 * 2 - 0.03, ww = 0.27;
                 const seg = (k0, k1, w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'butt'; ctx.beginPath(); ctx.moveTo(arm.hx - ux * k0, arm.hy - uy * k0); ctx.lineTo(arm.hx - ux * k1, arm.hy - uy * k1); ctx.stroke(); };
-                seg(0.5, 0.26, cw + 0.1, INK); seg(0.47, 0.29, cw, '#f5f5f5');
+                seg(0.28, -0.1, ww + 0.07, INK); seg(0.26, -0.08, ww, skin);              // poignet (recouvert par la paume)
+                seg(0.6, 0.2, cw + 0.07, INK); seg(0.57, 0.23, cw, '#f5f5f5');          // manchette
+                if (pro && sd < 0) { seg(0.2, 0.1, ww + 0.06, INK); seg(0.19, 0.11, ww + 0.02, '#c9d1dc'); ctx.fillStyle = '#10131c'; ctx.beginPath(); ctx.arc(arm.hx - ux * 0.15, arm.hy - uy * 0.15, 0.07, 0, TAU); ctx.fill(); }
             }
             ctx.lineCap = 'round';
             if (tg.mode === 'hold' && gt && gt.prop) drawProp(gt.prop, arm.hx, arm.hy - 0.05, gk);
@@ -3076,6 +3229,43 @@ class CanvasRenderer {
         if (typeof state !== 'undefined' && state.project && state.project.subtitles && scene.narration) {
             this.renderSubtitles(scene.narration, t, scene.duration);
         }
+        this.drawBrand(scene, t, idx, n);
+    }
+
+    drawBrand(scene, t, idx, n) {
+        const B = Brand.get(), img = Brand.image(); if (!B.name && !img) return;
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k || 1, dur = scene.duration || 5, fam = FONT_STACK, col = B.color || '#6c63ff';
+        const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+        if (img) { const s = W * 0.11, r = img.naturalHeight / img.naturalWidth; ctx.save(); ctx.globalAlpha = 0.9; ctx.drawImage(img, W - s - W * 0.04, H * 0.035, s, s * r); ctx.restore(); }
+        if (B.name && idx === 0 && t > 0.7 && t < Math.min(5.2, dur - 0.3)) {
+            const e = EASE.inOutCubic(Math.min(clamp((t - 0.7) / 0.5, 0, 1), clamp((Math.min(5.2, dur - 0.3) - t) / 0.4, 0, 1)));
+            ctx.save(); ctx.font = '800 ' + 40 * k + 'px ' + fam; const nw = ctx.measureText(B.name).width;
+            ctx.font = '600 ' + 26 * k + 'px ' + fam; const tw = B.title ? ctx.measureText(B.title).width : 0;
+            const w = Math.min(W * 0.9, Math.max(nw, tw) + 70 * k), h = (B.title ? 104 : 72) * k, x = W * 0.05 - (1 - e) * (w + W * 0.1), y = H * 0.70;
+            ctx.fillStyle = 'rgba(16,21,43,0.9)'; rr(x, y, w, h, 14 * k); ctx.fill();
+            ctx.fillStyle = col; rr(x, y, 9 * k, h, 5 * k); ctx.fill();
+            ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = '800 ' + 40 * k + 'px ' + fam;
+            ctx.fillText(B.name, x + 30 * k, y + (B.title ? 38 : 36) * k);
+            if (B.title) { ctx.fillStyle = 'rgba(235,241,255,0.8)'; ctx.font = '600 ' + 26 * k + 'px ' + fam; ctx.fillText(B.title, x + 30 * k, y + 78 * k); }
+            ctx.restore();
+        }
+        if (B.intro && idx === 0 && t < 1.1) {
+            const p = t / 1.1, e = EASE.inOutCubic(p); ctx.save(); ctx.fillStyle = col; ctx.fillRect(0, 0, W, H * (1 - e));
+            ctx.globalAlpha = 1 - clamp(p * 1.4, 0, 1); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            let cy = H * 0.46; if (img) { const s = W * 0.28, r = img.naturalHeight / img.naturalWidth; ctx.drawImage(img, W / 2 - s / 2, cy - s * r / 2, s, s * r); cy += s * r / 2 + 50 * k; }
+            if (B.name) { ctx.fillStyle = '#fff'; ctx.font = '800 ' + 56 * k + 'px ' + fam; ctx.fillText(B.name, W / 2, cy); }
+            ctx.restore();
+        }
+        if (B.outro && idx === n - 1 && dur >= 3 && t > dur - 2.2) {
+            const a = EASE.inOutCubic(clamp((t - (dur - 2.2)) / 0.5, 0, 1)); ctx.save();
+            ctx.fillStyle = 'rgba(8,10,24,' + 0.5 * a + ')'; ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; let cy = H * 0.34;
+            if (img) { const s = W * 0.22, r = img.naturalHeight / img.naturalWidth; ctx.drawImage(img, W / 2 - s / 2, cy - s * r / 2, s, s * r); cy += s * r / 2 + 46 * k; }
+            if (B.name) { ctx.fillStyle = '#fff'; ctx.font = '800 ' + 54 * k + 'px ' + fam; ctx.fillText(B.name, W / 2, cy); cy += 78 * k; }
+            ctx.font = '800 ' + 36 * k + 'px ' + fam; const cw = ctx.measureText(B.cta).width + 70 * k;
+            ctx.fillStyle = col; rr(W / 2 - cw / 2, cy - 36 * k, cw, 72 * k, 36 * k); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(B.cta, W / 2, cy + 2 * k);
+            ctx.restore();
+        }
     }
 
     drawLocationPath(scene, t) {
@@ -3554,6 +3744,7 @@ class CanvasRenderer {
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left';
         ctx.lineJoin = 'round';
+        ctx.fillStyle = 'rgba(10,14,30,0.55)'; ctx.beginPath(); { const bx = -lineW / 2 - 26 * k, by = -size * 0.78, bw = lineW + 52 * k, bh = size * 1.56; if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, size * 0.5); else ctx.rect(bx, by, bw, bh); } ctx.fill();
         let x = -lineW / 2;
         chunk.forEach((c, j) => {
             const isActive = c.i === active;
@@ -4003,6 +4194,7 @@ function applyTheme(theme) {
 const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
 const getVal = (id, d = '') => { const el = document.getElementById(id); return el ? el.value : d; };
 function loadSettingsUI() {
+    try { Brand.loadUI(); } catch (_) {}
     const c = Settings.get();
     applyTheme(c.theme || 'light');
     setVal('settingTheme', c.theme || 'light');
@@ -4011,8 +4203,9 @@ function loadSettingsUI() {
     setVal('settingModel', c.model || 'gemini-3.6-flash');
     setVal('settingQuality', c.quality || '1080');
     setVal('settingCharOutfit', c.charOutfit || 'suit');
-    setVal('settingCharArtStyle', c.charArtStyle === 'classic' || c.charArtStyle === 'anime' ? c.charArtStyle : 'soft');
+    setVal('settingCharArtStyle', ['classic', 'anime', 'soft', 'pro'].includes(c.charArtStyle) ? c.charArtStyle : 'pro');
     setVal('settingCharHair', c.charHair || 'short');
+    setVal('settingCharGlasses', c.charGlasses || 'none');
     setVal('settingCharHairColor', c.charHairColor || '#1b1410');
     setVal('settingCharSkin', c.charSkin || '#6b4226');
     setVal('settingCharColor', c.charColor || '#1f3a5f');
@@ -4024,6 +4217,11 @@ function loadSettingsUI() {
     setVal('settingSpeechifyModel', c.speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0');
 }
 
+function applyProPreset() {
+    [['settingCharArtStyle', 'pro'], ['settingCharMotion', 'professional'], ['settingCharOutfit', 'suit'], ['settingCharHair', 'short'], ['settingCharColor', '#1f3a5f']]
+        .forEach(([id, v]) => { const e = document.getElementById(id); if (e) e.value = v; });
+    saveSettings(); showToast('✨ Présentateur Pro appliqué');
+}
 function saveSettings() {
     applyTheme(getVal('settingTheme', 'light'));
     Settings.save({
@@ -4032,8 +4230,9 @@ function saveSettings() {
         model: getVal('settingModel').trim() || 'gemini-3.6-flash',
         quality: getVal('settingQuality'),
         charOutfit: getVal('settingCharOutfit'),
-        charArtStyle: getVal('settingCharArtStyle', 'soft'),
+        charArtStyle: getVal('settingCharArtStyle', 'pro'),
         charHair: getVal('settingCharHair'),
+        charGlasses: getVal('settingCharGlasses', 'none'),
         charHairColor: getVal('settingCharHairColor', '#1b1410'),
         charSkin: getVal('settingCharSkin'),
         charColor: getVal('settingCharColor'),
@@ -4094,6 +4293,43 @@ function unlockAudio() {
     if (c && c.state === 'suspended') c.resume().catch(() => {});
 }
 
+const Brand = {
+    KEY: 'vp_brand', d: null, img: null, imgSrc: '',
+    get() {
+        if (this.d) return this.d;
+        let o = {}; try { o = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (_) {}
+        this.d = Object.assign({ name: '', title: '', logo: '', color: '#6c63ff', intro: true, outro: true, cta: 'Abonne-toi' }, o); return this.d;
+    },
+    save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.d)); } catch (_) { showToast('Logo trop lourd pour être enregistré', 'error'); } },
+    image() {
+        const d = this.get(); if (!d.logo) return null;
+        if (this.imgSrc !== d.logo) { this.imgSrc = d.logo; this.img = new Image(); this.img.src = d.logo; }
+        return this.img && this.img.complete && this.img.naturalWidth ? this.img : null;
+    },
+    loadUI() {
+        const d = this.get(), v = (id, x) => { const e = document.getElementById(id); if (e) { if (e.type === 'checkbox') e.checked = !!x; else e.value = x; } };
+        v('brandName', d.name); v('brandTitle', d.title); v('brandColor', d.color); v('brandCta', d.cta); v('brandIntro', d.intro); v('brandOutro', d.outro);
+        const st = document.getElementById('brandLogoState'); if (st) st.textContent = d.logo ? '✅ Logo enregistré' : 'Aucun logo';
+    },
+    saveFromUI() {
+        const d = this.get(), g = id => document.getElementById(id);
+        d.name = g('brandName').value.trim().slice(0, 40); d.title = g('brandTitle').value.trim().slice(0, 60);
+        d.color = g('brandColor').value || '#6c63ff'; d.cta = g('brandCta').value.trim().slice(0, 30) || 'Abonne-toi';
+        d.intro = g('brandIntro').checked; d.outro = g('brandOutro').checked; this.save(); renderCurrentFrame();
+    },
+    pickLogo(input) {
+        const f = input.files && input.files[0]; if (!f) return;
+        const fr = new FileReader();
+        fr.onload = () => { const im = new Image(); im.onload = () => {
+            const m = 256, r = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement('canvas');
+            c.width = Math.round(im.width * r); c.height = Math.round(im.height * r); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+            this.get().logo = c.toDataURL('image/png'); this.save(); this.loadUI(); renderCurrentFrame(); showToast('Logo enregistré');
+        }; im.src = fr.result; };
+        fr.readAsDataURL(f);
+    },
+    clearLogo() { this.get().logo = ''; this.img = null; this.imgSrc = ''; this.save(); this.loadUI(); renderCurrentFrame(); }
+};
+setTimeout(() => Brand.image(), 0);
 const MusicEngine = {
     ctx: null, master: null, nodes: [], noise: null,
     hz(n) { return 440 * Math.pow(2, (n - 69) / 12); },
@@ -4149,7 +4385,7 @@ const MusicEngine = {
         this.ctx = ctx;
         const m = MUSIC_MOODS[moodId] || MUSIC_MOODS.documentary;
         const master = ctx.createGain();
-        master.connect(destination || ctx.destination);
+        const duck = ctx.createGain(); duck.connect(destination || ctx.destination); master.connect(duck);
         this.master = master;
         const t0 = ctx.currentTime + 0.1;
         const remain = Math.max(0.5, totalSec - fromSec);
@@ -4160,6 +4396,19 @@ const MusicEngine = {
 
         const beat = 60 / m.bpm, bar = beat * 4;
         const at = t => t0 + (t - fromSec);
+        try {   // la musique descend quand le personnage parle, remonte entre les phrases
+            const LOW = 0.32; let acc = 0, low = false; duck.gain.setValueAtTime(1, t0);
+            ((state.project && state.project.scenes) || []).forEach(sc => {
+                const a = acc, b = acc + (sc.duration || 0); acc = b;
+                if (!String(sc.narration || '').trim() || b <= fromSec) return;
+                const ta = Math.max(t0, at(a + 0.05));
+                if (!low) { duck.gain.setValueAtTime(a < fromSec ? LOW : 1, ta); if (a >= fromSec) duck.gain.linearRampToValueAtTime(LOW, ta + 0.3); else duck.gain.setValueAtTime(LOW, t0); low = true; }
+            });
+            // remontée dès que deux scènes parlées ne se suivent plus
+            let cur = 0; const sl = (state.project && state.project.scenes) || [];
+            sl.forEach((sc, i) => { const a = cur, b = cur + (sc.duration || 0); cur = b; const nextTalks = sl[i + 1] && String(sl[i + 1].narration || '').trim(); if (String(sc.narration || '').trim() && !nextTalks && b > fromSec) { duck.gain.setValueAtTime(LOW, Math.max(t0, at(b - 0.4))); duck.gain.linearRampToValueAtTime(1, Math.max(t0, at(b)) + 0.4); low = false; }
+                else if (!String(sc.narration || '').trim() && String(sl[i + 1] && sl[i + 1].narration || '').trim() && b > fromSec && !low) { duck.gain.setValueAtTime(1, Math.max(t0, at(b - 0.05))); duck.gain.linearRampToValueAtTime(LOW, Math.max(t0, at(b)) + 0.3); low = true; } });
+        } catch (e) { console.warn('Baisse musique', e); }
         const firstBar = Math.floor(fromSec / bar);
         for (let b = firstBar; b * bar < totalSec; b++) {
             const chord = m.prog[b % m.prog.length];
@@ -5336,6 +5585,13 @@ async function chooseLongExportWriter(filename, mime) {
 }
 
 async function exportVideo() {
+    if (window.__exportBusy) { showToast('Export déjà en cours…', 'error'); return; }
+    window.__exportBusy = true;
+    try { await exportVideoCore(); }
+    catch (e) { console.error('Export', e); try { Character.setExportQuality(false); } catch (_) {} showToast('Export interrompu. Réessaie.', 'error'); }
+    finally { window.__exportBusy = false; try { hideLoading(); } catch (_) {} }
+}
+async function exportVideoCore() {
     if (!state.project || state.project.scenes.length === 0) {
         showToast('Aucune scène à exporter', 'error');
         return;
@@ -5351,11 +5607,14 @@ async function exportVideo() {
     const longAudioCompatibilityMode = durationSeconds >= 120 && wantsAudio && typeof MediaRecorder !== 'undefined';
     // Les vidéos longues restent en MP4 (WebCodecs) : le mode WebM n'est qu'un dernier recours.
     const wcPlan = detectedWcPlan;
+    if (!wcPlan && !String(typeof pickRecorderMime === 'function' ? pickRecorderMime() : '').includes('mp4')) {
+        if (!window.confirm('Cet appareil ne peut pas créer de MP4 : la vidéo sera enregistrée en WebM (lisible dans Chrome, VLC…). Continuer ?')) return;
+    }
     const requestedLongExport = durationSeconds > 300;
     let directWriter = null;
     let directWriterCancelled = false;
     if (requestedLongExport && !wcPlan) {
-        const titleBase = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video');
+        const titleBase = videoFileBase();
         const earlyMime = (wantsAudio ? pickAudioRecorderMime() : pickRecorderMime()) || 'video/webm';
         directWriter = await chooseLongExportWriter(titleBase + (earlyMime.includes('mp4') ? '.mp4' : '.webm'), earlyMime);
         if (directWriter === false) { directWriterCancelled = true; directWriter = null; }
@@ -5424,7 +5683,7 @@ async function exportVideo() {
                 try {
                     showLoading('Enregistrement de la vidéo…', true);
                     updateProgress(1);
-                    const fname = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.mp4';
+                    const fname = videoFileBase() + '.mp4';
                     const saved = await saveBlobToDevice(res.blob, fname);
                     hideLoading();
                     if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 30 i/s' + (useVoice ? ', narration incluse' : hasAudio ? ', son inclus' : ', sans son') + ')');
@@ -5500,7 +5759,7 @@ async function exportVideo() {
         }
         activeRecorder = mediaRecorder;
         const actualMime = mediaRecorder.mimeType || mime || 'video/webm';
-        const longFileName = ((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + (actualMime.includes('mp4') ? '.mp4' : '.webm');
+        const longFileName = videoFileBase() + (actualMime.includes('mp4') ? '.mp4' : '.webm');
         let nativeWriteQueue = Promise.resolve(), nativeWriteError = null;
         let directWriteQueue = Promise.resolve(), directWriteError = null;
         try { nativeStream = !directWriter && !!(total > 60 && window.AndroidBridge && window.AndroidBridge.beginFile && window.AndroidBridge.beginFile(longFileName, actualMime)); } catch (_) { nativeStream = false; }
@@ -5581,7 +5840,7 @@ async function exportVideo() {
         }
         const type = blob ? (blob.type || mime || 'video/webm') : actualMime;
         const ext = type.includes('mp4') ? 'mp4' : 'webm';
-        const filename = nativeStream ? longFileName : (((state.project.title || 'video').replace(/[^\w\-]+/g, '-').toLowerCase() || 'video') + '.' + ext);
+        const filename = nativeStream ? longFileName : (videoFileBase() + '.' + ext);
         if (!nativeStream && !directWriter) {
             showLoading('Enregistrement de la vidéo…', true);
             updateProgress(1);

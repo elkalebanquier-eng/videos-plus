@@ -15,9 +15,11 @@ const CACHE_VERSION = 'kiko-cache-v1';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './manifest.webmanifest',
+  './icon.svg',
+  './assets/clapperboard-clay.webp',
+  './assets/mascotte-presentateur.webp',
+  './pastel-theme.css'
 ];
 
 // Domaines dont les médias (images/vidéos déjà vues) sont mis en cache
