@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.3.1-audio-export-guard">
-    <title>Vidéos Plus — VideoStory 3.3.1</title>
-    <meta name="description" content="Vidéos Plus 3.3.1 : narration vérifiée et mix audio renforcé à l’export, dans le studio pastel tactile.">
+    <meta name="videostory-build" content="3.3.2-mobile-wav-speech">
+    <title>Vidéos Plus — VideoStory 3.3.2</title>
+    <meta name="description" content="Vidéos Plus 3.3.2 : décodage WAV compatible mobile pour la narration Speechify et export audio vérifié.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,11 +16,11 @@
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.1">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.2">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.1">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.2">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -197,7 +197,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.1">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.2">
 </head>
 <body>
 
@@ -598,7 +598,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.1', channel: 'web', publicBuildId: 'videos-plus-3.3.1-audio-export-guard' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.2', channel: 'web', publicBuildId: 'videos-plus-3.3.2-mobile-wav-speech' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -2444,9 +2444,44 @@ const VoiceStudio = (() => {
     }
     function voiceExportError(message) { const e = new Error(message); e.code = 'VOICE_EXPORT_INVALID'; return e; }
     function b64ToArrayBuffer(b64) {
-        const bin = atob(b64), out = new Uint8Array(bin.length);
+        let value = String(b64 || '').trim();
+        const dataUrl = value.match(/^data:audio\/[^;,]+;base64,/i);
+        if (dataUrl) value = value.slice(dataUrl[0].length);
+        value = value.replace(/^base64,/i, '').replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+        if (!value) throw new Error('réponse audio vide');
+        value += '='.repeat((4 - value.length % 4) % 4);
+        const bin = atob(value), out = new Uint8Array(bin.length);
         for (let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
         return out.buffer;
+    }
+    function audioContainer(buffer) {
+        const b = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 12));
+        const ascii = (start, end) => String.fromCharCode(...b.subarray(start, end));
+        if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WAVE') return 'wav';
+        if (ascii(0, 4) === 'OggS') return 'ogg';
+        if (ascii(0, 3) === 'ID3') return 'mp3';
+        if (b[0] === 0xff && (b[1] & 0xe0) === 0xe0) return 'mp3/aac';
+        if (ascii(4, 8) === 'ftyp') return 'mp4';
+        return 'inconnu';
+    }
+    async function decodeAudioPayload(ctx, encoded, format) {
+        let raw;
+        try { raw = b64ToArrayBuffer(encoded); }
+        catch (cause) {
+            const err = new Error('Speechify a renvoyé un audio WAV dont l’encodage est incomplet ou invalide. Vérifie ta connexion et réessaie.');
+            err.cause = cause;
+            throw err;
+        }
+        const detected = audioContainer(raw);
+        try {
+            return await ctx.decodeAudioData(raw.slice(0));
+        } catch (firstError) {
+            const kind = String(format || detected || 'audio').toUpperCase();
+            const err = new Error('Le navigateur n’a pas réussi à décoder le fichier audio ' + kind + '. Réessaie dans Chrome à jour; si le problème continue, envoie cette capture au support.');
+            err.cause = firstError;
+            err.audioFormat = detected;
+            throw err;
+        }
     }
     async function synth(text) {
         const input = clean(text), key = modelFor() + '|' + voiceFor() + '|' + input;
@@ -2455,11 +2490,14 @@ const VoiceStudio = (() => {
         const job = queue.then(async () => {
             if (cache.has(key)) return cache.get(key);
             const lang = langFor();
-            const res = await api('/v1/audio/speech', { method: 'POST', body: JSON.stringify(Object.assign({ input, voice_id: voiceFor(), model: modelFor(), audio_format: 'mp3' }, lang ? { language: lang } : {})) });
+            // WAV PCM évite les incompatibilités de décodage MP3 rencontrées dans certaines WebView Android.
+            const res = await api('/v1/audio/speech', { method: 'POST', body: JSON.stringify(Object.assign({ input, voice_id: voiceFor(), model: modelFor(), audio_format: 'wav' }, lang ? { language: lang } : {})) });
             const j = await res.json();
             if (!j.audio_data) throw new Error('Speechify n’a pas renvoyé de données audio.');
             let buf;
-            try { buf = await getAudioCtx().decodeAudioData(b64ToArrayBuffer(j.audio_data)); } catch (e) { throw new Error('Speechify : audio reçu mais illisible sur cet appareil.'); }
+            const ctx = getAudioCtx();
+            if (!ctx) throw new Error('Le moteur audio du navigateur n’est pas disponible.');
+            try { buf = await decodeAudioPayload(ctx, j.audio_data, j.audio_format || 'wav'); } catch (e) { throw e; }
             if (!buf || !buf.length || bufferPeak(buf) < 0.001) throw voiceExportError('Speechify a renvoyé une narration silencieuse. Réessaie la génération avant l’export.');
             cache.set(key, buf); try { SyncBrain.register(input, buf); SyncBrain.setMarks(input, j.speech_marks, buf.duration); } catch (_) {}
             return buf;
