@@ -1,6 +1,6 @@
-# Vidéos Plus — version web 3.2.2
+# Vidéos Plus — version web 3.3.0
 
-`index.html` contient VideoStory 3.2.2 : mains redessinées (doigts affinés, pouce placé selon le côté, flexion du poignet adoucie), profil de mouvements professionnels par défaut et raccords sans fondu croisé lorsque le même personnage continue. Le rendu export suréchantillonné à 30 i/s, le débit vidéo 1080p et l’AAC WebCodecs à 128 kbit/s restent disponibles selon les encodeurs de l’appareil. La résolution recommandée est 1080p; 720p reste disponible pour les appareils limités. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
+`index.html` contient VideoStory 3.3.0 et charge `pastel-theme.css` : interface pastel tactile sur tous les écrans, accueil mobile avec mascotte 3D, cartes de projets assorties et icône PWA coordonnée. Les illustrations transparentes sont optimisées en WebP. Les correctifs antérieurs du personnage restent inclus : mouvements professionnels, mains adoucies, raccords sans fantôme et export 1080p/30 i/s lorsque l’appareil le permet. La résolution recommandée est 1080p; 720p reste disponible pour les appareils limités. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
 
 ## Déploiement et Speechify
 

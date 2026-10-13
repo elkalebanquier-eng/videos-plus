@@ -1,1 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff784e"/><stop offset="1" stop-color="#ed527a"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="#07091a"/><circle cx="256" cy="256" r="178" fill="url(#g)" opacity=".96"/><path d="M180 360V151h72c65 0 101 35 101 91 0 57-36 92-101 92h-29v26h-43Zm43-69h27c39 0 58-16 58-49 0-32-19-48-58-48h-27v97Z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vidéos Plus">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff2e8"/>
+      <stop offset="1" stop-color="#e7dcf7"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0.8" y2="1">
+      <stop stop-color="#ffd2b6"/>
+      <stop offset="1" stop-color="#f1a17e"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#d5aafa"/>
+      <stop offset="1" stop-color="#9d70d4"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="13"/>
+      <feOffset dy="12"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".22"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="slate"><rect x="92" y="223" width="328" height="202" rx="48"/></clipPath>
+  </defs>
+  <rect x="12" y="12" width="488" height="488" rx="132" fill="url(#bg)"/>
+  <ellipse cx="258" cy="436" rx="153" ry="19" fill="#7e6392" opacity=".15"/>
+  <g filter="url(#shadow)">
+    <rect x="92" y="223" width="328" height="202" rx="48" fill="url(#body)" stroke="#fff8f1" stroke-width="8"/>
+    <g clip-path="url(#slate)" fill="url(#purple)">
+      <rect x="158" y="281" width="205" height="20" rx="10"/>
+      <rect x="158" y="325" width="205" height="20" rx="10"/>
+      <rect x="194" y="366" width="20" height="27" rx="10"/>
+      <rect x="253" y="366" width="20" height="27" rx="10"/>
+      <rect x="312" y="366" width="20" height="27" rx="10"/>
+    </g>
+    <g transform="rotate(-12 256 191)">
+      <rect x="95" y="133" width="322" height="104" rx="34" fill="url(#purple)" stroke="#fff8ff" stroke-width="8"/>
+      <path d="M143 133h57l-45 104h-57zm116 0h57l-45 104h-57zm116 0h42v104h-87z" fill="#fff3e7" opacity=".96"/>
+      <circle cx="125" cy="185" r="14" fill="#efc8ff" stroke="#875dbb" stroke-width="5"/>
+      <circle cx="387" cy="185" r="14" fill="#efc8ff" stroke="#875dbb" stroke-width="5"/>
+    </g>
+  </g>
+</svg>

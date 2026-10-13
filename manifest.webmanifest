@@ -1,15 +1,15 @@
 {
-  "name": "Vidéos Plus — Créateur de vidéos",
+  "name": "Vidéos Plus — Dessins animés",
   "short_name": "Vidéos Plus",
-  "description": "Crée des vidéos animées avec narration, personnage et export vidéo.",
+  "description": "Crée des dessins animés à partir de texte dans un studio pastel.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#fbfaf7",
-  "theme_color": "#17171c",
+  "background_color": "#faf7f5",
+  "theme_color": "#faf7f5",
   "categories": ["social", "video", "entertainment"],
   "icons": [
     {

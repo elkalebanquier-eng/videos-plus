@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.2.2-character-professional-motion">
-    <title>Vidéos Plus — VideoStory 3.2.2</title>
-    <meta name="description" content="Vidéos Plus 3.2.2 propose un personnage plus net, des gestes professionnels et des transitions sans dédoublement.">
+    <meta name="videostory-build" content="3.3.0-pastel-clay-interface">
+    <title>Vidéos Plus — VideoStory 3.3.0</title>
+    <meta name="description" content="Vidéos Plus 3.3.0 : crée des dessins animés à partir de texte dans une interface pastel tactile, avec un personnage expressif et un export mobile.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
+    <meta name="theme-color" content="#faf7f5">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="preload" as="image" href="./assets/mascotte-presentateur.webp">
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.2.2">
-    <meta property="og:description" content="Crée des vidéos animées dans un style anime ou cartoon doux, avec narration et export mobile.">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.0">
+    <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.2.2">
-    <meta name="twitter:description" content="Un personnage personnalisable, des mains plus naturelles et des gestes professionnels sans superposition.">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.0">
+    <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -193,24 +197,29 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.0">
 </head>
 <body>
 
     <!-- HOME SCREEN -->
     <div id="homeScreen" class="screen active">
         <header class="header">
-            <div class="logo"><div class="logo-icon">🎬</div><h1>VideoStory</h1></div>
-            <button class="header-btn" onclick="showScreen('settingsScreen')">⚙️</button>
+            <div class="logo"><img class="logo-icon" src="./assets/clapperboard-clay.webp" alt=""><h1>VIDÉOS ANIMÉES</h1></div>
+            <button class="header-btn" aria-label="Ouvrir les paramètres" onclick="showScreen('settingsScreen')">⚙️</button>
         </header>
-        <main>
+        <main class="home-main">
             <div class="hero">
-                <h2>Créez des vidéos<br>à partir de texte</h2>
-                <p>Transformez vos histoires en vidéos verticales captivantes</p>
-                <button class="btn-primary" onclick="showScreen('createScreen')"><span>＋</span> Créer une vidéo</button>
+                <div class="hero-copy">
+                    <div class="hero-eyebrow">LE STUDIO DE VOS HISTOIRES</div>
+                    <h2>Créez des dessins animés<br><span>à partir de texte</span></h2>
+                    <p>Transformez vos histoires en vidéos captivantes</p>
+                    <button class="btn-primary" onclick="showScreen('createScreen')"><span>＋</span> Créer une vidéo</button>
+                </div>
+                <div class="hero-illustration" aria-hidden="true"><img src="./assets/mascotte-presentateur.webp" alt=""></div>
             </div>
-            <div class="quick-actions">
-                <div class="action-card" onclick="showScreen('goScreen')"><div class="icon">🚀</div><h3>GO</h3><p>Voir mes vidéos réalisées</p></div>
-                <div class="action-card" onclick="showScreen('templatesScreen')"><div class="icon">📋</div><h3>Modèles</h3><p>Commencer avec un template</p></div>
+            <div class="quick-actions home-actions">
+                <div class="action-card" onclick="showScreen('goScreen')"><div class="icon"><img src="./assets/clapperboard-clay.webp" alt=""></div><h3>GO</h3><p>Voir mes vidéos réalisées</p></div>
+                <div class="action-card" onclick="showScreen('templatesScreen')"><div class="icon">📋</div><h3>Modèles</h3><p>Commencer avec un modèle</p></div>
                 <div class="action-card" onclick="showScreen('assetsScreen')"><div class="icon">🖼️</div><h3>Assets</h3><p>Bibliothèque de ressources</p></div>
                 <div class="action-card" onclick="showScreen('settingsScreen')"><div class="icon">⚙️</div><h3>Paramètres</h3><p>Configuration</p></div>
             </div>
@@ -343,7 +352,7 @@
     <div id="settingsScreen" class="screen">
         <header class="header"><button class="back-btn" onclick="showScreen('homeScreen')">← Retour</button><h1 style="font-size: 16px;">Paramètres</h1><div style="width: 60px;"></div></header>
         <div style="padding: 20px; max-width: 500px; margin: 0 auto;">
-            <div class="form-group"><label>Apparence</label><select id="settingTheme" onchange="applyTheme(this.value)"><option value="dark">Thème sombre</option><option value="light">Thème clair</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Choisis l’affichage le plus confortable pour toi.</p></div>
+            <div class="form-group"><label>Apparence</label><select id="settingTheme" onchange="applyTheme(this.value)"><option value="light">Pastel lumineux · recommandé</option><option value="dark">Thème sombre</option></select><p style="font-size:12px;color:var(--text-muted);margin-top:7px;">Choisis l’affichage le plus confortable pour toi.</p></div>
             <div class="form-group"><label>Cerveau</label><select id="settingAI"><option value="local">Local (hors ligne, gratuit)</option><option value="gemini">Gemini (gratuit, clé Google AI Studio)</option></select></div>
             <div class="form-group"><label>Clé API Gemini</label><input type="password" id="settingKey" placeholder="Colle ta clé ici (optionnel)" autocomplete="off" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
             <div class="form-group"><label>Modèle Gemini</label><input type="text" id="settingModel" placeholder="gemini-3.6-flash" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);"></div>
@@ -380,10 +389,10 @@
     </div>
 
     <nav class="main-nav" id="mainNav" aria-label="Navigation principale">
-        <button data-screen="homeScreen" onclick="showScreen('homeScreen')"><strong>⌂</strong>Accueil</button>
-        <button data-screen="goScreen" onclick="showScreen('goScreen')"><strong>▶</strong>GO</button>
-        <button data-screen="createScreen" onclick="showScreen('createScreen')"><strong>＋</strong>Créer</button>
-        <button data-screen="settingsScreen" onclick="showScreen('settingsScreen')"><strong>⚙</strong>Paramètres</button>
+        <button data-screen="homeScreen" onclick="showScreen('homeScreen')"><strong>🏠</strong>Accueil</button>
+        <button data-screen="goScreen" onclick="showScreen('goScreen')"><strong>▶️</strong>GO</button>
+        <button data-screen="createScreen" onclick="showScreen('createScreen')"><strong>➕</strong>Créer</button>
+        <button data-screen="settingsScreen" onclick="showScreen('settingsScreen')"><strong>⚙️</strong>Paramètres</button>
     </nav>
     <!-- LOADING & TOAST -->
     <div id="voiceChip"></div>
@@ -589,12 +598,17 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.2.2', channel: 'web', publicBuildId: 'videos-plus-3.2.2-professional-motion' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.0', channel: 'web', publicBuildId: 'videos-plus-3.3.0-pastel-clay-interface' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
     save(o) { try { localStorage.setItem('vs_settings', JSON.stringify({ ...this.get(), ...o })); } catch (e) { /* ignore */ } },
 };
+// Migration vers le nouveau thème pastel, appliquée une seule fois; le mode sombre reste ensuite disponible.
+try {
+    const saved = Settings.get();
+    if (saved.uiSkinVersion !== 1) Settings.save({ theme: 'light', uiSkinVersion: 1 });
+} catch (_) {}
 // Migration de sécurité : efface les anciennes clés Speechify stockées dans ce navigateur.
 try {
     const saved = JSON.parse(localStorage.getItem('vs_settings') || '{}');
@@ -3645,7 +3659,7 @@ function loadRecentProjects() {
     }
     container.innerHTML = recent.map(p => `
         <div class="project-card" onclick="loadProject('${p.id}')">
-            <div class="project-thumb">🎬</div>
+            <div class="project-thumb"><img src="./assets/clapperboard-clay.webp" alt=""></div>
             <div class="project-info"><h4>${esc(p.title)}</h4><p>${formatTime(p.scenes.reduce((s, sc) => s + sc.duration, 0))} • ${new Date(p.updatedAt).toLocaleDateString()}</p></div>
         </div>
     `).join('');
@@ -3661,7 +3675,7 @@ function loadGoVideos() {
     }
     const projects = readSavedProjects().slice().reverse();
     if (!projects.length) { container.innerHTML = '<div class="empty-state"><div class="icon">🚀</div><h3>Aucune vidéo pour le moment</h3><p>Crée ta première vidéo pour la retrouver ici.</p></div>'; return; }
-    container.innerHTML = projects.map(p => `<div class="project-card" onclick="loadProject('${p.id}')" style="margin-bottom:12px;"><div class="project-thumb">▶</div><div class="project-info" style="flex:1"><h4>${esc(p.title)}</h4><p>${p.scenes.length} scènes · ${formatTime(p.scenes.reduce((n,sc)=>n+sc.duration,0))} · ${new Date(p.updatedAt).toLocaleDateString()}</p></div><span style="color:var(--primary);font-size:20px">›</span></div>`).join('');
+    container.innerHTML = projects.map(p => `<div class="project-card" onclick="loadProject('${p.id}')" style="margin-bottom:12px;"><div class="project-thumb"><img src="./assets/clapperboard-clay.webp" alt=""></div><div class="project-info" style="flex:1"><h4>${esc(p.title)}</h4><p>${p.scenes.length} scènes · ${formatTime(p.scenes.reduce((n,sc)=>n+sc.duration,0))} · ${new Date(p.updatedAt).toLocaleDateString()}</p></div><span style="color:var(--primary);font-size:20px">›</span></div>`).join('');
 }
 
 function forceUniqueRiveCharacter(project) {
@@ -3881,8 +3895,8 @@ const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.v
 const getVal = (id, d = '') => { const el = document.getElementById(id); return el ? el.value : d; };
 function loadSettingsUI() {
     const c = Settings.get();
-    applyTheme(c.theme || 'dark');
-    setVal('settingTheme', c.theme || 'dark');
+    applyTheme(c.theme || 'light');
+    setVal('settingTheme', c.theme || 'light');
     setVal('settingAI', c.ai || 'local');
     setVal('settingKey', c.key || '');
     setVal('settingModel', c.model || 'gemini-3.6-flash');
@@ -3902,7 +3916,7 @@ function loadSettingsUI() {
 }
 
 function saveSettings() {
-    applyTheme(getVal('settingTheme', 'dark'));
+    applyTheme(getVal('settingTheme', 'light'));
     Settings.save({
         ai: getVal('settingAI'),
         key: getVal('settingKey').trim(),
