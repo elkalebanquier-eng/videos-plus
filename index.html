@@ -692,7 +692,7 @@ const LipSync = (() => {
 // Il lit chaque phrase (mots, ponctuation, rôle de la scène, scène d'avant) et prépare, mot par mot :
 // l'émotion du visage, le geste des mains, le regard, les hochements de tête, les petites icônes (!, ?, cœur…).
 const ActingBrain = (() => {
-    const EMOS = ['joy', 'sad', 'angry', 'surprise', 'fear', 'think', 'proud', 'love', 'doubt', 'excited'];
+    const EMOS = ['joy', 'sad', 'angry', 'surprise', 'fear', 'think', 'proud', 'love', 'doubt', 'excited', 'disgust', 'shy', 'tired', 'smug'];   // les 4 dernières : dégoût, gêne, fatigue, malice
     const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
     const backOut = x => { x = clamp(x, 0, 1); const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
     // ---- vie du visage : tout dépend seulement du temps et de la scène => même résultat à l'aperçu et à l'export
@@ -731,7 +731,7 @@ const ActingBrain = (() => {
     };
     const EMO = {
         joy: compile('heureu content joie ravi super genial magnifi merveill felicit reussi succes victoire gagn sourir rire fete celebr enchant parfait excellent formidable chance bonheur plaisir sympa cool =top gratuit offert cadeau soulag bravo savour delici beau belle'),
-        sad: compile('trist pleur larme malheur perdu perdre perdit echec echou decu deception seul solitude mort deces regret helas douleur souffr abandon rupture faillite ruin misere pauvre galere chagrin depress manque fatigu epuis difficile deuil orphelin sans-abri'),
+        sad: compile('trist pleur larme malheur perdu perdre perdit echec echou decu deception seul solitude mort deces regret helas douleur souffr abandon rupture faillite ruin misere pauvre galere chagrin depress manque difficile deuil orphelin sans-abri'),
         angry: compile('colere enerv furieu rage injust scandal arnaqu voleur =vol menteur mensonge trahi trahison hais haine insupportable =marre agress corrompu escroc exploit revolt denonc inacceptable honteu abus'),
         surprise: compile('incroyable stupefi =choc soudain brusquement etonn surpris inimaginable =impossible =waouh =wow enorme extraordinaire inattendu miracle revelation decouv apparu stupeur =quoi sensationnel hallucin'),
         fear: compile('peur effray terrifi danger menace risque crainte angoiss panique inquiet cauchemar horrible redout piege alerte urgence terreur tremb dangereu fragile vulnerab'),
@@ -739,6 +739,10 @@ const ActingBrain = (() => {
         proud: compile('fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom persever tenace resil surmont overcome'),
         love: compile('aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute aide aider entraide solidaire partag offr'),
         doubt: compile('peut-etre probablement douteu doute hesit incertain suspect bizarre croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment'),
+        disgust: compile('degout ecoeur beurk berk =pouah puant pourri infect immonde moisi crasse nauseab vomi repugn degueu =sale =crade'),
+        shy: compile('timid =gene =genee =genes =genees honte rougi rougis embarras intimid maladroit confus =pardon'),
+        tired: compile('fatigu epuis sommeil baill ennui ennuy somnol =creve =crevee =lasse =las lassitude assoupi =zzz'),
+        smug: compile('malicieu coquin taquin sournois ruse =hehe =hihi =hihihi malin =tricheur'),
         excited: compile('=vite maintenant =allons ensemble =pret lancez commencez abonne rejoin nouveau nouvelle revolution explos =boom decoll =go incroyable decouvrez imm\u00e9diat gratuitement bonus'),
     };
     const SPIKE_SYM = { surprise: 'excl', fear: 'sweat', angry: 'vein', love: 'heart', think: 'ques', doubt: 'ques' };
@@ -814,6 +818,10 @@ const ActingBrain = (() => {
         { re: /peut.?etre|qui sait|je ne sais pas|sais pas|on ne sait/, gesture: 'shrug', emo: 'doubt' },
         { re: /il etait une fois|il y a longtemps|autrefois/, gesture: 'present', emo: 'think', look: [0.8, -0.7] },
         { re: /tout a coup|soudain|d.un seul coup|brusquement/, emo: 'surprise' },
+        { re: /\b(?:fatigu\w*|epuis\w*|creve\w*|j.en peux plus|a bout de force\w*|baille\w*|bailler)\b/, emo: 'tired' },
+        { re: /\b(?:sourire en coin|sourit en coin|petit sourire|air malin|avec malice|d.un air complice)\b/, emo: 'smug' },
+        { re: /\b(?:j.ai honte|un peu gene\w*|je rougis|il rougit|elle rougit|rougir)\b/, emo: 'shy' },
+        { re: /\b(?:quel degout|c.est degoutant|ca me degoute|ca degoute|beurk|berk|pouah)\b/, emo: 'disgust' },
         { re: /\b(?:crie|crient|criait|criaient|crions|criez|crier|hurle|hurlent|hurlait|hurler|secrie|secrient|sexclame|sexclament|beugle|beuglent)\b/, emo: 'surprise', gesture: 'wide' },   // il crie : bouche ouverte, sourcils levés, bras ouverts
         { re: /\b(?:he{3,}|hey+|ohh+|ahh+|aie+|ouch)\b/, emo: 'surprise' },   // interjections : « Héééé ! », « Aïe ! », « Ohhh »
         { re: /heureusement|enfin|ouf|soulage/, emo: 'joy' },
@@ -838,7 +846,7 @@ const ActingBrain = (() => {
     ];
     // « pas triste », « jamais content », « ne … plus » : l'émotion s'inverse au lieu d'être jouée telle quelle
     const NEG = compile('=pas =jamais =sans =aucun =aucune =nullement =ni =non');
-    const NEG_OPP = { joy: 'sad', sad: 'joy', angry: null, fear: 'joy', surprise: null, think: null, proud: 'sad', love: 'sad', doubt: 'proud', excited: null };
+    const NEG_OPP = { joy: 'sad', sad: 'joy', angry: null, fear: 'joy', surprise: null, think: null, proud: 'sad', love: 'sad', doubt: 'proud', excited: null, disgust: null, shy: null, tired: null, smug: null };
     const negAt = (c, i) => {
         for (let k = Math.max(0, i - 3); k < i; k++) {
             const ps = parts(c.ws[k]);
@@ -849,10 +857,24 @@ const ActingBrain = (() => {
     };
     // accessoires tenus en main quand on les nomme (pas ajoutés si l'objet est déjà affiché à l'écran)
     const PROPS = {
-        phone:  { obj: 'phone',    w: compile('telephone mobile smartphone appel sms whatsapp notification =appli application') },
+        phone:  { obj: 'phone',    w: compile('telephone mobile smartphone android tactile iphone samsung tecno infinix xiaomi redmi huawei appel sms whatsapp notification =appli application') },   // smartphone Android (écran tactile)
+        keypad: { obj: 'phone',    w: compile('nokia clapet') },                                                                                                            // téléphone à touches (choisi aussi quand « touches » / « boutons » est près de « téléphone »)
         money:  { obj: 'money',    w: compile('argent billet liasse cash salaire dollar euro cfa') },
         book:   { obj: 'book',     w: compile('livre lire lecture etude apprendre formation cours ecole') },
-        tablet: { obj: 'computer', w: compile('ordinateur =pc site internet code programme logiciel plateforme =web youtube') },
+        laptop: { obj: 'computer', w: compile('ordinateur =pc laptop macbook =mac site internet code programme logiciel plateforme =web youtube') },
+        tablet: { obj: 'tablet',   w: compile('tablette ipad') },
+        camera: { obj: 'camera',   w: compile('camera =photo =photos photograph =selfie filmer') },
+        radio:  { obj: 'radio',    w: compile('radio =fm transistor') },
+        // fruits tenus en main quand on les nomme (« fruit » seul donne une mangue)
+        mango:      { obj: 'fruit', w: compile('mangue =fruit =fruits') },
+        banana:     { obj: 'fruit', w: compile('banane plantain') },
+        orange:     { obj: 'fruit', w: compile('orange') },
+        apple:      { obj: 'fruit', w: compile('pomme') },
+        watermelon: { obj: 'fruit', w: compile('pasteque') },
+        pineapple:  { obj: 'fruit', w: compile('ananas') },
+        lemon:      { obj: 'fruit', w: compile('citron') },
+        coconut:    { obj: 'fruit', w: compile('=coco =cocos cocotier') },
+        grapes:     { obj: 'fruit', w: compile('raisin') },
         mic:    { obj: 'mic',      w: compile('podcast interview micro =parole discours conference temoign') },
     };
     const EMPTY = { start: {}, base: {}, emotionEvents: [], spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null, level: 0 };
@@ -952,7 +974,7 @@ const ActingBrain = (() => {
                 P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[emo] || null, stateful: true });
             });
             // accessoires
-            Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w)) cand.push({ name: 'hold', prop: name, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
+            Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w)) cand.push({ name: 'hold', prop: name, wi: i, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
             if (hasAny(ps, IDEA)) { P.emotionEvents.push({ emo: 'excited', t, s: 0.7 }); P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.7, sym: 'bulb', stateful: true }); }
             // gestes
             let n = 0; ps.forEach(p => { if (COUNT_WORDS[p]) n = COUNT_WORDS[p]; if (/^[1-5]$/.test(p)) n = +p; });
@@ -979,6 +1001,12 @@ const ActingBrain = (() => {
             P.looks.push({ t0: d - 0.1, t1: d + 1.6, x: side ? side * 0.9 : 0.1, y: -0.55 });
             cand.push({ name: side ? 'side' : 'up', side: side || 1, n: 0, t0: d + 0.05, t1: d + 1.6, pri: 5, force: true });
         });
+        // « téléphone à touches / à boutons » (ou Nokia, clapet) près du mot : on tient un téléphone à touches ; sinon c'est le smartphone Android
+        const nearTxt = i => c.ws.slice(Math.max(0, i - 4), i + 5).map(w => parts(w).join('')).join(' ');
+        cand.forEach(q => { if (q.name === 'hold' && q.prop === 'phone' && q.wi !== undefined && /\b(?:touches|boutons?|nokia|clapet|basique)\b|\ba touche\b/.test(nearTxt(q.wi)) && !/\b(?:android|tactile|smartphone)\b/.test(nearTxt(q.wi))) q.prop = 'keypad'; });
+        // faux amis : l'opérateur « Orange (Money, Mali, Burkina…) » et la « pomme de terre » ne sont pas des fruits à tenir
+        for (let q = cand.length - 1; q >= 0; q--) { const g = cand[q]; if (g.name !== 'hold' || g.wi === undefined) continue; const nt = nearTxt(g.wi);
+            if ((g.prop === 'orange' && /\borange\w* (?:money|mali|burkina|niger|telecom\w*|cote|business|bank\w*)\b/.test(nt)) || (g.prop === 'apple' && /\bpommes? de terre\b/.test(nt))) cand.splice(q, 1); }
         // on retire les accessoires qui font doublon avec un objet déjà affiché
         for (let q = cand.length - 1; q >= 0; q--) if (cand[q].name === 'hold' && objs.some(o => o.assetId === PROPS[cand[q].prop].obj)) cand.splice(q, 1);
         // expressions de plusieurs mots
@@ -1062,6 +1090,8 @@ const ActingBrain = (() => {
         cand.forEach(g => {
             let prev = out[out.length - 1];
             if (g.t0 > dur - 0.5) return;
+            // un objet nommé (téléphone, ordinateur, radio…) l'emporte sur un simple geste de pronom (moi, toi, mon) qui vient de commencer
+            if (g.name === 'hold' && prev && !prev.act && prev.pri <= 2 && g.t0 - prev.t0 < 1.9) { out.pop(); simpleGestureCount = Math.max(0, simpleGestureCount - 1); prev = out[out.length - 1]; lastSimpleGestureAt = prev && !prev.act ? prev.t0 : -Infinity; }
             // Présentation sobre : éviter l’enchaînement de poses à chaque mot-clé.
             if (!g.act && (g.t0 - lastSimpleGestureAt < 1.9 || simpleGestureCount >= 2)) return;
             // une action (courir, tomber, rire) prend la place d'un simple geste en cours
@@ -1267,17 +1297,17 @@ const BuiltinCharacter = (() => {
     const TAU = Math.PI * 2;
     const INK = 'rgba(24,14,32,0.92)';
     const SKINS = [['Ébène', '#4a2c1a'], ['Brun foncé', '#6b4226'], ['Brun', '#8d5524'], ['Caramel', '#c68642'], ['Clair', '#f1c27d']];
-    const HALO_ORDER = ['sad', 'fear', 'angry', 'love', 'joy', 'excited', 'proud', 'surprise', 'doubt', 'think'];
-    const HALO_RGB = { sad: '98,174,255', fear: '106,222,210', angry: '255,102,112', love: '255,123,183', joy: '255,205,112', excited: '255,184,94', proud: '255,218,125', surprise: '190,151,255', doubt: '165,174,204', think: '171,186,221' };
+    const HALO_ORDER = ['sad', 'fear', 'angry', 'love', 'joy', 'excited', 'proud', 'surprise', 'doubt', 'think', 'disgust', 'shy', 'tired', 'smug'];
+    const HALO_RGB = { sad: '98,174,255', fear: '106,222,210', angry: '255,102,112', love: '255,123,183', joy: '255,205,112', excited: '255,184,94', proud: '255,218,125', disgust: '154,205,92', shy: '255,160,185', tired: '140,152,196', smug: '255,150,70', surprise: '190,151,255', doubt: '165,174,204', think: '171,186,221' };
     const cfg = () => {
         const c = Settings.get();
         return { outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', glasses: c.charGlasses === 'round' || c.charGlasses === 'square' ? c.charGlasses : 'none', hairColor: c.charHairColor || '#1b1410', skin: c.charSkin || '#6b4226', color: c.charColor || '#1f3a5f', artStyle: c.charArtStyle === 'classic' ? 'classic' : c.charArtStyle === 'anime' ? 'anime' : c.charArtStyle === 'soft' ? 'soft' : 'pro' };
     };
     const mix = (hex, amt) => tint(hex, amt, 1);
-    function ik(sx, sy, hx, hy, l1, l2, sd, out) {
+    function ik(sx, sy, hx, hy, l1, l2, sd, out, fold) {
         let dx = hx - sx, dy = hy - sy, d = Math.hypot(dx, dy) || 0.001;
         // main écartée sur le côté : on garantit une portée minimale, sinon le bras (2,85 de long) se replie en Z contre le buste
-        if (sd * hx > 1.95 && d < 2.4) { const f = 2.4 / d; dx *= f; dy *= f; d = 2.4; hx = sx + dx; hy = sy + dy; }
+        if (!fold && sd * hx > 1.95 && d < 2.4) { const f = 2.4 / d; dx *= f; dy *= f; d = 2.4; hx = sx + dx; hy = sy + dy; }
         const maxd = l1 + l2 - 0.18;                 // garde un coude légèrement fléchi, même sur les gestes d’extension
         if (d > maxd) { const f = maxd / d; dx *= f; dy *= f; d = maxd; hx = sx + dx; hy = sy + dy; }
         const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d), hh = Math.sqrt(Math.max(0, l1 * l1 - a * a));
@@ -1285,7 +1315,7 @@ const BuiltinCharacter = (() => {
         const c1 = { x: mx - dy / d * hh, y: my + dx / d * hh }, c2 = { x: mx + dy / d * hh, y: my - dx / d * hh };
         // le coude va toujours vers le bas ET vers l'extérieur du corps : on note chaque solution (y vers le bas + x vers l'extérieur) et on garde la meilleure.
         // Avant, le coude pouvait tomber dans le buste : le bras faisait un Z et son contour traversait la veste.
-        const side = sd * hx > 1.5;      // main écartée sur le côté : le coude ne doit pas rentrer dans le buste ; main devant la poitrine : le coude descend naturellement
+        const side = !fold && sd * hx > 1.5;      // main écartée sur le côté : le coude ne doit pas rentrer dans le buste ; main devant la poitrine : le coude descend naturellement
         const score = c => c.y + (out ? 1.2 : side ? 0.6 : 0.15) * sd * c.x - (side && sd * c.x < 1.15 ? 4 * (1.15 - sd * c.x) : 0);
         const e = score(c1) >= score(c2) ? c1 : c2;
         return { ex: e.x, ey: e.y, hx, hy };
@@ -1558,19 +1588,22 @@ const BuiltinCharacter = (() => {
         const walk = amb === 'walking' ? mt * 4.2 : (runK > 0 ? mt * 9.5 : (danceK > 0 ? mt * 7.5 : 0));
         if (laughK > 0) { open = Math.max(open, laughK * (0.45 + 0.55 * Math.abs(Math.sin(mt * 10.5)))); vow = 'aa'; }   // « ha ha ha » : la bouche s'ouvre et se ferme
         // visage : on mélange toutes les émotions actives
-        const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat, -1, 1.3);
-        const browAngle = clamp(1.0 * E.sad + 0.8 * E.fear + 0.3 * E.love - 1.0 * E.angry - 0.15 * E.doubt, -1, 1);
-        const eyeOpen = clamp(1 + 0.35 * E.surprise + 0.3 * E.fear + 0.2 * E.excited - 0.18 * E.sad - 0.22 * E.angry - 0.15 * E.proud - 0.18 * E.doubt - 0.08 * E.joy, 0.55, 1.4);
-        const curve = clamp(1.0 * E.joy + 0.7 * E.proud + 1.0 * E.love + 0.9 * E.excited + 1.15 * smileK - 0.85 * E.sad - 0.55 * E.angry - 0.35 * E.fear - 0.15 * E.doubt + 0.08 * E.think, -1, 1);
+        const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat - 0.25 * E.disgust + 0.2 * E.shy - 0.35 * E.tired + 0.3 * E.smug, -1, 1.3);
+        const browAngle = clamp(1.0 * E.sad + 0.8 * E.fear + 0.3 * E.love - 1.0 * E.angry - 0.15 * E.doubt - 0.55 * E.disgust + 0.4 * E.shy + 0.3 * E.tired, -1, 1);
+        const eyeOpen = clamp(1 + 0.35 * E.surprise + 0.3 * E.fear + 0.2 * E.excited - 0.18 * E.sad - 0.22 * E.angry - 0.15 * E.proud - 0.18 * E.doubt - 0.08 * E.joy - 0.28 * E.disgust - 0.1 * E.shy - 0.5 * E.tired - 0.18 * E.smug, 0.28, 1.4);
+        const curve = clamp(1.0 * E.joy + 0.7 * E.proud + 1.0 * E.love + 0.9 * E.excited + 1.15 * smileK - 0.85 * E.sad - 0.55 * E.angry - 0.35 * E.fear - 0.15 * E.doubt + 0.08 * E.think + 0.3 * E.shy + 0.25 * E.smug - 0.55 * E.disgust - 0.2 * E.tired, -1, 1);
         const mouthO = clamp(0.95 * E.surprise + 0.35 * E.fear, 0, 1);
-        const blush = clamp(E.love * 1.2 + E.joy * 0.5 + E.proud * 0.2 + smileK * 0.45, 0, 1);
-        const asym = clamp(E.doubt + 0.5 * E.think, 0, 1);
+        const blush = clamp(E.love * 1.2 + E.joy * 0.5 + E.proud * 0.2 + smileK * 0.45 + 1.4 * E.shy, 0, 1);
+        const asym = clamp(E.doubt + 0.5 * E.think + 0.9 * E.smug + 0.5 * E.disgust, 0, 1);
+        // bâillement : toute la fatigue se voit toutes les ~5 s (bouche grande ouverte, yeux fermés)
+        const yawnP = (t * 0.19 + 0.35) % 1, yawnK = E.tired > 0.35 && yawnP < 0.3 ? Math.sin(Math.PI * yawnP / 0.3) * Math.min(1, E.tired * 1.2) : 0;
+        if (yawnK > 0) { open = Math.max(open, yawnK * 0.95); vow = 'aa'; }
         const sad = E.sad > 0.45, happy = E.joy + E.excited + E.love > 0.7;
         const bounce = E.excited * Math.abs(Math.sin(mt * 7)) * 0.1 + laughK * Math.abs(Math.sin(mt * 10.5)) * 0.12;
         const bob = ((walk ? Math.abs(Math.sin(walk)) * (0.12 + 0.2 * runK) : (a.breath !== undefined ? a.breath : Math.sin(mt * 1.6) * 0.035)) + E.sad * 0.08 - bounce + a.beat * 0.03) * motionScale;
         const shrug = gh && gh.shrug ? gk * 0.3 : 0;
-        const tilt = (E.sad * 0.1 + Math.sin(mt * 0.7) * 0.025 - E.think * 0.07 + E.doubt * 0.06 - E.proud * 0.03 + (gh && gh.tilt ? gh.tilt * gk : 0) + a.shake * 0.05 + a.nod * 0.0 + (open > 0.05 ? Math.sin(mt * 7) * 0.015 * open : 0) - laughK * 0.1 + laughK * Math.sin(mt * 21) * 0.03) * motionScale;
-        const nodY = a.nod * 0.1 + a.beat * 0.05 + E.sad * 0.05;
+        const tilt = (E.sad * 0.1 + E.shy * 0.1 + E.smug * 0.05 - E.disgust * 0.05 + Math.sin(mt * 0.7) * 0.025 - E.think * 0.07 + E.doubt * 0.06 - E.proud * 0.03 + (gh && gh.tilt ? gh.tilt * gk : 0) + a.shake * 0.05 + a.nod * 0.0 + (open > 0.05 ? Math.sin(mt * 7) * 0.015 * open : 0) - laughK * 0.1 + laughK * Math.sin(mt * 21) * 0.03) * motionScale;
+        const nodY = a.nod * 0.1 + a.beat * 0.05 + E.sad * 0.05 + E.tired * 0.08;
         const yaw = clamp(a.look.x * 0.5 + a.shake * 0.6, -1, 1);
         const outfitDk = mix(c.color, -0.3), outfitLt = mix(c.color, 0.2);
         const g = amb;
@@ -1761,8 +1794,9 @@ const BuiltinCharacter = (() => {
         // visage (les traits glissent un peu quand la tête se tourne)
         ctx.save(); ctx.translate(yaw * 0.16, 0);
         const bl0 = a.blink !== undefined ? a.blink : (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
-        const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98);      // rire : yeux plissés ; sommeil : yeux fermés
-        const look0 = a.eye || a.look, look = pro ? { x: look0.x + Math.sin(t * 2.3) * 0.04, y: look0.y + Math.sin(t * 1.7 + 1) * 0.03 } : look0;
+        const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98, yawnK * 0.9);      // rire : yeux plissés ; sommeil : yeux fermés
+        const look0 = a.eye || a.look, look1 = pro ? { x: look0.x + Math.sin(t * 2.3) * 0.04, y: look0.y + Math.sin(t * 1.7 + 1) * 0.03 } : look0;
+        const look = { x: look1.x + 1.2 * E.shy + 1.3 * E.smug - 1.0 * E.disgust, y: look1.y + 1.3 * E.shy - 0.5 * E.tired };
         [-0.38, 0.38].forEach(x => {
             const ey = hy + 0.02, eyeRx = anime ? 0.27 : soft ? 0.22 : 0.2, winkSide = x > 0 ? 1 : 0, lid = Math.max(0.05, (1 - bl * 0.95) * eyeOpen * (winkSide ? 1 : 1 - winkK * 0.96)), ry = Math.min(anime ? 0.34 : soft ? 0.26 : 0.24, (anime ? 0.25 : soft ? 0.19 : 0.17) * lid);
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, 0, TAU); ctx.fill();
@@ -1796,10 +1830,11 @@ const BuiltinCharacter = (() => {
             }
         });
         if (anime) { [-1, 1].forEach(sc2 => { const bg = ctx.createRadialGradient(sc2 * 0.62, hy + 0.52, 0, sc2 * 0.62, hy + 0.52, 0.26); bg.addColorStop(0, 'rgba(255,120,140,0.22)'); bg.addColorStop(1, 'rgba(255,120,140,0)'); ctx.fillStyle = bg; ctx.fillRect(sc2 * 0.62 - 0.26, hy + 0.26, 0.52, 0.52); }); }   // joues rosées anime
+        if (E.tired > 0.25) { ctx.strokeStyle = 'rgba(20,8,12,' + (0.3 * Math.min(1, E.tired * 1.5)).toFixed(2) + ')'; ctx.lineWidth = 0.055; ctx.lineCap = 'round'; [-0.38, 0.38].forEach(gx => { ctx.beginPath(); ctx.arc(gx, hy + 0.0, 0.22, Math.PI * 0.22, Math.PI * 0.78); ctx.stroke(); }); }   // cernes
         // sourcils : hauteur, inclinaison et asymétrie selon l'émotion
         ctx.strokeStyle = '#120d0b'; ctx.lineWidth = anime ? 0.105 : soft ? 0.095 : 0.085;
         [-1, 1].forEach(sd => {
-            const raise = browRaise + (sd < 0 ? 0.55 : -0.2) * asym;
+            const raise = browRaise + (sd < 0 ? 0.55 : -0.2) * asym + (sd > 0 ? 0.7 : -0.2) * E.smug;
             const x0 = sd * 0.62, x1 = sd * 0.14, by = hy - 0.36 - 0.17 * raise;
             const yOut = by + 0.05 * browAngle, yIn = by - 0.13 * browAngle;
             ctx.beginPath(); ctx.moveTo(x0, yOut); ctx.quadraticCurveTo((x0 + x1) / 2, by - 0.08 - 0.05 * raise, x1, yIn); ctx.stroke();
@@ -1813,6 +1848,7 @@ const BuiltinCharacter = (() => {
             ctx.restore();
         }
         ctx.strokeStyle = skinDk; ctx.lineWidth = anime ? 0.025 : 0.06; ctx.beginPath(); ctx.moveTo(-0.07, hy + 0.3); ctx.quadraticCurveTo(0, hy + 0.42, 0.1, hy + 0.32); ctx.stroke();
+        if (E.disgust > 0.3) { ctx.strokeStyle = skinDk; ctx.lineWidth = 0.035; ctx.lineCap = 'round'; [[-0.12, 0.1], [0.0, 0.06], [0.12, 0.1]].forEach(q => { ctx.beginPath(); ctx.moveTo(q[0] - 0.05, hy + q[1]); ctx.quadraticCurveTo(q[0], hy + q[1] + 0.05, q[0] + 0.05, hy + q[1]); ctx.stroke(); }); }   // nez qui se plisse
         ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.beginPath(); ctx.ellipse(0.03, hy + 0.05, 0.05, 0.14, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(30,10,5,0.45)'; ctx.beginPath(); ctx.ellipse(-0.075, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.ellipse(0.105, hy + 0.36, 0.028, 0.02, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(0,0,0,0.13)'; ctx.beginPath(); ctx.ellipse(0, hy + 1.0, 0.32, 0.1, 0, 0, TAU); ctx.fill();
@@ -1827,6 +1863,13 @@ const BuiltinCharacter = (() => {
             if (mouthO > 0.3) {
                 ctx.fillStyle = '#3a0f12'; ctx.beginPath(); ctx.ellipse(0, my + 0.1, 0.13 + 0.05 * mouthO, 0.09 + 0.17 * mouthO, 0, 0, TAU); ctx.fill();
                 ctx.strokeStyle = lip; ctx.lineWidth = 0.06; ctx.stroke();
+            } else if (E.disgust > 0.4 && E.disgust >= E.smug) {          // « beurk » : lèvre du haut relevée, dents visibles, coins vers le bas
+                ctx.fillStyle = '#3a0f12'; ctx.beginPath(); ctx.moveTo(-0.3, my + 0.16); ctx.quadraticCurveTo(-0.15, my - 0.04, 0, my + 0.0); ctx.quadraticCurveTo(0.15, my + 0.05, 0.3, my + 0.18); ctx.quadraticCurveTo(0, my + 0.36, -0.3, my + 0.16); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#fafafa'; ctx.beginPath(); ctx.moveTo(-0.24, my + 0.12); ctx.quadraticCurveTo(-0.12, my + 0.01, 0, my + 0.04); ctx.quadraticCurveTo(0.12, my + 0.07, 0.24, my + 0.16); ctx.lineTo(0.22, my + 0.21); ctx.quadraticCurveTo(0, my + 0.11, -0.22, my + 0.18); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = lip; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.moveTo(-0.3, my + 0.16); ctx.quadraticCurveTo(-0.15, my - 0.04, 0, my + 0.0); ctx.quadraticCurveTo(0.15, my + 0.05, 0.3, my + 0.18); ctx.quadraticCurveTo(0, my + 0.36, -0.3, my + 0.16); ctx.stroke();
+            } else if (E.smug > 0.4) {                                  // sourire en coin avec petite fossette
+                ctx.strokeStyle = lip; ctx.lineWidth = 0.075; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-0.26, my + 0.04); ctx.quadraticCurveTo(0.05, my + 0.1, 0.3, my - 0.14); ctx.stroke();
+                ctx.lineWidth = 0.035; ctx.beginPath(); ctx.moveTo(0.36, my - 0.24); ctx.quadraticCurveTo(0.44, my - 0.14, 0.35, my - 0.06); ctx.stroke();
             } else {
                 const cl = my - 0.1 * curve + 0.04 * asym, cr = my - 0.1 * curve - 0.07 * asym - 0.05 * E.proud;
                 if (curve > 0.66) {                                       // grand sourire avec les dents
@@ -1899,12 +1942,91 @@ const BuiltinCharacter = (() => {
         const drawProp = (kind, x, y, k) => {
             ctx.save(); ctx.translate(x, y); const pop = clamp(k, 0, 1.12) * 1.3; ctx.scale(pop, pop); ctx.rotate(-0.12); ctx.lineJoin = 'round';
             const box = (x0, y0, w0, h0, r, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(x0, y0, w0, h0, r); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke(); };
-            if (kind === 'phone') {
+            const leaf = (lx, ly, rot, ln) => { ctx.save(); ctx.translate(lx, ly); ctx.rotate(rot); ctx.fillStyle = '#4caf50'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(ln * 0.5, -ln * 0.38, ln, 0); ctx.quadraticCurveTo(ln * 0.5, ln * 0.38, 0, 0); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.035; ctx.stroke(); ctx.restore(); };
+            const ball = (cx, cy, rx, ry, rot, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke(); };
+            const shine = (sx, sy, r) => { ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.ellipse(sx, sy, r, r * 0.6, -0.6, 0, TAU); ctx.fill(); };
+            const stem = (x0, y0, x1, y1) => { ctx.strokeStyle = '#6b3f1d'; ctx.lineWidth = 0.065; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); };
+            if (['mango', 'banana', 'orange', 'apple', 'watermelon', 'pineapple', 'lemon', 'coconut', 'grapes'].includes(kind)) { ctx.translate(0, -0.14); ctx.scale(1.18, 1.18); }   // les fruits sont plus petits : on les monte et on les agrandit pour que le poing n'en cache pas la moitié
+            if (kind === 'phone') {                                  // smartphone Android : bords fins, caméra « punch-hole », grille d'applis, barre de navigation
                 box(-0.3, -1.05, 0.6, 1.05, 0.1, '#161a26');
-                const g = ctx.createLinearGradient(0, -0.95, 0, -0.15); g.addColorStop(0, '#6ee0ff'); g.addColorStop(1, '#3a7bd5');
-                ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-0.24, -0.97, 0.48, 0.82, 0.06); ctx.fill();
-                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(-0.15, -0.8, 0.3, 0.06); ctx.fillRect(-0.15, -0.66, 0.2, 0.05);
-                ctx.fillStyle = '#ff5d5d'; ctx.beginPath(); ctx.arc(0.19, -0.97, 0.07, 0, TAU); ctx.fill();
+                const g = ctx.createLinearGradient(0, -1.0, 0, -0.1); g.addColorStop(0, '#5fd4ff'); g.addColorStop(1, '#3a62d5');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-0.26, -1.0, 0.52, 0.9, 0.07); ctx.fill();
+                ctx.fillStyle = '#0b0e16'; ctx.beginPath(); ctx.arc(0, -0.93, 0.025, 0, TAU); ctx.fill();
+                const ic = ['#ff6b6b', '#ffd166', '#6bd67a', '#c79bff', '#ffffff', '#4dd0e1', '#ff9f5a', '#7aa2ff', '#f78fb3'];
+                ic.forEach((col, q) => { ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(-0.19 + (q % 3) * 0.14, -0.82 + Math.floor(q / 3) * 0.14, 0.1, 0.1, 0.03); ctx.fill(); });
+                ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.roundRect(-0.07, -0.16, 0.14, 0.025, 0.012); ctx.fill();
+            } else if (kind === 'keypad') {                          // téléphone à touches : petit écran, touches d'appel, pavé numérique
+                box(-0.25, -1.0, 0.5, 1.0, 0.09, '#2a2f3d');
+                ctx.fillStyle = '#9fe3b0'; ctx.beginPath(); ctx.roundRect(-0.19, -0.93, 0.38, 0.3, 0.04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.03; ctx.stroke();
+                ctx.fillStyle = '#2f6b45'; ctx.fillRect(-0.14, -0.86, 0.2, 0.04); ctx.fillRect(-0.14, -0.78, 0.28, 0.03); ctx.fillRect(-0.14, -0.71, 0.14, 0.03);
+                ctx.fillStyle = '#5b6378'; ctx.beginPath(); ctx.ellipse(0, -0.55, 0.09, 0.045, 0, 0, TAU); ctx.fill();
+                ctx.fillStyle = '#43c463'; ctx.beginPath(); ctx.roundRect(-0.2, -0.58, 0.07, 0.06, 0.02); ctx.fill();
+                ctx.fillStyle = '#e5534b'; ctx.beginPath(); ctx.roundRect(0.13, -0.58, 0.07, 0.06, 0.02); ctx.fill();
+                ctx.fillStyle = '#c9ced9'; for (let r = 0; r < 4; r++) for (let q = 0; q < 3; q++) { ctx.beginPath(); ctx.roundRect(-0.18 + q * 0.125, -0.47 + r * 0.115, 0.1, 0.085, 0.02); ctx.fill(); }
+            } else if (kind === 'laptop') {                          // ordinateur portable ouvert, tourné vers le public
+                ctx.fillStyle = '#9aa3b5'; ctx.beginPath(); ctx.roundRect(-0.64, -0.15, 1.28, 0.15, 0.04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
+                ctx.fillStyle = '#c9d0de'; ctx.beginPath(); ctx.roundRect(-0.12, -0.15, 0.24, 0.045, 0.02); ctx.fill();
+                box(-0.55, -0.9, 1.1, 0.78, 0.06, '#1a1d29');
+                ctx.fillStyle = '#e8f1ff'; ctx.beginPath(); ctx.roundRect(-0.49, -0.84, 0.98, 0.66, 0.03); ctx.fill();
+                ctx.fillStyle = '#2f6fe0'; ctx.fillRect(-0.49, -0.84, 0.98, 0.1);
+                ['#ff6b6b', '#ffd166', '#6bd67a'].forEach((col, q) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(-0.43 + q * 0.07, -0.79, 0.022, 0, TAU); ctx.fill(); });
+                ctx.fillStyle = '#9db4d6'; [[-0.42, -0.66, 0.4], [-0.42, -0.57, 0.3], [-0.42, -0.48, 0.36], [-0.42, -0.39, 0.22]].forEach(([lx, ly, lw]) => ctx.fillRect(lx, ly, lw, 0.045));
+                ctx.fillStyle = '#4da3ff'; [[0.12, 0.16], [0.24, 0.26], [0.36, 0.2]].forEach(([bx, bh]) => ctx.fillRect(bx, -0.22 - bh, 0.09, bh));
+            } else if (kind === 'camera') {                          // appareil photo compact
+                ctx.fillStyle = '#c9ced9'; ctx.beginPath(); ctx.roundRect(0.22, -0.7, 0.2, 0.08, 0.025); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.04; ctx.stroke();
+                box(-0.5, -0.64, 1.0, 0.58, 0.08, '#2b2f3a');
+                ctx.fillStyle = '#c9ced9'; ctx.beginPath(); ctx.roundRect(-0.5, -0.64, 1.0, 0.15, [0.08, 0.08, 0, 0]); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
+                ctx.fillStyle = '#fff6c2'; ctx.beginPath(); ctx.roundRect(-0.4, -0.6, 0.15, 0.07, 0.02); ctx.fill();
+                ctx.fillStyle = '#10131c'; ctx.beginPath(); ctx.arc(0.04, -0.33, 0.2, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
+                ctx.fillStyle = '#3a7bd5'; ctx.beginPath(); ctx.arc(0.04, -0.33, 0.12, 0, TAU); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.arc(0.0, -0.37, 0.035, 0, TAU); ctx.fill();
+            } else if (kind === 'radio') {                           // petite radio à antenne
+                ctx.strokeStyle = '#9aa3b5'; ctx.lineWidth = 0.045; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0.34, -0.62); ctx.lineTo(0.62, -1.05); ctx.stroke();
+                ctx.fillStyle = '#ff5d5d'; ctx.beginPath(); ctx.arc(0.62, -1.05, 0.05, 0, TAU); ctx.fill();
+                box(-0.5, -0.64, 1.0, 0.64, 0.08, '#b5483a');
+                ctx.fillStyle = '#6b2a22'; ctx.beginPath(); ctx.roundRect(-0.42, -0.57, 0.5, 0.5, 0.05); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 0.025; for (let q = 0; q < 5; q++) { ctx.beginPath(); ctx.moveTo(-0.37, -0.5 + q * 0.09); ctx.lineTo(0.03, -0.5 + q * 0.09); ctx.stroke(); }
+                ctx.fillStyle = '#f6efe0'; ctx.beginPath(); ctx.roundRect(0.14, -0.57, 0.3, 0.15, 0.03); ctx.fill();
+                ctx.strokeStyle = '#ff5d5d'; ctx.lineWidth = 0.03; ctx.beginPath(); ctx.moveTo(0.27, -0.56); ctx.lineTo(0.27, -0.43); ctx.stroke();
+                ctx.fillStyle = '#2b2f3a'; ctx.beginPath(); ctx.arc(0.29, -0.2, 0.09, 0, TAU); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.04; ctx.stroke();
+            } else if (kind === 'mango') {
+                const g = ctx.createLinearGradient(-0.3, -0.8, 0.3, -0.05); g.addColorStop(0, '#8fd14f'); g.addColorStop(0.45, '#ffd23f'); g.addColorStop(1, '#f06a3a');
+                ball(0, -0.42, 0.29, 0.4, 0.35, g); stem(-0.12, -0.78, -0.15, -0.9); leaf(-0.14, -0.88, -0.7, 0.3); shine(0.1, -0.6, 0.07);
+            } else if (kind === 'banana') {
+                const arcB = () => { ctx.beginPath(); ctx.arc(0.3, -0.45, 0.5, Math.PI * 0.78, Math.PI * 1.62); };
+                ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 0.3; arcB(); ctx.stroke();
+                ctx.strokeStyle = '#ffd83d'; ctx.lineWidth = 0.2; arcB(); ctx.stroke();
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 0.04; ctx.beginPath(); ctx.arc(0.3, -0.45, 0.55, Math.PI * 0.95, Math.PI * 1.3); ctx.stroke();
+                ctx.fillStyle = '#6b4a1a'; [[-0.083, -0.129], [0.48, -0.915]].forEach(([bx, by]) => { ctx.beginPath(); ctx.arc(bx, by, 0.075, 0, TAU); ctx.fill(); });
+            } else if (kind === 'orange') {
+                const g = ctx.createRadialGradient(-0.1, -0.5, 0.03, 0, -0.4, 0.38); g.addColorStop(0, '#ffc15a'); g.addColorStop(1, '#f07c10');
+                ball(0, -0.4, 0.34, 0.34, 0, g); ctx.fillStyle = 'rgba(160,70,0,0.35)'; [[-0.12, -0.3], [0.08, -0.22], [0.16, -0.42], [-0.02, -0.5], [-0.2, -0.45]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(dx, dy, 0.018, 0, TAU); ctx.fill(); });
+                stem(0, -0.73, 0.02, -0.8); leaf(0.02, -0.78, -0.5, 0.26); shine(-0.12, -0.55, 0.07);
+            } else if (kind === 'apple') {
+                const g = ctx.createRadialGradient(-0.1, -0.5, 0.03, 0, -0.4, 0.38); g.addColorStop(0, '#ff6b6b'); g.addColorStop(1, '#c62828');
+                ball(0, -0.4, 0.35, 0.32, 0, g); ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(0, -0.68, 0.08, 0.04, 0, 0, TAU); ctx.fill();
+                stem(0, -0.68, 0.04, -0.85); leaf(0.04, -0.82, -0.45, 0.3); shine(-0.14, -0.52, 0.07);
+            } else if (kind === 'watermelon') {
+                ctx.beginPath(); ctx.arc(0, -0.62, 0.56, 0, Math.PI); ctx.closePath(); ctx.fillStyle = '#2e9d4a'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, -0.62, 0.47, 0, Math.PI); ctx.closePath(); ctx.fillStyle = '#f4f0d8'; ctx.fill();
+                ctx.beginPath(); ctx.arc(0, -0.62, 0.41, 0, Math.PI); ctx.closePath(); ctx.fillStyle = '#ff4d5e'; ctx.fill();
+                ctx.fillStyle = '#2a1416'; [[-0.22, -0.42, 0.4], [0, -0.34, 0], [0.22, -0.42, -0.4], [-0.1, -0.52, 0.2], [0.12, -0.54, -0.2]].forEach(([sx, sy, sr]) => { ctx.beginPath(); ctx.ellipse(sx, sy, 0.025, 0.04, sr, 0, TAU); ctx.fill(); });
+            } else if (kind === 'pineapple') {
+                for (let q = -2; q <= 2; q++) { ctx.save(); ctx.translate(0, -0.7); ctx.rotate(q * 0.36); ctx.fillStyle = '#3fa34d'; ctx.beginPath(); ctx.moveTo(-0.075, 0); ctx.lineTo(0, -0.42 + Math.abs(q) * 0.07); ctx.lineTo(0.075, 0); ctx.closePath(); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.035; ctx.stroke(); ctx.restore(); }
+                ball(0, -0.38, 0.28, 0.37, 0, '#f6b21a');
+                ctx.save(); ctx.beginPath(); ctx.ellipse(0, -0.38, 0.28, 0.37, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = 'rgba(150,80,0,0.55)'; ctx.lineWidth = 0.028;
+                for (let q = -4; q <= 4; q++) { ctx.beginPath(); ctx.moveTo(q * 0.14 - 0.4, -0.8); ctx.lineTo(q * 0.14 + 0.4, 0.05); ctx.stroke(); ctx.beginPath(); ctx.moveTo(q * 0.14 + 0.4, -0.8); ctx.lineTo(q * 0.14 - 0.4, 0.05); ctx.stroke(); }
+                ctx.restore(); ctx.strokeStyle = INK; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.ellipse(0, -0.38, 0.28, 0.37, 0, 0, TAU); ctx.stroke();
+            } else if (kind === 'lemon') {
+                ctx.save(); ctx.translate(0, -0.4); ctx.rotate(-0.35); ball(-0.36, 0, 0.07, 0.06, 0, '#f3d11e'); ball(0.36, 0, 0.07, 0.06, 0, '#f3d11e'); ball(0, 0, 0.38, 0.26, 0, '#ffe135'); shine(-0.1, -0.1, 0.08); ctx.restore();
+                stem(0.1, -0.62, 0.14, -0.72); leaf(0.13, -0.7, -0.6, 0.26);
+            } else if (kind === 'coconut') {
+                ball(0, -0.4, 0.35, 0.35, 0, '#7a4b2a'); ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 0.025; ctx.lineCap = 'round';
+                [[-0.2, -0.2, -0.25, -0.4], [0.2, -0.2, 0.28, -0.4], [-0.05, -0.12, -0.08, -0.3], [0.1, -0.62, 0.18, -0.5]].forEach(([x0, y0, x1, y1]) => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); });
+                ctx.fillStyle = '#3b2210'; [[-0.1, -0.52], [0.1, -0.52], [0, -0.38]].forEach(([ex, ey]) => { ctx.beginPath(); ctx.arc(ex, ey, 0.05, 0, TAU); ctx.fill(); }); shine(-0.18, -0.6, 0.06);
+            } else if (kind === 'grapes') {
+                stem(0, -0.92, 0.05, -1.02); leaf(0.0, -0.93, -0.55, 0.3);
+                [[-0.2, -0.78], [0, -0.8], [0.2, -0.78], [-0.1, -0.6], [0.1, -0.6], [0, -0.42]].forEach(([gx, gy]) => { ball(gx, gy, 0.12, 0.12, 0, '#7b3fb0'); shine(gx - 0.04, gy - 0.04, 0.035); });
             } else if (kind === 'money') {
                 for (let q = 2; q >= 0; q--) { ctx.save(); ctx.rotate((q - 1) * 0.16); box(-0.42, -0.72, 0.84, 0.42, 0.04, q === 0 ? '#58c46f' : '#3fae5a'); ctx.restore(); }
                 ctx.fillStyle = '#f7efb5'; ctx.fillRect(-0.06, -0.72, 0.12, 0.42);
@@ -1940,7 +2062,7 @@ const BuiltinCharacter = (() => {
             const sx = sd * 1.2, sy = sh + 0.35 - shrug, b = T[i];
             const gt = gh ? (sd < 0 ? gh.L : gh.R) : null;
             const tg = gt ? { x: b.x + (gt.x - b.x) * gk, y: b.y + (gt.y - b.y) * gk, mode: gk > 0.35 ? gt.mode : b.mode, n: gt.n, s: gt.s || 1, out: gt.out } : { x: b.x, y: b.y, mode: b.mode, n: 0, s: 1 };
-            const arm = ik(sx, sy, tg.x, tg.y, 1.45, 1.4, sd, tg.out);
+            const arm = ik(sx, sy, tg.x, tg.y, 1.45, 1.4, sd, tg.out, tg.mode === 'hold');   // « hold » : avant-bras replié vers le haut (on montre l'objet près du buste)
             const fdx = arm.hx - arm.ex, fdy = arm.hy - arm.ey, fL = Math.hypot(fdx, fdy) || 1, fux = fdx / fL, fuy = fdy / fL;
             const wk = c.outfit === 'suit' ? 0.56 : 0;                 // distance poignet : la manche s'arrête là, puis manchette blanche, poignet, main
             const wx = arm.hx - fux * wk, wy = arm.hy - fuy * wk;
@@ -4588,9 +4710,9 @@ async function llmBrain({ idea, script, options, cfg }) {
 
 // ===== JEU DU PERSONNAGE : frise modifiable + réalisateur IA =====
 const ACT_LABELS = {
-    emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation' },
+    emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation', disgust: 'Dégoût', shy: 'Gêne', tired: 'Fatigue', smug: 'Malice' },
     gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', draw: 'Puiser de l’eau', plant: 'Planter une graine', water: 'Arroser', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
-    prop: { phone: 'Téléphone', money: 'Billets', book: 'Livre', tablet: 'Tablette', mic: 'Micro' },
+    prop: { phone: 'Téléphone Android', keypad: 'Téléphone à touches', laptop: 'Ordinateur portable', tablet: 'Tablette', camera: 'Appareil photo', radio: 'Radio', mango: 'Mangue', banana: 'Banane', orange: 'Orange', apple: 'Pomme', watermelon: 'Pastèque', pineapple: 'Ananas', lemon: 'Citron', coconut: 'Noix de coco', grapes: 'Raisin', money: 'Billets', book: 'Livre', mic: 'Micro' },
     count: { 1: '1 doigt', 2: '2 doigts', 3: '3 doigts', 4: '4 doigts', 5: '5 doigts' },
     shot: { close: 'Gros plan', wide: 'Plan large' },
     head: { nod: 'Oui (hocher)', shake: 'Non (secouer)' },
@@ -4643,7 +4765,7 @@ async function directorBrain(scenes, cfg) {
     const list = scenes.map((s, i) => '[' + i + '] ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
     const prompt = 'You are the acting director of an animated film. ONE animated presenter character tells the story below. For each scene decide how the character acts, word by word. The words of each scene are numbered (index:word). Understand the whole story: negation (\"not sad\" means relieved), irony, contrast (\"but\"), the emotional arc across scenes, and what is physically described.\n' +
         'Return ONLY valid JSON, no markdown: {\"scenes\":[{\"i\": scene number, \"base\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"strength\": number 0.4-1, \"events\":[{\"w\": word index, and exactly ONE of: \"emo\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"gesture\": one of [' + ActingBrain.LISTS.gestures.join(', ') + ', count, hold], \"n\": 1-5 (only with gesture count), \"prop\": one of [' + ActingBrain.LISTS.props.join(', ') + '] (only with gesture hold), \"shot\": close or wide, \"head\": nod or shake, \"look\": left, right, up, down or cam}]}]}\n' +
-        'Rules: 2 to 8 events per scene, only where the acting is meaningful. Put an emotion event on each meaningful change, on the word that triggers it. An emotion event becomes the active emotional state until the next emotion event or the end of the scene; do not reset to the base after a few seconds. Keep the base as the starting mood, and include an emotion cue after a real contrast such as ‘but’ when the story changes direction. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone/money/book/tablet/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
+        'Rules: 2 to 8 events per scene, only where the acting is meaningful. Put an emotion event on each meaningful change, on the word that triggers it. An emotion event becomes the active emotional state until the next emotion event or the end of the scene; do not reset to the base after a few seconds. Keep the base as the starting mood, and include an emotion cue after a real contrast such as ‘but’ when the story changes direction. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone (phone = Android smartphone, keypad = button phone)/laptop/tablet/camera/radio/a fruit (mango, banana, orange, apple, watermelon, pineapple, lemon, coconut, grapes)/money/book/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 45000);
     try {
