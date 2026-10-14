@@ -489,6 +489,9 @@ const ASSETS = {
         { id: 'gradient_teal', name: 'Turquoise', from: '#0b3d4a', to: '#1fa2a6' },
         { id: 'gradient_slate', name: 'Ardoise', from: '#1c1c28', to: '#3a3f55' },
         { id: 'gradient_night', name: 'Nuit', from: '#0f2027', to: '#203a43' },
+        { id: 'african_day', name: 'Jour africain luxueux', from: '#f5b942', to: '#7a2e12', scenery: true },
+        { id: 'city_night', name: 'Ville de luxe (nuit)', from: '#0b1030', to: '#3a2a6b', scenery: true },
+        { id: 'maquis', name: 'Vidéo Plus Maquis', from: '#c46a1a', to: '#3b1a0a', scenery: true },
     ],
 };
 
@@ -661,7 +664,7 @@ const LipSync = (() => {
         let c = cache.get(scene);
         if (!c || c.key !== key) {
             const ws = splitWords(scene.narration || '');
-            c = { key, ws, starts: wordStarts(ws, scene.duration || 5),
+            c = { key, sc: scene, ws, starts: wordStarts(ws, scene.duration || 5),
                   vs: ws.map(w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().match(/[aeiouy]/g) || ['a']) };
             cache.set(scene, c);
         }
@@ -686,6 +689,280 @@ const LipSync = (() => {
         return speaking ? 0.35 + 0.45 * Math.abs(Math.sin(time * 9)) : 0;
     }
     return { vowel, open, info };
+})();
+
+// ===== STORYMIND : compréhension fine de l'histoire (négation, hypothèse, ironie, idiomes, sujet) + auto-réparation =====
+// Lit chaque scène par propositions (clauses) et prépare, pour chaque mot, un « masque » de compréhension :
+//  - neg  : le mot est nié (« pas triste », « ne … jamais content »), double négation comprise
+//  - hyp  : hypothèse / faire semblant (« imagine que tu cours », « si tu tombes »)
+//  - amp  : intensité (« très », « un peu », « extrêmement »)
+//  - idiome / métaphore : « courir un risque », « tomber amoureux », « pleurer de rire », « les prix tombent »
+//  - ironie : « Super… encore une panne » joue la malice, pas la joie
+//  - sujet : une action du corps n'est jouée que si une personne la fait (pas un prix, un marché, la pluie)
+// Puis repairPlan() corrige le jeu prévu (contradictions, gestes absurdes, scène muette) et repairProject() répare les données.
+const StoryMind = (() => {
+    const stripAcc = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const wparts = w => String(w).split(/[’'\-]/).map(p => stripAcc(p).replace(/[^a-z0-9]/g, '')).filter(Boolean);
+    const flatWord = w => wparts(w).join('');
+    const POS_EMO = ['joy', 'excited', 'proud', 'love', 'smug'], NEG_EMO = ['sad', 'angry', 'fear', 'disgust', 'tired'];
+    const BODY = ['run', 'fall', 'jump', 'dance', 'cry', 'shake', 'sleep', 'laugh', 'turn', 'walk', 'crouch', 'kneel', 'bow', 'kick', 'stretch'];
+    const NEG_KEEP = new Set(['stop', 'shrug', 'cross', 'shush']);      // ces gestes ont du sens même dans une phrase négative
+    const NEGW = new Set(['pas', 'jamais', 'rien', 'aucun', 'aucune', 'nullement', 'sans', 'ni', 'guere', 'non', 'plus']);
+    const NOT_NEG_FOLLOW = /^(?:seulement|que|uniquement)$/;                         // « pas seulement », « non seulement » : pas une vraie négation
+    const CONTRAST = new Set(['mais', 'pourtant', 'cependant', 'toutefois', 'sauf', 'jusqua', 'jusque', 'tandis']);
+    const HYP_W = /^(?:si|imagin\w*|suppos\w*|semblant|pretend\w*|comme|voudrai\w*|aimerai\w*)$/;
+    const INANIM = /^(?:prix|cours|marche|bourse|courbe|vente|ventes|chiffre|chiffres|taux|benefice|benefices|valeur|action|actions|monnaie|economie|temperature|pluie|neige|vent|feuille|feuilles|temps|nuit|soleil|jour|terre|sol|mur|batiment|popularite|audience|trafic|revenu|revenus|inflation|croissance|tension|bruit|fievre|rumeur|projet|entreprise|societe|systeme|reseau|site|application|appli|moteur|machine|voiture|avion|dollar|euro|franc|fcfa|stock|stocks|salaire|salaires|dette|dettes|score|note|notes)$/;
+    const AMP_UP = /^(?:tres|tellement|extremement|vraiment|enormement|terriblement|profondement|totalement|completement|super|hyper)$/;
+    const AMP_DN = /^(?:peu|legerement|vaguement|presque|plutot|assez|relativement)$/;
+    const IRONY_MARK = /\b(?:comme par hasard|evidemment|quelle chance|quel bonheur|bien joue|ah oui|tu parles|c est ca oui|trop fort|merci bien|super idee|bravo\b)/;
+    const IDIOMS = [
+        { kind: 'fall', re: /\btomb\w* (?:amoureu\w*|enceinte|malade|daccord|en panne|en ruine|a pic|du ciel|dans (?:le|un) piege|dans les pommes|en amour|en depression|a leau|sur (?:un|une) (?:idee|article|video|erreur|probleme|solution|ami|ami\w*|piste|annonce|offre))\b/, emo: null },
+        { kind: 'none', re: /\b(?:prix|cours|ventes?|actions?|bourse|marche|chiffres?|benefices?|revenus?) (?:\w+ ){0,2}(?:tomb\w*|chut\w*|seffondr\w*|effondr\w*|plong\w*|degringol\w*)\b/, emo: 'fear' },
+        { kind: 'none', re: /\b(?:prix|cours|ventes?|actions?|bourse|benefices?|revenus?|chiffres?) (?:\w+ ){0,2}(?:explos\w*|montent|grimpent|flambent|decollent)\b/, emo: 'excited' },
+        { kind: 'fall', re: /\b(?:la )?nuit tombe\b|\bchutes? (?:des|du|de la|de l)\b/, emo: null },
+        { kind: 'run', re: /\bcour\w* (?:un|le|des) risques?\b|\bcour\w* apres\b|\bcour\w* a sa perte\b|\ble temps cour\w*|\bla rumeur cour\w*|\bcourse (?:a|au|aux|contre)\b/, emo: null },
+        { kind: 'jump', re: /\bsaut\w* (?:une|un|le|la) (?:etape|classe|repas|ligne|page)\b|\bsaut\w* aux yeux\b|\bsaut\w* sur l\w* occasion\b|\bsaut (?:technolog\w*|qualitatif)\b/, emo: null },
+        { kind: 'laugh', act: 'laugh', re: /\bpleur\w* de rire\b|\bmouri\w* de rire\b|\brire aux larmes\b|\bfou rire\b/, emo: 'joy' },
+        { kind: 'cry', re: /\bcrier? misere\b/, emo: 'sad' },
+        { kind: 'laugh', re: /\bri(?:re|t|ent) jaune\b/, emo: 'doubt' },
+        { kind: 'laugh', re: /\bri(?:re|t|ent|ait|aient) de (?:lui|elle|toi|moi|nous|eux|vous)\b/, emo: 'smug' },
+        { kind: 'sleep', re: /\bdorm\w* sur (?:ses|mes|tes|leurs) lauriers\b|\bdor\w* debout\b/, emo: 'smug' },
+        { kind: 'turn', re: /\b(?:se )?retourn\w* contre\b/, emo: 'angry' },
+        { kind: 'none', re: /\bcoeur (?:brise|lourd|serre)\b|\ble moral dans les chaussettes\b|\bun poids (?:sur|dans)\b|\bavoir le (?:blues|cafard)\b|\bperdre (?:pied|espoir|confiance|courage)\b/, emo: 'sad' },
+        { kind: 'none', re: /\bcoeur leger\b|\bvoir la vie en rose\b|\bau septieme ciel\b|\bun poids en moins\b|\bsur un nuage\b/, emo: 'joy' },
+        { kind: 'none', re: /\bvoir rouge\b|\bpeter un cable\b|\bmonter sur ses grands chevaux\b|\ble sang (?:bout|ne fait qu un tour)\b/, emo: 'angry' },
+        { kind: 'none', re: /\bla boule au ventre\b|\bavoir les jetons\b|\bperdre la tete\b|\bsueurs? froides?\b|\bfrisson\w* dans le dos\b/, emo: 'fear' },
+        { kind: 'none', re: /\bpapillons dans le ventre\b|\brougir jusqu\w+ aux oreilles\b/, emo: 'shy' },
+        { kind: 'none', re: /\bavoir (?:la )?flemme\b|\bau bout du rouleau\b|\bsur les rotules\b/, emo: 'tired' },
+        { kind: 'none', re: /\bmonter en fleche\b|\bexplos\w* les compteurs\b|\bbattre des records\b/, emo: 'surprise' },
+    ];
+    const SENT_END = /[.!?…]["»”)]*$/, CLAUSE_END = /[,;:.!?…]["»”)]*$/;
+
+    // Instance permissive : utilisée si l'analyse échoue (le cerveau retombe alors sur son comportement d'avant)
+    const OPEN = { clauses: [], notes: [], emo: (i, k) => k, neg: () => false, hyp: () => false, amp: () => 1, ironic: () => false, okGesture: () => true, okBody: () => true, okProp: () => true, idiomEmos: [], idiomActs: [], idiomAt: () => null, subject: 'inconnu', open: true };
+    const cache = new WeakMap();
+
+    function analyse(scene, c) {
+        const ws = c.ws, n = ws.length, P = ws.map(wparts), F = ws.map(flatWord);
+        const clauseOf = new Array(n), clauses = [];
+        // 1) découpe en propositions : ponctuation + mots de contraste
+        let cur = { i0: 0, i1: -1, sent: 0 }, sent = 0;
+        for (let i = 0; i < n; i++) {
+            const first = P[i][0] || '';
+            if (i > cur.i0 && CONTRAST.has(first)) { cur.i1 = i - 1; clauses.push(cur); cur = { i0: i, i1: -1, sent }; }
+            clauseOf[i] = clauses.length;
+            if (CLAUSE_END.test(ws[i])) { cur.i1 = i; clauses.push(cur); if (SENT_END.test(ws[i])) sent++; cur = { i0: i + 1, i1: -1, sent }; }
+        }
+        if (cur.i0 < n) { cur.i1 = n - 1; clauses.push(cur); }
+        for (let k = 0; k < clauses.length; k++) for (let i = clauses[k].i0; i <= clauses[k].i1; i++) clauseOf[i] = k;
+        const words = clauses.length ? clauses : [{ i0: 0, i1: n - 1, sent: 0 }];
+
+        // 2) texte aplati pour les idiomes (et correspondance caractère -> mot)
+        const offs = []; let pos = 0; F.forEach(w => { offs.push(pos); pos += w.length + 1; });
+        const flat = F.join(' ');
+        const wordAt = idx => { let k = 0; for (let i = 0; i < offs.length; i++) if (offs[i] <= idx) k = i; return k; };
+        const idioms = [];
+        IDIOMS.forEach(d => { const re = new RegExp(d.re.source, 'g'); let m; while ((m = re.exec(flat))) { idioms.push({ kind: d.kind, act: d.act || null, emo: d.emo, i0: wordAt(m.index), i1: wordAt(m.index + Math.max(0, m[0].length - 1)) }); if (m[0].length === 0) re.lastIndex++; } });
+        const idiomAt = i => idioms.find(d => i >= d.i0 && i <= d.i1) || null;
+
+        // 3) négation (portée = proposition, fenêtre de 5 mots, groupes adjacents fusionnés, double négation = positif)
+        const negCache = new Array(n);
+        const negAtWord = i => {
+            if (negCache[i] !== undefined) return negCache[i];
+            const cl = words[clauseOf[i]] || words[0], lo = Math.max(cl.i0, i - 5), hasNe = j => { for (let q = Math.max(cl.i0, j - 3); q < j; q++) if (/^(?:ne|n)$/.test(P[q][0] || '') || /^n['’]/i.test(ws[q])) return true; return false; };
+            const pos = [];
+            for (let j = lo; j < i; j++) {
+                const ps = P[j]; if (!ps.length) continue;
+                const w = ps[ps.length - 1], w0 = ps[0];
+                const cand = NEGW.has(w) ? w : (NEGW.has(w0) ? w0 : null); if (!cand) continue;
+                if (cand === 'plus' && !hasNe(j)) continue;
+                if (cand === 'ni' && pos.length) continue;      // « ni … ni » prolonge la même négation
+                if (cand === 'non' || cand === 'pas') { const nx = (P[j + 1] && P[j + 1][0]) || ''; if (NOT_NEG_FOLLOW.test(nx)) continue; }
+                pos.push(j);
+            }
+            let groups = 0, last = -9;
+            pos.forEach(j => { if (j - last > 2) groups++; last = j; });
+            // « il ne pleure pas » : la négation vient après le mot
+            if (hasNe(i)) { for (let j = i + 1; j <= Math.min(cl.i1, i + 3); j++) { const w = P[j][P[j].length - 1] || ''; if (/^(?:pas|jamais|plus|rien|aucun|aucune|guere)$/.test(w)) { groups++; break; } } }
+            // « ne … pas » + « sans » dans la même portée : on garde la parité des groupes distincts
+            return (negCache[i] = groups % 2 === 1);
+        };
+        const hypCache = new Array(n);
+        const hypAtWord = i => {
+            if (hypCache[i] !== undefined) return hypCache[i];
+            const cl = words[clauseOf[i]] || words[0];
+            for (let j = Math.max(cl.i0, i - 7); j < i; j++) { const w = P[j][0] || ''; if (HYP_W.test(w)) { if (w === 'comme' && !/^(?:si)$/.test((P[j + 1] && P[j + 1][0]) || '')) continue; if (w === 'si' && /^(?:oui|non|bien|tres|peu|tellement|grand\w*|petit\w*|gentil\w*|content\w*|triste\w*|heureu\w*|fatigu\w*|fier\w*|beau|belle|fort\w*|vite|longtemps)$/.test((P[j + 1] && P[j + 1][0]) || '')) continue; return (hypCache[i] = true); } }
+            return (hypCache[i] = false);
+        };
+        const ampAt = i => {
+            const cl = words[clauseOf[i]] || words[0]; let a = 1;
+            for (let j = Math.max(cl.i0, i - 2); j < i; j++) { const w = P[j][0] || ''; if (AMP_UP.test(w)) a = 1.18; else if (AMP_DN.test(w)) a = 0.72; }
+            if (/!$/.test(ws[i]) || (i + 1 < n && /!$/.test(ws[i + 1]))) a *= 1.06;
+            return a;
+        };
+
+        // 4) ironie : une phrase positive en apparence mais accompagnée d'un marqueur d'ironie et d'un mot négatif / de points de suspension
+        const sentWords = {}; ws.forEach((w, i) => { const s = (words[clauseOf[i]] || words[0]).sent; (sentWords[s] = sentWords[s] || []).push(i); });
+        const ironySent = new Set();
+        Object.keys(sentWords).forEach(s => {
+            const idx = sentWords[s], txt = idx.map(i => F[i]).join(' ');
+            const negHit = idx.some(i => typeof LEX !== 'undefined' && LEX.neg.some(st => st.length >= 4 && F[i].startsWith(st) && !negAtWord(i)));
+            const dots = /(\.\.\.|…)$/.test(ws[idx[idx.length - 1]] || '');
+            if (IRONY_MARK.test(txt) && (negHit || dots)) ironySent.add(+s);
+            else if (/\b(?:super|genial|parfait|magnifique)\b/.test(txt) && /\b(?:encore|une fois de plus|comme d habitude)\b/.test(txt) && negHit) ironySent.add(+s);
+        });
+        const ironic = i => ironySent.has((words[clauseOf[i]] || words[0]).sent);
+
+        // 5) sujet : une action du corps exige un sujet capable de la faire
+        const inanimAt = i => { const cl = words[clauseOf[i]] || words[0]; for (let j = Math.max(cl.i0, i - 5); j < i; j++) { const w = P[j][P[j].length - 1] || ''; if (INANIM.test(w) || INANIM.test(w.replace(/s$/, ''))) { const prevPron = j > cl.i0 && /^(?:il|elle|on|je|tu|nous|vous|ils|elles)$/.test(P[j - 1].join('')) ; if (!prevPron) return true; } } return false; };
+        const okBody = (i, name) => {
+            if (negAtWord(i) || hypAtWord(i) || inanimAt(i)) return false;
+            const d = idiomAt(i); if (d) return d.act === name;     // un idiome décide seul de l'action jouée (ex. « pleurer de rire » = rire)
+            return true;
+        };
+        const okGesture = (i, name) => {
+            if (BODY.includes(name)) return okBody(i, name);
+            if (negAtWord(i) && !NEG_KEEP.has(name)) return false;
+            const d = idiomAt(i); if (d && (d.kind === name || (d.kind === 'fall' && name === 'down'))) return false;
+            return true;
+        };
+        const emo = (i, k) => {
+            // renvoie l'émotion réellement à jouer pour ce mot, ou null
+            let e = k;
+            const d = idiomAt(i); if (d && d.kind !== 'none' && d.emo && d.emo !== k) return null;     // l'idiome a déjà dit ce qu'il fallait jouer
+            if (negAtWord(i)) { const o = ({ joy: 'sad', sad: 'joy', angry: null, fear: 'joy', surprise: null, think: null, proud: 'sad', love: 'sad', doubt: 'proud', excited: null, disgust: null, shy: null, tired: null, smug: null })[k]; return o || null; }
+            if (ironic(i) && (k === 'joy' || k === 'proud' || k === 'excited' || k === 'love')) e = 'smug';
+            return e;
+        };
+        const idiomEmos = idioms.filter(d => d.emo).map(d => ({ emo: d.emo, i: d.i0, kind: d.kind }));
+        const idiomActs = idioms.filter(d => d.act).map(d => ({ name: d.act, i: d.i0 }));
+        const subject = (() => { const txt = F.join(' '); if (/\b(?:je|j ai|mon|ma|mes|moi)\b/.test(txt)) return 'narrateur'; if (/\b(?:tu|toi|ton|ta|tes|vous|votre)\b/.test(txt)) return 'public'; if (/\b(?:il|elle|ils|elles|lui)\b/.test(txt)) return 'personnage'; return 'général'; })();
+        const notes = [];
+        if (idioms.length) notes.push(idioms.length + ' expression' + (idioms.length > 1 ? 's' : '') + ' imagée' + (idioms.length > 1 ? 's' : ''));
+        if (ironySent.size) notes.push('ironie');
+        if (ws.some((_, i) => negAtWord(i) && P[i].some(p => /^(?:triste|content|heureu\w*|peur|fier|joie|colere)/.test(p)))) notes.push('négation comprise');
+        if (words.length > 1 && words.some(cl => CONTRAST.has(P[cl.i0][0] || '') && cl.i0 > 0)) notes.push('contraste');
+        return { clauses: words, notes, emo, neg: negAtWord, hyp: hypAtWord, amp: ampAt, ironic, okGesture, okBody, okProp: (i, name) => { if (negAtWord(i)) return false; if (name === 'book' && P[i][0] === 'cours' && P[i - 1] && /^(?:je|tu|il|elle|on|nous|vous|ils|elles|jai)$/.test(P[i - 1].join(''))) return false; if (name === 'book' && P[i][0] === 'cours' && P[i + 1] && /^(?:vers|apres|vite|derriere|jusqu\w*)$/.test(P[i + 1][0] || '')) return false; return true; }, idiomEmos, idiomActs, idiomAt, subject, open: false };
+    }
+
+    function read(scene, c) {
+        try {
+            const key = (scene.narration || '') + '|' + (c && c.ws ? c.ws.length : 0);
+            const hit = cache.get(scene);
+            if (hit && hit.key === key) return hit.m;
+            const m = analyse(scene, c);
+            cache.set(scene, { key, m });
+            return m;
+        } catch (e) { warnOnce('StoryMind.read', e); return OPEN; }
+    }
+
+    // Une émotion positive et une négative fortes en même temps = contradiction : la plus forte gagne
+    function deconflict(target, EMOS) {
+        try {
+            const mp = Math.max.apply(null, POS_EMO.map(k => target[k] || 0)), mn = Math.max.apply(null, NEG_EMO.map(k => target[k] || 0));
+            if (mp > 0.5 && mn > 0.5) { const drop = mp >= mn ? NEG_EMO : POS_EMO; drop.forEach(k => { target[k] = (target[k] || 0) * 0.3; }); return true; }
+        } catch (_) {}
+        return false;
+    }
+
+    const warned = new Set();
+    function warnOnce(tag, e) { if (warned.has(tag)) return; warned.add(tag); console.warn('[StoryMind] ' + tag, e); }
+
+    // Corrige le plan de jeu d'une scène. Renvoie la liste des corrections (texte court).
+    function repairPlan(P, out, scene, c, dur, M, EMOS) {
+        const fixes = [];
+        try {
+            // 1) gestes invalides (temps absurdes, NaN) ou hors de la scène
+            for (let q = out.length - 1; q >= 0; q--) {
+                const g = out[q];
+                if (!isFinite(g.t0) || !isFinite(g.t1) || g.t1 <= g.t0 || g.t0 >= dur - 0.15) { out.splice(q, 1); fixes.push('geste invalide retiré'); continue; }
+                if (g.t1 > dur + 0.2) g.t1 = dur;
+            }
+            // 2) émotion dominante à un instant donné
+            const domAt = t => {
+                let tg = null; (P.emotionEvents || []).forEach(ev => { if (ev.t <= t) tg = ev.target; });
+                if (!tg) tg = P.turn ? (t >= P.turn.t ? P.turn.to : P.turn.from) : P.base;
+                let best = null, bv = 0; EMOS.forEach(k => { if ((tg[k] || 0) > bv) { bv = tg[k] || 0; best = k; } });
+                return { emo: best, v: bv };
+            };
+            // 3) gestes de joie pendant une émotion triste, et inversement : incohérent, on le retire
+            const HAPPY_G = new Set(['smile', 'thumbs', 'clap', 'wink', 'dance', 'laugh', 'jump']), SAD_G = new Set(['headhands', 'facepalm', 'cry']);
+            for (let q = out.length - 1; q >= 0; q--) {
+                const g = out[q]; if (g.force) continue;
+                const d = domAt(g.t0 + 0.2);
+                if (HAPPY_G.has(g.name) && NEG_EMO.includes(d.emo) && d.v > 0.6) { out.splice(q, 1); fixes.push('geste joyeux retiré pendant une émotion triste'); }
+                else if (SAD_G.has(g.name) && POS_EMO.includes(d.emo) && d.v > 0.7 && d.emo !== 'smug') { out.splice(q, 1); fixes.push('geste triste retiré pendant une émotion joyeuse'); }
+            }
+            // 4) scène parlée assez longue mais sans aucun geste : on ajoute un geste calme adapté au ton
+            const words = c.ws.length;
+            if (!out.length && words >= 9 && dur >= 3.2) {
+                const q = /\?\s*$/.test(scene.narration || '') || /\?/.test(scene.narration || '');
+                const t0 = Math.min(dur - 0.9, (c.starts[Math.min(words - 1, Math.floor(words / 3))] || dur * 0.3) - 0.1);
+                const name = q ? 'chin' : (scene.mood === 'negative' ? 'shrug' : 'present');
+                out.push({ name, n: 0, t0: Math.max(0.3, t0), t1: Math.min(dur - 0.3, Math.max(0.3, t0) + 1.5), pri: 3 });
+                fixes.push('scène sans jeu : geste ajouté');
+            }
+        } catch (e) { warnOnce('repairPlan', e); }
+        return fixes;
+    }
+
+    // Répare un projet entier (anciens enregistrements, données incohérentes). Renvoie le nombre de corrections.
+    function repairProject(project) {
+        const report = [];
+        try {
+            if (!project || !Array.isArray(project.scenes)) return report;
+            const ids = new Set();
+            const BGS = (typeof ASSETS !== 'undefined' && ASSETS.backgrounds) ? ASSETS.backgrounds.map(b => b.id) : [];
+            const ROLES_OK = typeof ROLES !== 'undefined' ? ROLES : [], MOODS_OK = typeof MOODS !== 'undefined' ? MOODS : [];
+            project.scenes.forEach((s, i) => {
+                if (!s || typeof s !== 'object') return;
+                if (typeof s.narration !== 'string') { s.narration = String(s.narration == null ? '' : s.narration); report.push('scène ' + (i + 1) + ' : narration réparée'); }
+                const n = s.narration.trim().split(/\s+/).filter(Boolean).length;
+                if (!isFinite(+s.duration) || +s.duration <= 0) { s.duration = Math.max(3, Math.round((n / 2.4 + 0.6) * 2) / 2); report.push('scène ' + (i + 1) + ' : durée réparée'); }
+                else if (n > 0 && +s.duration < n / 3.4 + 0.4) { s.duration = Math.min(30, Math.round((n / 3.0 + 0.6) * 2) / 2); report.push('scène ' + (i + 1) + ' : durée trop courte allongée'); }
+                if (!s.id || ids.has(s.id)) { s.id = 'scene-' + Date.now() + '-' + i + '-' + Math.floor(Math.random() * 1e6); report.push('scène ' + (i + 1) + ' : identifiant dupliqué corrigé'); }
+                ids.add(s.id);
+                if (BGS.length && !BGS.includes(s.background)) { s.background = BGS[i % BGS.length]; report.push('scène ' + (i + 1) + ' : arrière-plan réparé'); }
+                if (ROLES_OK.length && s.role && !ROLES_OK.includes(s.role)) { s.role = i === 0 ? 'hook' : 'context'; report.push('scène ' + (i + 1) + ' : rôle réparé'); }
+                if (MOODS_OK.length && s.mood && !MOODS_OK.includes(s.mood)) { s.mood = 'neutral'; report.push('scène ' + (i + 1) + ' : humeur réparée'); }
+                if (!Array.isArray(s.elements)) { s.elements = []; report.push('scène ' + (i + 1) + ' : éléments réparés'); }
+                s.elements = s.elements.filter(e => e && typeof e === 'object');
+                s.elements.forEach(e => {
+                    if (!e.position || !isFinite(e.position.x) || !isFinite(e.position.y)) { e.position = { x: 0.5, y: 0.5 }; report.push('scène ' + (i + 1) + ' : position réparée'); }
+                    if (!e.size || !isFinite(e.size.width) || !isFinite(e.size.height)) { e.size = { width: 0.3, height: 0.3 }; report.push('scène ' + (i + 1) + ' : taille réparée'); }
+                    e.position.x = Math.max(-0.2, Math.min(1.2, e.position.x)); e.position.y = Math.max(-0.2, Math.min(1.2, e.position.y));
+                    if (e.zIndex == null || !isFinite(e.zIndex)) e.zIndex = 5;
+                    if (e.visible == null) e.visible = true;
+                    if (e.opacity == null || !isFinite(e.opacity)) e.opacity = 1;
+                    if (e.type === 'text' && typeof e.content === 'string' && e.content.length > 40) { e.content = e.content.slice(0, 40); report.push('scène ' + (i + 1) + ' : texte trop long coupé'); }
+                });
+                if (typeof s.keyText === 'string' && s.keyText.length > 22) s.keyText = s.keyText.slice(0, 22);
+                // partition de jeu : événements hors des mots, valeurs inconnues, actions du corps contredites par le texte
+                if (s.acting && typeof s.acting === 'object') {
+                    const nW = Math.max(1, splitWords(s.narration).length), L = ActingBrain.LISTS;
+                    if (!Array.isArray(s.acting.events)) { delete s.acting; report.push('scène ' + (i + 1) + ' : jeu invalide supprimé'); }
+                    else {
+                        const before = s.acting.events.length;
+                        s.acting.events = s.acting.events.filter(ev => ev && typeof ev === 'object' && (!ev.emo || L.emos.includes(ev.emo)) && (!ev.gesture || ev.gesture === 'count' || ev.gesture === 'hold' || L.gestures.includes(ev.gesture)) && (!ev.prop || L.props.includes(ev.prop)));
+                        s.acting.events.forEach(ev => { ev.w = Math.max(0, Math.min(nW - 1, Math.round(+ev.w || 0))); });
+                        if (s.acting.base && !L.emos.includes(s.acting.base)) s.acting.base = 'joy';
+                        if (s.acting.events.length !== before) report.push('scène ' + (i + 1) + ' : événements de jeu invalides retirés');
+                        if (s.acting.src === 'ia' && !s.acting.events.length) { delete s.acting; report.push('scène ' + (i + 1) + ' : jeu vide, retour à l’automatique'); }
+                    }
+                }
+            });
+            // fil de l'histoire : première scène = accroche, dernière = résultat ou appel à l'action
+            const L = project.scenes;
+            if (L.length > 2) {
+                if (L[0].role && L[0].role !== 'hook') { L[0].role = 'hook'; report.push('accroche rétablie sur la première scène'); }
+                if (L[L.length - 1].role && !['cta', 'result'].includes(L[L.length - 1].role)) { L[L.length - 1].role = 'result'; report.push('conclusion rétablie sur la dernière scène'); }
+            }
+            L.forEach((s, i) => { s.index = i; });
+        } catch (e) { warnOnce('repairProject', e); }
+        return report;
+    }
+
+    return { read, deconflict, repairPlan, repairProject, warnOnce, POS_EMO, NEG_EMO };
 })();
 
 // ===== CERVEAU DU JEU D'ACTEUR : comprend le texte et fait jouer le personnage =====
@@ -777,13 +1054,19 @@ const ActingBrain = (() => {
         fall:     { pri: 9, dur: 2.8, act: true, w: () => false },
         laugh:    { pri: 7, dur: 2.3, act: true, neg: true, w: compile('rigol hilar =mdr =lol haha hihi =rire =rit =rient =riait =riaient =rions eclatderire fourire marrant =drole blague') },
         jump:     { pri: 8, dur: 2.1, act: true, w: () => false },
-        dance:    { pri: 7, dur: 2.8, act: true, w: () => false },
+        dance:    { pri: 7, dur: 4.2, act: true, w: () => false },
         cry:      { pri: 8, dur: 2.4, act: true, w: () => false },
         shake:    { pri: 8, dur: 2.1, act: true, w: () => false },
         smile:    { pri: 6, dur: 1.8, w: compile('sourir sourire souriant rayonn heureux content') },
         wink:     { pri: 6, dur: 1.2, w: compile('clin doeil complicite complice') },
         turn:     { pri: 8, dur: 2.2, act: true, w: () => false },
         sleep:    { pri: 6, dur: 3.0, act: true, w: () => false },
+        walk:     { pri: 6, dur: 3.2, act: true, w: () => false },
+        crouch:   { pri: 8, dur: 2.6, act: true, w: () => false },
+        kneel:    { pri: 8, dur: 2.8, act: true, w: () => false },
+        bow:      { pri: 7, dur: 2.2, act: true, w: () => false },
+        kick:     { pri: 8, dur: 1.9, act: true, w: () => false },
+        stretch:  { pri: 6, dur: 2.4, act: true, w: () => false },
         draw:     { pri: 7, dur: 2.4, w: compile('puise puiser eau water seau pompe') },
         plant:    { pri: 8, dur: 2.0, w: () => false },
         water:    { pri: 8, dur: 2.2, w: () => false },
@@ -812,11 +1095,29 @@ const ActingBrain = (() => {
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:pleure|pleurons|pleurez|pleurent|pleurait|pleurer|fond en larmes|eclate en sanglots)\b|\b(?:en larmes|en sanglots)\b/, gesture: 'cry', emo: 'sad' },
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:tremble|tremblons|tremblez|tremblent|tremblait|trembler|frissonne|frissonnent|grelotte|grelotter)\b/, gesture: 'shake', emo: 'fear' },
         { re: /\b(?:je|il|elle|on|tu|nous|vous|ils|elles) (?:dort|dormons|dormez|dorment|dormait|dormir|s.endort|sommeille|somnole)\b|\b(?:va dormir|au lit|bonne nuit)\b/, gesture: 'sleep', emo: 'joy' },
+        { re: /\b(?:tomb\w*|ecroul\w*|saffal\w*) (?:par terre|au sol|sur le sol|a terre|sur le dos|sur le ventre)\b/, gesture: 'fall', emo: 'surprise' },
         { re: /\b(?:sourit|sourire|souriant|grand sourire|sourire profond|rayonn\w*|eclate de joie)\b/, gesture: 'smile', emo: 'joy' },
         { re: /\b(?:clin d.?oeil|clin d.?œil|complice|complicite)\b/, gesture: 'wink', emo: 'love' },
         { re: /\b(?:se retourne|retourne-toi|retourne toi|regarde derriere|regarde derrière|fait demi-tour|demi-tour)\b/, gesture: 'turn', emo: 'surprise' },
         { re: /peut.?etre|qui sait|je ne sais pas|sais pas|on ne sait/, gesture: 'shrug', emo: 'doubt' },
         { re: /il etait une fois|il y a longtemps|autrefois/, gesture: 'present', emo: 'think', look: [0.8, -0.7] },
+        { re: /\b(?:montr\w*|pointe\w*|designe\w*|indiqu\w*)\b/, gesture: 'side' },
+        { re: /\b(?:tend\w*|donne\w*|donn\w*|offre\w*|remet\w*|apporte\w*|propose\w*)\b/, gesture: 'present' },
+        { re: /\b(?:ouvre\w*|ouvr\w*|accueill\w*|embrass\w*|bras ouverts)\b/, gesture: 'wide' },
+        { re: /\b(?:salue\w*|saluer|salua\w*|fait signe)\b/, gesture: 'wave' },
+        { re: /\b(?:appelle\w*|appel\w*|invite\w*|accourt\w*)\b/, gesture: 'beckon' },
+        { re: /\b(?:refuse\w*|repousse\w*|interdit\w*|empeche\w*)\b/, gesture: 'stop' },
+        { re: /\b(?:se prend la tete|tete entre les mains|se tient la tete)\b/, gesture: 'headhands', emo: 'fear' },
+        { re: /\b(?:je|tu|il|elle|on|nous|vous|ils|elles) (?:\w+ ){0,1}(?:march\w*|promen\w*|avanc\w*|arpent\w*)\b|\ba pied\b|\ben marchant\b/, gesture: 'walk' },
+        { re: /\b(?:saccroup\w*|accroupi\w*|se baiss\w*|je me baisse|ramass\w*|sabaiss\w*|se courb\w*)\b/, gesture: 'crouch' },
+        { re: /\b(?:sagenouill\w*|agenouill\w*|a genoux|genoux a terre|je prie|il prie|elle prie|prient|priere)\b/, gesture: 'kneel' },
+        { re: /\b(?:sincline\w*|reverence|se penche\w*|salue\w* (?:bas|respectueusement)|remercie\w* (?:humblement|chaleureusement))\b/, gesture: 'bow' },
+        { re: /\b(?:coup de pied|donne\w* un coup de pied|shoot\w*|tire\w* dans le ballon|frappe\w* le ballon|botte\w*)\b/, gesture: 'kick', emo: 'excited' },
+        { re: /\b(?:setire\w*|etirement\w*|baille\w*|se reveille\w*|je me reveille|reveil)\b/, gesture: 'stretch', emo: 'tired' },
+        { re: /\b(?:soudain|tout a coup|brusquement|d.un seul coup|subitement)\b/, gesture: 'up', emo: 'surprise' },
+        { re: /\b(?:heureusement|enfin|finalement|au final)\b/, gesture: 'present', emo: 'joy' },
+        { re: /\b(?:malheureusement|helas|helas)\b/, gesture: 'down', emo: 'sad' },
+        { re: /\b(?:mais|pourtant|cependant|toutefois)\b/, gesture: 'shrug' },
         { re: /tout a coup|soudain|d.un seul coup|brusquement/, emo: 'surprise' },
         { re: /\b(?:fatigu\w*|epuis\w*|creve\w*|j.en peux plus|a bout de force\w*|baille\w*|bailler)\b/, emo: 'tired' },
         { re: /\b(?:sourire en coin|sourit en coin|petit sourire|air malin|avec malice|d.un air complice)\b/, emo: 'smug' },
@@ -848,6 +1149,7 @@ const ActingBrain = (() => {
     const NEG = compile('=pas =jamais =sans =aucun =aucune =nullement =ni =non');
     const NEG_OPP = { joy: 'sad', sad: 'joy', angry: null, fear: 'joy', surprise: null, think: null, proud: 'sad', love: 'sad', doubt: 'proud', excited: null, disgust: null, shy: null, tired: null, smug: null };
     const negAt = (c, i) => {
+        try { if (c.sc) { const M0 = StoryMind.read(c.sc, c); if (!M0.open) return M0.neg(i); } } catch (_) {}
         for (let k = Math.max(0, i - 3); k < i; k++) {
             const ps = parts(c.ws[k]);
             if (hasAny(ps, NEG)) return true;
@@ -946,6 +1248,7 @@ const ActingBrain = (() => {
         const hit = cache.get(scene);
         if (hit && hit.key === key) return hit.p;
         const c = LipSync.info(scene), dur = scene.duration || 5;
+        const M = StoryMind.read(scene, c);
         const A = scene.acting && Array.isArray(scene.acting.events) ? scene.acting : null;
         const P = { start: {}, base: baseOf(scene), turn: null, emotionEvents: [], spikes: [], gestures: [], beats: [], looks: [], heads: [], ambient: null };
         EMOS.forEach(k => P.start[k] = 0);
@@ -968,19 +1271,21 @@ const ActingBrain = (() => {
             // émotions ponctuelles sur le mot
             EMOS.forEach(k => {
                 const hit = hasAny(ps, EMO[k]) && (k !== 'joy' || ps.some(p => p.length > 4)); if (!hit) return;
-                let emo = k;
-                if (negAt(c, i)) { emo = NEG_OPP[k]; if (!emo) return; }
-                P.emotionEvents.push({ emo, t, s: 0.85 });
-                P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[emo] || null, stateful: true });
+                let emo = M.open ? k : M.emo(i, k);                           // StoryMind : négation, ironie, idiomes
+                if (M.open && negAt(c, i)) { emo = NEG_OPP[k]; }
+                if (!emo) return;
+                const sv = clamp(0.85 * (M.amp(i) || 1) * (M.hyp(i) ? 0.6 : 1), 0.35, 1);
+                P.emotionEvents.push({ emo, t, s: sv });
+                P.spikes.push({ emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: sv, sym: SPIKE_SYM[emo] || null, stateful: true });
             });
             // accessoires
-            Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w)) cand.push({ name: 'hold', prop: name, wi: i, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
+            Object.keys(PROPS).forEach(name => { if (hasAny(ps, PROPS[name].w) && M.okProp(i, PROPS[name].obj === 'book' ? 'book' : name)) cand.push({ name: 'hold', prop: name, wi: i, n: 0, t0: t - 0.2, t1: t + 2.0, pri: 5 }); });
             if (hasAny(ps, IDEA)) { P.emotionEvents.push({ emo: 'excited', t, s: 0.7 }); P.spikes.push({ emo: 'excited', t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.7, sym: 'bulb', stateful: true }); }
             // gestes
             let n = 0; ps.forEach(p => { if (COUNT_WORDS[p]) n = COUNT_WORDS[p]; if (/^[1-5]$/.test(p)) n = +p; });
             if (n && i < c.ws.length - 1) cand.push({ name: 'count', n, t0: t - 0.2, t1: t + 1.2, pri: 6 });
             Object.keys(GES).forEach(name => {
-                if (hasAny(ps, GES[name].w)) cand.push({ name, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[name].dur, pri: GES[name].pri });
+                if (hasAny(ps, GES[name].w) && M.okGesture(i, name)) cand.push({ name, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[name].dur, pri: GES[name].pri });
             });
             // tête et regard
             if (hasAny(ps, NOD)) P.heads.push({ kind: 'nod', t0: t, t1: t + 0.9 });
@@ -993,6 +1298,21 @@ const ActingBrain = (() => {
             if (ps.some(p => p.length >= 7) || /[,;:!?]$/.test(w)) P.beats.push({ t, s: /[!?]$/.test(w) ? 0.95 : 0.7 });
         });
         if (!A && P.turn) EMOS.forEach(k => { if (P.turn.to[k] > 0) P.emotionEvents.push({ emo: k, t: P.turn.t, s: P.turn.to[k] }); });
+        // StoryMind : émotion des expressions imagées + suivi de l'émotion proposition par proposition (l'humeur change quand le sens change)
+        if (!A && !M.open) {
+            M.idiomEmos.forEach(d => { const t = c.starts[d.i] || 0; if (!P.emotionEvents.some(ev => Math.abs(ev.t - t) < 0.5)) { P.emotionEvents.push({ emo: d.emo, t, s: 0.8 }); P.spikes.push({ emo: d.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.8, sym: SPIKE_SYM[d.emo] || null, stateful: true }); } });
+            M.idiomActs.forEach(d => { const t = c.starts[d.i] || 0; if (GES[d.name]) cand.push({ name: d.name, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[d.name].dur, pri: GES[d.name].pri + 1 }); });
+            let prevEmo = null; EMOS.forEach(k => { if ((P.base[k] || 0) > (prevEmo ? P.base[prevEmo] : 0.45)) prevEmo = k; });
+            M.clauses.forEach((cl, ci) => {
+                const sc = {}; let any = false;
+                for (let i = cl.i0; i <= cl.i1; i++) { const ps = parts(c.ws[i]); EMOS.forEach(k => { if (hasAny(ps, EMO[k]) && (k !== 'joy' || ps.some(q => q.length > 4))) { const e = M.emo(i, k); if (e) { sc[e] = (sc[e] || 0) + (M.amp(i) || 1); any = true; } } }); }
+                if (!any) return;
+                let best = null, bv = 0; Object.keys(sc).forEach(k => { if (sc[k] > bv) { bv = sc[k]; best = k; } });
+                const t = c.starts[cl.i0] || 0;
+                if (best && bv >= 0.9 && ci > 0 && best !== prevEmo && t > 0.4 && !P.emotionEvents.some(ev => Math.abs(ev.t - t) < 0.6)) P.emotionEvents.push({ emo: best, t, s: clamp(0.62 + 0.15 * bv, 0.6, 0.9) });
+                if (best && bv >= 0.9) prevEmo = best;
+            });
+        }
         // objets affichés à l'écran : le personnage les regarde et les montre quand ils apparaissent
         const objs = (scene.elements || []).filter(e => e.type === 'object' && e.visible !== false);
         objs.forEach(o => {
@@ -1017,9 +1337,11 @@ const ActingBrain = (() => {
             const wordAt = idx => { let k = 0; for (let i = 0; i < offs.length; i++) if (offs[i] <= idx) k = i; return k; };
             PHRASES.forEach(ph => {
                 const m = ph.re.exec(textN); if (!m) return;
-                const i = wordAt(m.index), t = c.starts[i] || 0;
-                if (ph.gesture && ph.gesture !== 'stop' && negAt(c, i)) return;
-                if (ph.emo) { P.emotionEvents.push({ emo: ph.emo, t, s: 0.85 }); P.spikes.push({ emo: ph.emo, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: 0.85, sym: SPIKE_SYM[ph.emo] || null, stateful: true }); }
+                const i = wordAt(m.index), t = c.starts[i] || 0, i2 = wordAt(m.index + Math.max(0, m[0].length - 1));      // i2 : dernier mot de l'expression (le verbe), c'est lui que StoryMind interroge
+                if (ph.gesture && ph.gesture !== 'stop' && (M.open ? negAt(c, i) : !M.okGesture(i2, ph.gesture))) return;
+                let pe = ph.emo;
+                if (pe && !M.open) pe = M.emo(i2, pe);
+                if (pe) { const sv = clamp(0.85 * (M.hyp(i2) ? 0.6 : 1), 0.35, 1); P.emotionEvents.push({ emo: pe, t, s: sv }); P.spikes.push({ emo: pe, t0: t - 0.1, dur: EMOTION_HOLD_SECONDS, s: sv, sym: SPIKE_SYM[pe] || null, stateful: true }); }
                 if (ph.gesture) cand.push({ name: ph.gesture, n: 0, t0: t - 0.2, t1: t - 0.2 + GES[ph.gesture].dur, pri: GES[ph.gesture].pri + 1 });
                 if (ph.head) P.heads.push({ kind: ph.head, t0: t, t1: t + 0.9 });
                 if (ph.look) P.looks.push({ t0: t - 0.1, t1: t + 1.5, x: ph.look[0], y: ph.look[1] });
@@ -1058,6 +1380,7 @@ const ActingBrain = (() => {
                 if (!last || Math.abs(last.t - ev.t) > 0.001) { const target = {}; EMOS.forEach(k => target[k] = 0); last = { t: ev.t, target }; grouped.push(last); }
                 last.target[ev.emo] = Math.max(last.target[ev.emo], ev.s);
             });
+            grouped.forEach(cue => { if (!A && StoryMind.deconflict(cue.target, EMOS)) (P.repairs = P.repairs || []).push('émotions contradictoires départagées'); });
             P.emotionEvents = grouped.filter((cue, i) => i === 0 || EMOS.some(k => Math.abs(cue.target[k] - grouped[i - 1].target[k]) > 0.01));
         }
         // actions du corps entier (courir / tomber / rire) : elles doivent tenir dans la scène et ne sont jamais coupées en plein mouvement
@@ -1093,7 +1416,7 @@ const ActingBrain = (() => {
             // un objet nommé (téléphone, ordinateur, radio…) l'emporte sur un simple geste de pronom (moi, toi, mon) qui vient de commencer
             if (g.name === 'hold' && prev && !prev.act && prev.pri <= 2 && g.t0 - prev.t0 < 1.9) { out.pop(); simpleGestureCount = Math.max(0, simpleGestureCount - 1); prev = out[out.length - 1]; lastSimpleGestureAt = prev && !prev.act ? prev.t0 : -Infinity; }
             // Présentation sobre : éviter l’enchaînement de poses à chaque mot-clé.
-            if (!g.act && (g.t0 - lastSimpleGestureAt < 1.9 || simpleGestureCount >= 2)) return;
+            if (!g.act && (g.t0 - lastSimpleGestureAt < 1.3 || simpleGestureCount >= Math.max(2, Math.ceil(dur / 3.2)))) return;
             // une action (courir, tomber, rire) prend la place d'un simple geste en cours
             if (prev && g.act && !prev.act && g.t0 < prev.t1 - 0.15) { if (g.t0 - prev.t0 <= 0.45) out.pop(); else prev.t1 = Math.max(prev.t0 + 0.65, g.t0 - 0.32); prev = out[out.length - 1]; }
             if (prev && prev.act && g.t0 < prev.t1 && !g.force) {
@@ -1102,7 +1425,7 @@ const ActingBrain = (() => {
                 else return;
             }
             if (!g.force && prevLast && g.name === prevLast && g.t0 < 2.2 && g.name !== 'count' && g.name !== 'hold') return;
-            if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 4.0 && g.name !== 'count') return;
+            if (!g.force && lastByType[g.name] !== undefined && g.t0 - lastByType[g.name] < 2.6 && g.name !== 'count') return;
             if (prev && g.t0 < prev.t1 - 0.15) {
                 // un geste voulu (écrit par le réalisateur ou réglé à la main) coupe le précédent ; sinon le plus important gagne
                 if (g.t0 - prev.t0 < 0.8) return;
@@ -1112,10 +1435,59 @@ const ActingBrain = (() => {
             out.push(g); lastByType[g.name] = g.t0;
             if (!g.act) { lastSimpleGestureAt = g.t0; simpleGestureCount++; }
         });
+        // CERVEAU : couverture par phrase. Chaque phrase parlée assez longue qui n'a aucun geste en reçoit un,
+        // choisi selon sa fonction (question, exclamation, énumération, adresse au public, « je »), l'émotion en cours,
+        // posé sur le mot le plus fort de la phrase, jamais le même geste deux fois de suite.
+        if (!A || A.src === 'ia') {
+            try {
+                const nW = c.ws.length, nz = w => parts(w).join('');
+                const sents = []; let s0 = 0;
+                c.ws.forEach((w, i) => { if (/[.!?…]["»”)]*$/.test(w) || i === nW - 1) { sents.push([s0, i]); s0 = i + 1; } });
+                const BYEMO = { joy: ['present', 'wide', 'up'], excited: ['up', 'wide', 'present'], proud: ['hips', 'present'], love: ['heart', 'present'], surprise: ['up', 'wide'], think: ['chin', 'present'], doubt: ['shrug', 'chin'], fear: ['stop', 'side'], angry: ['stop', 'present'], sad: ['self', 'down'], tired: ['self'], disgust: ['cross'], shy: ['self'], smug: ['present', 'side'] };
+                const emoAt = t => {
+                    let best = null;
+                    P.emotionEvents.forEach(ev => { if (ev.t <= t + 0.05 && (!best || ev.t >= best.t)) best = ev; });
+                    if (best) return best.emo;
+                    const bs = (P.turn && t >= P.turn.t) ? P.turn.to : P.base; let b = null, bv = 0.25;
+                    EMOS.forEach(k => { const v = (bs && bs[k]) || 0; if (v > bv) { bv = v; b = k; } });
+                    return b;
+                };
+                sents.forEach(([a, b]) => {
+                    const st = c.starts[a] || 0, en = c.starts[b + 1] !== undefined ? c.starts[b + 1] : dur;
+                    if (en - st < 1.7 || st > dur - 1.2) return;
+                    if (out.some(o => o.t0 >= st - 0.3 && o.t0 <= en)) return;             // la phrase a déjà son geste
+                    const ws2 = c.ws.slice(a, b + 1), txt = ws2.map(nz).join(' '), last = ws2[ws2.length - 1] || '';
+                    // mot le plus fort (le plus long, dans les premiers 60 % de la phrase) : le geste tombe dessus
+                    let k = a, bl = 0; for (let i = a; i <= b; i++) { const L = nz(c.ws[i]).length; if (L > bl && i - a <= Math.ceil((b - a) * 0.6)) { bl = L; k = i; } }
+                    const t0 = Math.max(st + 0.1, (c.starts[k] || st) - 0.2); if (t0 > dur - 0.9) return;
+                    const emo = emoAt(t0), commas = (ws2.join(' ').match(/,/g) || []).length;
+                    let opts = [];
+                    if (/\?["»”)]*$/.test(last)) opts = ['chin', 'present', 'viewer'];
+                    else if (/!["»”)]*$/.test(last)) opts = (BYEMO[emo] || ['wide', 'up']).concat(['present']);
+                    else {
+                        opts = (BYEMO[emo] || []).slice();
+                        if (/\b(?:tu|toi|vous|ton|ta|tes|votre|vos)\b/.test(txt)) opts.unshift('viewer');
+                        else if (/\b(?:je|jai|moi|mon|ma|mes|nous|notre|nos)\b/.test(txt)) opts.push('self');
+                        if (commas >= 2) opts.unshift('present');
+                        opts.push('present', 'side');
+                    }
+                    const prev = out.filter(o => o.t0 < t0).pop(), prevName = prev && prev.name;
+                    const name = opts.find(n => GES[n] && !GES[n].act && n !== prevName && n !== prevLast && (M.open || M.okGesture(k, n)));
+                    if (!name) return;
+                    const t1 = Math.min(dur - 0.15, Math.min(t0 + GES[name].dur, Math.max(t0 + 0.9, en + 0.1)));
+                    if (t1 - t0 < 0.8) return;
+                    if (out.some(o => t0 < o.t1 + 0.25 && t1 > o.t0 - 0.25)) return;        // pas de chevauchement
+                    out.push({ name, n: 0, t0, t1, pri: 2, auto: true }); lastByType[name] = t0;
+                    out.sort((x, y) => x.t0 - y.t0);
+                });
+            } catch (_) {}
+        }
         // scène d'appel à l'action ou d'accroche sans geste : on en ajoute un
         if (!out.length && scene.role === 'cta') out.push({ name: 'beckon', n: 0, t0: dur * 0.35, t1: Math.min(dur - 0.3, dur * 0.35 + 1.5), pri: 5 });
         if (!out.length && scene.role === 'hook') out.push({ name: 'present', n: 0, t0: Math.min(1.0, dur * 0.3), t1: Math.min(dur - 0.3, 2.6), pri: 3 });
+        if (!A) { const fx = StoryMind.repairPlan(P, out, scene, c, dur, M, EMOS); if (fx.length) P.repairs = (P.repairs || []).concat(fx); }
         P.gestures = out;
+        P.insight = { notes: M.notes || [], repairs: (P.repairs || []).filter((x, i, a) => a.indexOf(x) === i), subject: M.subject };
         // clignements au bon moment (pause entre deux phrases, changement d'émotion) et regard qui s'échappe quand la phrase reste en suspens (« … »)
         P.blinks = [];
         c.ws.forEach((w, i) => {
@@ -1180,6 +1552,7 @@ const ActingBrain = (() => {
     function at(scene, t, pose) {
         const P = scene && scene.narration ? plan(scene) : EMPTY;
         const e = {}; EMOS.forEach(k => e[k] = 0);
+        let onset = 0;   // « choc » d'une nouvelle émotion : sert à écarquiller, froncer, étirer la tête
         const bl = smooth(t / 0.6);
         const bt = P.turn ? smooth((t - P.turn.t + 0.1) / 0.6) : 1;
         EMOS.forEach(k => { const bk = P.turn ? (P.turn.from[k] || 0) * (1 - bt) + (P.turn.to[k] || 0) * bt : (P.base[k] || 0); e[k] = (P.start[k] || 0) * (1 - bl) + bk * bl; });
@@ -1194,6 +1567,13 @@ const ActingBrain = (() => {
                 }
                 const q = smooth((t - cue.t) / EMOTION_BLEND_SECONDS);
                 EMOS.forEach(k => { e[k] = (from[k] || 0) * (1 - q) + (cue.target[k] || 0) * q; });
+                // principe d'animation : l'émotion DÉPASSE un peu sa cible puis se pose (anticipation + dépassement), au lieu d'un simple fondu
+                const xo = t - cue.t;
+                if (xo > 0.08 && xo < 1.15) {
+                    const ov = Math.sin(Math.PI * clamp((xo - 0.08) / 1.07, 0, 1)) * Math.exp(-(xo - 0.08) * 1.2); let dm = 0;
+                    EMOS.forEach(k => { const d = (cue.target[k] || 0) - (from[k] || 0); if (d > 0.12) { e[k] = Math.min(1, e[k] + d * 0.32 * ov); dm = Math.max(dm, d); } });
+                    if (xo < 0.42) onset = Math.max(onset, Math.sin(Math.PI * clamp(xo / 0.42, 0, 1)) * Math.min(1, dm * 1.6));
+                }
             }
         }
         let sym = null, symP = 0;
@@ -1203,9 +1583,9 @@ const ActingBrain = (() => {
             if (!sp.stateful) e[sp.emo] = Math.min(1, e[sp.emo] + sp.s * env);
             if (sp.sym && env > 0.05 && (!sym || sp.t0 >= symP)) { sym = sp.sym; symP = sp.t0; }
         });
-        let name = null, n = 0, w = 0, p = 0, gside = 1, prop = null, act = null;
+        let name = null, n = 0, w = 0, p = 0, gside = 1, prop = null, act = null, gdur = 0;
         for (const g of P.gestures) if (t >= g.t0 - 0.05 && t <= g.t1 + 0.05) {
-            name = g.name; n = g.n; gside = g.side || 1; prop = g.prop || null; if (GES[g.name] && GES[g.name].act) act = g.name;
+            name = g.name; n = g.n; gdur = g.t1 - g.t0; gside = g.side || 1; prop = g.prop || null; if (GES[g.name] && GES[g.name].act) act = g.name;
             w = smooth((t - g.t0) / 0.38) * smooth((g.t1 - t) / 0.48);   // pas de dépassement de cible ni de claquement au relâchement
             p = clamp((t - g.t0) / Math.max(0.1, g.t1 - g.t0), 0, 1);
             break;
@@ -1222,6 +1602,22 @@ const ActingBrain = (() => {
         else if (act === 'cry') { e.sad = Math.min(1, e.sad + 0.9 * w); e.joy *= 1 - w; e.excited *= 1 - w; }
         else if (act === 'shake') { e.fear = Math.min(1, e.fear + 0.8 * w); e.doubt = Math.min(1, e.doubt + 0.25 * w); }
         else if (act === 'sleep') { e.sad *= 1 - 0.5 * w; e.excited *= 1 - w; e.think = Math.min(1, e.think + 0.25 * w); }
+        else if (act === 'kick') { e.excited = Math.min(1, e.excited + 0.55 * w); }
+        else if (act === 'stretch') { e.tired = Math.min(1, e.tired + 0.35 * w); }
+        else if (act === 'kneel') { e.think = Math.min(1, e.think + 0.3 * w); }
+        // ---- ÉMOTIONS VIVANTES : expressions plus marquées, l'émotion « respire », micro-expressions, tremblements ----
+        let dom = 0; EMOS.forEach(k => { if (e[k] > dom) dom = e[k]; });
+        EMOS.forEach((k, ki) => {
+            const v = e[k]; if (v < 0.05) return;
+            const g = smooth((v - 0.08) / 0.32), gained = clamp(Math.pow(v, 0.8) * 1.13, 0, 1);       // les émotions moyennes se voient enfin sur le visage
+            const live = 1 + 0.055 * Math.sin(t * 1.35 + ki * 1.9) * Math.min(1, v * 2);               // l'intensité ne reste jamais figée
+            e[k] = clamp((v + (gained - v) * g) * live, 0, 1);
+        });
+        const mseed = strHash(scene && scene.id) + 31, MW = 2.2, mk = Math.floor(t / MW), mx = t - mk * MW;
+        const mOn = hash01(mseed + mk * 13 + 5) < 0.6 && mx < 0.5 && t > 0.6, mv = mOn ? Math.sin(Math.PI * mx / 0.5) : 0, mkind = hash01(mseed + mk * 17 + 9);
+        const microBrow = mv * (mkind < 0.45 ? 0.26 : mkind < 0.75 ? -0.14 : 0.08) * (1 - 0.6 * dom);
+        const microSmile = mv * (mkind >= 0.75 ? 0.2 : 0) * (1 - dom);
+        const tremor = (Math.max(0, e.fear - 0.45) * Math.sin(t * 41) * 0.75 + Math.max(0, e.angry - 0.7) * Math.sin(t * 53) * 0.3) * smooth((t - 0.3) / 0.4);
         // rythme de la parole : enveloppe « il parle » (0 dans les pauses), préparation + coup de main sur chaque accent, main de tête
         let talkAmt, stroke = 0, prep = 0, hand = 1;
         if (P.strokes) {
@@ -1271,7 +1667,7 @@ const ActingBrain = (() => {
         let zUp = 0, zDown = 0;
         (P.shots || []).forEach(sh => { if (t >= sh.t0 - 0.2 && t <= sh.t1 + 0.25) { const k = smooth((t - (sh.t0 - 0.18)) / 0.18) * smooth((sh.t1 + 0.22 - t) / 0.22), v = (sh.z - 1) * k; if (v > 0) zUp = Math.max(zUp, v); else zDown = Math.min(zDown, v); } });
         camZ += zUp + zDown;
-        return { e, act, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, eye, blink, breath, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, talkAmt, stroke, prep, hand, sway, ant, push, jolt, camZ, gside, prop };
+        return { e, act, gesture: name, n, gw: w, gp: p, ambient: amb, beat, look, eye, blink, breath, nod, shake, sym, symAge: sym ? clamp(t - symP, 0, 2) : 0, talkAmt, stroke, prep, hand, sway, ant, push, jolt: jolt + tremor, camZ, gside, prop, onset, microBrow, microSmile, gdur };
     }
     // partition actuelle de la scène sous forme d'événements (pour la frise éditable)
     function describe(scene) {
@@ -1289,7 +1685,32 @@ const ActingBrain = (() => {
         return { base, strength: +(P.base[base] || 0.5).toFixed(2), events: out, src: 'auto' };
     }
     const LISTS = { emos: EMOS, gestures: Object.keys(GES), props: Object.keys(PROPS) };
-    return { at, plan, describe, LISTS, EMOS };
+    // auto-réparation : si le calcul du jeu échoue, le personnage reste vivant (pose neutre) au lieu de bloquer l'aperçu ou l'export
+    let atFails = 0;
+    function safeAt(scene, t, pose) {
+        try { return at(scene, t, pose); }
+        catch (e) {
+            if (atFails++ < 3) console.warn('[ActingBrain] jeu réparé après erreur', e);
+            try { cache.delete && scene && cache.delete(scene); } catch (_) {}
+            try { return at({ id: scene && scene.id, duration: scene && scene.duration }, t, pose); } catch (_) { return at(null, t, pose); }
+        }
+    }
+    function insight(scene) {
+        try {
+            if (!scene || !scene.narration) return '';
+            const P = plan(scene), I = P.insight || {}, bits = [];
+            let a = null, bv = 0.3; EMOS.forEach(k => { if ((P.base[k] || 0) > bv) { bv = P.base[k]; a = k; } });
+            const lab = (typeof ACT_LABELS !== 'undefined' && ACT_LABELS.emo) || {};
+            const last = P.emotionEvents && P.emotionEvents.length ? P.emotionEvents[P.emotionEvents.length - 1] : null;
+            let b = null, bw = 0; if (last) EMOS.forEach(k => { if ((last.target[k] || 0) > bw) { bw = last.target[k]; b = k; } });
+            if (P.turn) { let to = null, tv = 0; EMOS.forEach(k => { if ((P.turn.to[k] || 0) > tv) { tv = P.turn.to[k]; to = k; } }); if (to && to !== a) b = b || to; }
+            if (a) bits.push(lab[a] || a); if (b && b !== a) bits[bits.length - 1] += ' → ' + (lab[b] || b);
+            (I.notes || []).forEach(n => bits.push(n));
+            if (I.repairs && I.repairs.length) bits.push(I.repairs.length + ' correction' + (I.repairs.length > 1 ? 's' : ''));
+            return bits.join(' · ');
+        } catch (_) { return ''; }
+    }
+    return { at: safeAt, plan, describe, insight, LISTS, EMOS };
 })();
 
 // ===== PERSONNAGE INTÉGRÉ : présentateur dessiné en code (aucun fichier à télécharger) =====
@@ -1439,6 +1860,53 @@ const BuiltinCharacter = (() => {
         ctx.restore();
         return true;
     }
+    // ===== DANSE COMIQUE : 5 numéros enchaînés (disco, poulet, robot, moulin à bras, déhanché) puis pose figée avec langue et clin d'œil =====
+    let DANCE_CUR = 4.2;
+    function danceMoves(ts, dur) {
+        const MV = 0.8, FREEZE = Math.min(1.0, dur * 0.26), freezeAt = Math.max(0, dur - FREEZE), TAU2 = Math.PI * 2;
+        const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }, lerp = (a, b, k) => a + (b - a) * k;
+        const ORDER = ['disco', 'chicken', 'robot', 'windmill', 'hips'];
+        const nameAt = x => x >= freezeAt ? 'freeze' : ORDER[Math.floor(Math.max(0, x) / MV) % ORDER.length];
+        const H = (x, y, mode, extra) => Object.assign({ x, y, mode, out: 1 }, extra || {});
+        function one(name, t) {
+            const s1 = Math.sin(TAU2 * t / (MV)), s2 = Math.sin(TAU2 * t / (MV / 2)), pulse = Math.abs(s2);
+            const D = { dx: 0, rot: 0, drop: 0.2 * pulse, lift: 0.5, sx: 0.05 * pulse, sy: -0.07 * pulse, tilt: 0, brow: 0, browUp: 0, closed: 0, wide: 0, wink: 0, tongue: 0, sweat: 0, moving: 1, L: H(-1.7, -4.9, 'fist'), R: H(1.7, -4.9, 'fist') };
+            if (name === 'disco') {                       // le doigt de Travolta : en haut, en bas, avec les sourcils qui dansent
+                const q = sm(0.5 + 0.5 * Math.max(-1, Math.min(1, s1 * 2.5)));
+                D.R = H(lerp(-0.2, 2.0, q), lerp(-4.0, -9.3, q), q > 0.5 ? 'pointup' : 'pointdown'); D.dx = (q - 0.5) * 0.5; D.rot = -(q - 0.5) * 0.18; D.tilt = (q - 0.5) * 0.22;
+                D.brow = 0.45 * s2; D.drop = 0.3 * pulse; D.lift = 0.6;
+            } else if (name === 'chicken') {              // danse du poulet : accroupi, « ailes » qui claquent, yeux ronds
+                const f = 0.5 + 0.5 * s2;
+                D.L = H(-1.35 - 0.5 * f, -8.3 + 0.45 * f, 'flat'); D.R = H(1.35 + 0.5 * f, -8.3 + 0.45 * f, 'flat');
+                D.drop = 0.95 + 0.3 * pulse; D.dx = 0.25 * s1; D.rot = 0.05 * s2; D.tilt = 0.16 * s1; D.wide = 1; D.browUp = 0.8; D.lift = 0.15; D.sy = -0.05 * pulse;
+            } else if (name === 'robot') {                // le robot : poses saccadées, sans aucun amorti
+                const k = Math.floor(t * 5) % 4;
+                const PL = [[-1.9, -7.3, 1.9, -5.5], [-1.9, -5.5, 1.9, -7.3], [-1.2, -8.2, 1.2, -8.2], [-2.3, -6.4, 2.3, -6.4]][k];
+                D.L = H(PL[0], PL[1], 'flat'); D.R = H(PL[2], PL[3], 'flat'); D.tilt = [0.16, -0.16, 0, 0.16][k]; D.dx = [0.18, -0.18, 0, 0.18][k]; D.drop = 0.08 * (k % 2); D.sx = 0; D.sy = 0; D.wide = 0.7; D.lift = 0.2; D.rot = 0;
+            } else if (name === 'windmill') {             // moulin à bras : les deux bras tournent comme des hélices, la sueur gicle
+                const ph = TAU2 * 1.4 * t;
+                D.R = H(1.3 + 2.2 * Math.cos(ph), -6.5 + 2.2 * Math.sin(ph), 'open'); D.L = H(-(1.3 + 2.2 * Math.cos(ph + Math.PI)), -6.5 + 2.2 * Math.sin(ph + Math.PI), 'open');
+                D.rot = 0.1 * Math.sin(ph); D.dx = 0.2 * Math.cos(ph); D.tilt = -0.1 * Math.sin(ph); D.drop = 0.15 + 0.1 * pulse; D.wide = 1; D.sweat = 1; D.lift = 0.45;
+            } else if (name === 'hips') {                 // le déhanché : bassin qui part d'un côté, yeux fermés « dans le feeling »
+                D.L = H(-1.75, -4.8 + 0.3 * s2, 'fist'); D.R = H(1.75, -4.8 - 0.3 * s2, 'fist');
+                D.dx = 0.55 * s1; D.rot = -0.1 * s1; D.tilt = 0.12 * s1; D.drop = 0.25 + 0.2 * pulse; D.sx = 0.04 * pulse; D.brow = 0.4 * s2; D.closed = sm((s1 + 0.3) / 0.4); D.lift = 0.9;
+            } else {                                      // pose finale figée : doigt en l'air, langue dehors, clin d'œil, petit tremblement
+                const u = t - freezeAt;
+                D.R = H(2.2, -9.3, 'pointup'); D.L = H(-1.7, -4.9, 'fist'); D.dx = 0.3 + 0.04 * Math.sin(u * 40); D.rot = -0.14 + 0.05 * Math.sin(u * 17) * sm((u - 0.5) / 0.3);
+                D.drop = 0.25; D.lift = 0; D.sx = 0; D.sy = 0.07 * Math.exp(-u * 7); D.tilt = 0.17; D.wink = 1; D.tongue = 1; D.browUp = 0.7; D.moving = 0;
+            }
+            return D;
+        }
+        const cur = nameAt(ts), segStart = cur === 'freeze' ? freezeAt : Math.floor(Math.max(0, ts) / MV) * MV;
+        const A = one(cur, ts);
+        if (segStart <= 0.001) return A;
+        const kk = sm((ts - segStart) / 0.16); if (kk >= 1) return A;
+        const B = one(nameAt(segStart - 0.01), ts), O = { L: {}, R: {} };
+        Object.keys(A).forEach(key => { if (key === 'L' || key === 'R') return; O[key] = lerp(B[key], A[key], kk); });
+        ['L', 'R'].forEach(sd => { O[sd] = Object.assign({}, kk > 0.5 ? A[sd] : B[sd], { x: lerp(B[sd].x, A[sd].x, kk), y: lerp(B[sd].y, A[sd].y, kk) }); });
+        O.moving = kk > 0.5 ? A.moving : B.moving;
+        return O;
+    }
     // gestes des mains pilotés par le texte : chaque entrée donne la cible de la main gauche (L) / droite (R) à l'écran
     function gestureHands(name, p, t, n, side, prop) {
         const r = gestureHands0(name, p, t, n, prop);
@@ -1473,12 +1941,18 @@ const BuiltinCharacter = (() => {
             case 'run': { const sw = Math.sin(t * 9.5); return { L: { x: -1.5, y: -5.35 + 1.1 * sw, mode: 'fist', out: 1 }, R: { x: 1.5, y: -5.35 - 1.1 * sw, mode: 'fist', out: 1 } }; }   // bras pliés qui balancent
             case 'laugh': { const sw = Math.sin(t * 10.5) * 0.12; return { L: { x: -0.8, y: -4.9 + sw, mode: 'palm', out: 1 }, R: { x: 0.8, y: -4.9 - sw, mode: 'palm', out: 1 } }; }   // mains sur le ventre
             case 'jump': { const sw = Math.sin(p * Math.PI) * 0.45; return { L: { x: -2.0, y: -7.4 - sw, mode: 'open', out: 1 }, R: { x: 2.0, y: -7.4 - sw, mode: 'open', out: 1 } }; }
-            case 'dance': { const sw = Math.sin(t * 8) * 0.5; return { L: { x: -2.2 + sw, y: -6.8, mode: 'open', out: 1 }, R: { x: 2.2 - sw, y: -6.2, mode: 'open', out: 1 }, tilt: Math.sin(t * 8) * 0.12 }; }
+            case 'dance': { const D = danceMoves(p * DANCE_CUR, DANCE_CUR); return { L: D.L, R: D.R, tilt: D.tilt }; }
             case 'cry': return { L: { x: -0.7, y: -7.9, mode: 'palm' }, R: { x: 0.7, y: -7.9, mode: 'palm' }, tilt: 0.08 };
             case 'shake': { const sw = Math.sin(t * 18) * 0.35; return { L: { x: -1.9 - sw, y: -5.5, mode: 'fist', out: 1 }, R: { x: 1.9 + sw, y: -5.5, mode: 'fist', out: 1 }, tilt: Math.sin(t * 18) * 0.06 }; }
             case 'smile': return { L: { x: -2.2, y: -5.9, mode: 'open', out: 1 }, R: { x: 2.2, y: -5.9, mode: 'open', out: 1 }, tilt: -0.03 };
             case 'wink': return { R: { x: 2.0, y: -6.3, mode: 'point', s: 1.05 }, tilt: -0.04 };
             case 'turn': return null;
+            case 'walk': { const sw = Math.sin(t * 4.4); return { L: { x: -1.55, y: -4.8 + 0.55 * sw, mode: 'palm', out: 1 }, R: { x: 1.55, y: -4.8 - 0.55 * sw, mode: 'palm', out: 1 } }; }
+            case 'crouch': { const rch = 0.25 * Math.sin(p * Math.PI * 3); return { L: { x: -1.3, y: -3.9 + rch, mode: 'open', out: 1 }, R: { x: 1.3, y: -3.9 - rch, mode: 'open', out: 1 }, tilt: 0.05 }; }
+            case 'kneel': return { L: { x: -0.55, y: -4.9, mode: 'palm' }, R: { x: 0.55, y: -4.9, mode: 'palm' }, tilt: 0.07 };
+            case 'bow': return { L: { x: -0.6, y: -4.5, mode: 'palm' }, R: { x: 0.6, y: -4.5, mode: 'palm' }, tilt: 0.05 };
+            case 'kick': return { L: { x: -2.5, y: -6.3, mode: 'open', out: 1 }, R: { x: 2.5, y: -6.6, mode: 'open', out: 1 }, tilt: -0.05 };
+            case 'stretch': { const st = Math.sin(t * 5) * 0.12; return { L: { x: -2.1, y: -9.4 + st, mode: 'open', out: 1 }, R: { x: 2.1, y: -9.4 - st, mode: 'open', out: 1 }, tilt: 0.04 }; }
             case 'plant': { const dip = Math.sin(p * Math.PI * 4) * 0.18; return { L: { x: -0.75, y: -3.65 + dip, mode: 'palm' }, R: { x: 0.75, y: -3.65 - dip, mode: 'palm' }, tilt: 0.08 }; }
             case 'water': { const pour = Math.sin(p * Math.PI) * 0.55; return { L: { x: -0.9, y: -4.9 + pour, mode: 'palm' }, R: { x: 1.0, y: -5.4 - pour, mode: 'palm' }, tilt: -0.06 }; }
             case 'draw': { const dip = Math.sin(p * Math.PI) * 0.7; return { L: { x: -0.65, y: -4.55 + dip, mode: 'palm' }, R: { x: 0.65, y: -4.55 + dip, mode: 'palm' }, tilt: 0.06 }; }
@@ -1556,14 +2030,16 @@ const BuiltinCharacter = (() => {
         const skin = c.skin, skinDk = mix(skin, -0.22), skinLt = mix(skin, 0.16);
         PRO_HANDS = pro;
         const amb = a.ambient || pose || 'standing';
+        DANCE_CUR = a.gdur || 4.2;
         const gh = a.gesture ? gestureHands(a.gesture, a.gp, mt, a.n, a.gside, a.prop) : null;
         const gk = gh ? clamp(a.gw, 0, 1.12) * motionScale : 0;
         // actions du corps entier choisies par l'histoire : courir, tomber, rire,
         // sauter, danser, pleurer, trembler et dormir
         const act = a.act || null, aq0 = clamp(a.gp || 0, 0, 1), aw0 = clamp(a.gw || 0, 0, 1);
         const runK = act === 'run' ? aw0 * motionScale : 0, laughK = act === 'laugh' ? aw0 * motionScale : 0;
-        const smileK = a.gesture === 'smile' ? gk : 0, winkK = a.gesture === 'wink' ? gk : 0, turnK = act === 'turn' ? aw0 * motionScale : 0;
+        const smileK = a.gesture === 'smile' ? gk : 0, winkK0 = a.gesture === 'wink' ? gk : 0, turnK = act === 'turn' ? aw0 * motionScale : 0;
         const jumpK = act === 'jump' ? aw0 * motionScale : 0, danceK = act === 'dance' ? aw0 * motionScale : 0;
+        const DN = danceK > 0 ? danceMoves(aq0 * DANCE_CUR, DANCE_CUR) : null, winkK = Math.max(winkK0, DN ? DN.wink * danceK : 0);
         const cryK = act === 'cry' ? aw0 * motionScale : 0, shakeK = act === 'shake' ? aw0 * motionScale : 0, sleepK = act === 'sleep' ? aw0 * motionScale : 0;
         const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
         let fallK = 0, stumble = 0, dizzy = 0;
@@ -1574,24 +2050,33 @@ const BuiltinCharacter = (() => {
             dizzy = sm((q - 0.28) / 0.04) * (1 - sm((q - 0.64) / 0.06));
         }
         fallK *= motionScale; stumble *= motionScale; dizzy *= motionScale;
-        const jumpLift = jumpK * Math.sin(Math.PI * aq0) * 1.15;
-        const danceSwing = danceK * Math.sin(mt * 8);
+        const walkK = act === 'walk' ? aw0 * motionScale : 0, crouchK = act === 'crouch' ? aw0 * motionScale : 0, kneelK = act === 'kneel' ? aw0 * motionScale : 0;
+        const bowK = act === 'bow' ? aw0 * motionScale : 0, kickK = act === 'kick' ? aw0 * motionScale : 0, stretchK = act === 'stretch' ? aw0 * motionScale : 0;
+        // saut : flexion des genoux, envol (jambes repliées), réception amortie
+        const jPre = jumpK && aq0 < 0.2 ? Math.sin(Math.PI * aq0 / 0.2) : 0, jPost = jumpK && aq0 > 0.84 ? Math.sin(Math.PI * (aq0 - 0.84) / 0.16) : 0;
+        const jumpLift = jumpK * Math.sin(Math.PI * clamp((aq0 - 0.2) / 0.64, 0, 1)) * 1.25;
+        // le bassin descend : accroupi, agenouillé, flexion avant/après le saut, rebond de la danse
+        const bodyDrop = crouchK * 1.55 + kneelK * 2.3 + (jPre + jPost) * 0.7 * jumpK + (DN ? DN.drop * danceK : 0) + kickK * 0.15;
+        const danceSwing = 0;
         const shakeOffset = shakeK * Math.sin(mt * 34) * 0.12;
         if (turnK) {
             const facing = Math.cos(Math.PI * aq0), sideScale = 0.16 + 0.84 * Math.abs(facing);
             ctx.scale(facing < 0 ? -sideScale : sideScale, 1);
         }
         if (jumpLift || danceK || shakeK || sleepK) {
-            ctx.translate(shakeOffset + danceSwing * 0.12, -jumpLift + sleepK * 0.05);
-            ctx.rotate(danceSwing * 0.09 + shakeK * Math.sin(t * 32) * 0.035 + sleepK * 0.08);
+            ctx.translate(shakeOffset + (DN ? DN.dx * danceK : 0), -jumpLift + sleepK * 0.05);
+            if (DN) ctx.scale(1 + DN.sx * danceK, 1 + DN.sy * danceK);   // écrase-étire sur chaque temps de la danse
+            ctx.rotate((DN ? DN.rot * danceK : 0) + shakeK * Math.sin(t * 32) * 0.035 + sleepK * 0.08);
         }
-        const walk = amb === 'walking' ? mt * 4.2 : (runK > 0 ? mt * 9.5 : (danceK > 0 ? mt * 7.5 : 0));
+        const walk = (amb === 'walking' || walkK > 0) ? mt * 4.4 : (runK > 0 ? mt * 9.5 : (danceK > 0 ? (DN.moving ? aq0 * DANCE_CUR * Math.PI * 2 / 0.8 : 0) : 0));
+        if (stretchK > 0) { open = Math.max(open, stretchK * (0.4 + 0.5 * Math.sin(Math.PI * aq0))); vow = 'aa'; }   // il s'étire et bâille
         if (laughK > 0) { open = Math.max(open, laughK * (0.45 + 0.55 * Math.abs(Math.sin(mt * 10.5)))); vow = 'aa'; }   // « ha ha ha » : la bouche s'ouvre et se ferme
         // visage : on mélange toutes les émotions actives
-        const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat - 0.25 * E.disgust + 0.2 * E.shy - 0.35 * E.tired + 0.3 * E.smug, -1, 1.3);
+        const browRaise = clamp(0.25 * E.joy + 0.2 * E.proud + 1.0 * E.surprise + 0.8 * E.fear + 0.3 * E.think + 0.5 * E.excited + 0.25 * E.love - 0.45 * E.angry + 0.55 * a.beat - 0.25 * E.disgust + 0.2 * E.shy - 0.35 * E.tired + 0.3 * E.smug + (a.microBrow || 0) + 0.4 * (a.onset || 0) + (DN ? DN.browUp * danceK * 0.8 : 0), -1, 1.3);
         const browAngle = clamp(1.0 * E.sad + 0.8 * E.fear + 0.3 * E.love - 1.0 * E.angry - 0.15 * E.doubt - 0.55 * E.disgust + 0.4 * E.shy + 0.3 * E.tired, -1, 1);
-        const eyeOpen = clamp(1 + 0.35 * E.surprise + 0.3 * E.fear + 0.2 * E.excited - 0.18 * E.sad - 0.22 * E.angry - 0.15 * E.proud - 0.18 * E.doubt - 0.08 * E.joy - 0.28 * E.disgust - 0.1 * E.shy - 0.5 * E.tired - 0.18 * E.smug, 0.28, 1.4);
-        const curve = clamp(1.0 * E.joy + 0.7 * E.proud + 1.0 * E.love + 0.9 * E.excited + 1.15 * smileK - 0.85 * E.sad - 0.55 * E.angry - 0.35 * E.fear - 0.15 * E.doubt + 0.08 * E.think + 0.3 * E.shy + 0.25 * E.smug - 0.55 * E.disgust - 0.2 * E.tired, -1, 1);
+        let eyeOpen = clamp(1 + 0.35 * E.surprise + 0.3 * E.fear + 0.2 * E.excited - 0.18 * E.sad - 0.22 * E.angry - 0.15 * E.proud - 0.18 * E.doubt - 0.08 * E.joy - 0.28 * E.disgust - 0.1 * E.shy - 0.5 * E.tired - 0.18 * E.smug, 0.28, 1.4);
+        const curve = clamp(1.0 * E.joy + 0.7 * E.proud + 1.0 * E.love + 0.9 * E.excited + 1.15 * smileK - 0.85 * E.sad - 0.55 * E.angry - 0.35 * E.fear - 0.15 * E.doubt + 0.08 * E.think + 0.3 * E.shy + 0.25 * E.smug - 0.55 * E.disgust - 0.2 * E.tired + (a.microSmile || 0) + (E.sad > 0.55 ? 0.07 * Math.sin(t * 23) * Math.min(1, (E.sad - 0.55) * 3) : 0), -1, 1);
+        eyeOpen = clamp(eyeOpen - 0.17 * clamp((curve - 0.35) / 0.5, 0, 1) + 0.12 * (a.onset || 0) + (DN ? DN.wide * 0.3 * danceK : 0), 0.28, 1.4);   // vrai sourire : les joues remontent et plissent les yeux ; choc : les yeux s'écarquillent
         const mouthO = clamp(0.95 * E.surprise + 0.35 * E.fear, 0, 1);
         const blush = clamp(E.love * 1.2 + E.joy * 0.5 + E.proud * 0.2 + smileK * 0.45 + 1.4 * E.shy, 0, 1);
         const asym = clamp(E.doubt + 0.5 * E.think + 0.9 * E.smug + 0.5 * E.disgust, 0, 1);
@@ -1603,7 +2088,7 @@ const BuiltinCharacter = (() => {
         const bob = ((walk ? Math.abs(Math.sin(walk)) * (0.12 + 0.2 * runK) : (a.breath !== undefined ? a.breath : Math.sin(mt * 1.6) * 0.035)) + E.sad * 0.08 - bounce + a.beat * 0.03) * motionScale;
         const shrug = gh && gh.shrug ? gk * 0.3 : 0;
         const tilt = (E.sad * 0.1 + E.shy * 0.1 + E.smug * 0.05 - E.disgust * 0.05 + Math.sin(mt * 0.7) * 0.025 - E.think * 0.07 + E.doubt * 0.06 - E.proud * 0.03 + (gh && gh.tilt ? gh.tilt * gk : 0) + a.shake * 0.05 + a.nod * 0.0 + (open > 0.05 ? Math.sin(mt * 7) * 0.015 * open : 0) - laughK * 0.1 + laughK * Math.sin(mt * 21) * 0.03) * motionScale;
-        const nodY = a.nod * 0.1 + a.beat * 0.05 + E.sad * 0.05 + E.tired * 0.08;
+        const nodY = a.nod * 0.1 + a.beat * 0.05 + E.sad * 0.05 + E.tired * 0.08 + bowK * 0.32 + kneelK * 0.1;
         const yaw = clamp(a.look.x * 0.5 + a.shake * 0.6, -1, 1);
         const outfitDk = mix(c.color, -0.3), outfitLt = mix(c.color, 0.2);
         const g = amb;
@@ -1639,18 +2124,38 @@ const BuiltinCharacter = (() => {
             ctx.quadraticCurveTo(1.55, -7.4, 1.08, -9.0 - bob); ctx.closePath(); ctx.fill();
         }
 
-        // ---- jambes
-        const legL = Math.sin(walk) * (0.3 + 0.5 * runK) * motionScale, legR = -legL;
+        // ---- jambes articulées : hanche -> genou -> cheville. Le genou plie vers l'extérieur (raccourci par la perspective).
+        const gait = runK > 0 ? 1.25 * runK : walkK > 0 ? 0.55 * walkK : (amb === 'walking' ? 0.35 : 0);
+        const swing = Math.sin(walk) * (0.3 + 0.5 * runK) * motionScale;
+        const tuck = jumpK * Math.sin(Math.PI * clamp((aq0 - 0.22) / 0.56, 0, 1)) * 0.95;      // jambes repliées en l'air
+        const kp = kickK > 0 ? Math.sin(Math.PI * clamp((aq0 - 0.2) / 0.5, 0, 1)) * kickK : 0;   // coup de pied (jambe droite)
         const legColor = c.outfit === 'suit' ? outfitDk : c.outfit === 'tee' ? '#27324a' : c.outfit === 'boubou' ? mix(c.color, -0.1) : skin;
         const bareLegs = c.outfit === 'dress';
-        [[-0.52, legL, Math.max(0, Math.cos(walk)) * 0.85 * runK], [0.52, legR, Math.max(0, -Math.cos(walk)) * 0.85 * runK]].forEach(([x, dx, lift]) => {
-            ctx.strokeStyle = bareLegs ? skin : legColor; ctx.lineWidth = 0.78;
-            ctx.beginPath(); ctx.moveTo(x * 0.8, -4.4); ctx.lineTo(x + dx, -0.45 - lift); ctx.stroke();
-            if (pro && !bareLegs) { ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.moveTo(x * 0.8, -4.1); ctx.lineTo(x + dx, -0.8 - lift); ctx.stroke(); }
+        const LEG = 2.0;
+        [-1, 1].forEach(sd => {
+            const ph = sd < 0 ? 1 : -1;                                                         // jambes en opposition de phase
+            const hx = sd * 0.416, hy = -4.4 + bodyDrop;
+            let fx = sd * 0.52 + ph * swing + sd * (0.55 * crouchK + 0.9 * kneelK + 0.15 * (jPre + jPost) * jumpK);
+            let fy = -0.45 - Math.max(0, ph * Math.cos(walk)) * gait - tuck - (danceK > 0 ? Math.max(0, ph * Math.sin(walk)) * DN.lift * danceK : 0);
+            if (sd > 0 && kp > 0) { fx += 1.7 * kp; fy -= 2.0 * kp; }
+            const dx = fx - hx, dy = fy - hy, dd = Math.min(Math.hypot(dx, dy) || 0.01, 2 * LEG - 0.05);
+            const hh = Math.sqrt(Math.max(0, LEG * LEG - (dd / 2) * (dd / 2)));
+            const kx = (hx + fx) / 2 + sd * hh * 0.55, ky = (hy + fy) / 2 + hh * 0.28;           // genou
+            ctx.lineJoin = 'round'; ctx.strokeStyle = bareLegs ? skin : legColor; ctx.lineWidth = 0.78;
+            ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+            if (pro && !bareLegs) {
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.moveTo(hx, hy + 0.3); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy - 0.35); ctx.stroke();
+                if (hh > 0.55) { ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.ellipse(kx, ky, 0.26, 0.2, 0, 0, TAU); ctx.fill(); }   // genou plié
+            }
             ctx.fillStyle = c.outfit === 'tee' ? '#f4f4f4' : '#15110f';          // chaussures
-            ctx.beginPath(); ctx.ellipse(x + dx + 0.12, -0.2 - lift, 0.62, 0.26, 0, 0, TAU); ctx.fill();
-            if (pro) { ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.beginPath(); ctx.ellipse(x + dx, -0.3 - lift, 0.3, 0.07, -0.1, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x + dx - 0.5, -0.1 - lift, 1.2, 0.07); }
+            ctx.beginPath(); ctx.ellipse(fx + 0.12, fy + 0.25, 0.62, 0.26, 0, 0, TAU); ctx.fill();
+            if (pro) { ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.beginPath(); ctx.ellipse(fx, fy + 0.15, 0.3, 0.07, -0.1, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(fx - 0.5, fy + 0.35, 1.2, 0.07); }
         });
+        // le haut du corps suit le bassin : il descend (accroupi, agenouillé), se penche (révérence) ou se hisse (étirement)
+        if (bodyDrop || bowK || stretchK) {
+            ctx.translate(0, bodyDrop - 0.25 * stretchK);
+            if (bowK) { ctx.translate(0, -4.35); ctx.scale(1 + 0.07 * bowK, 1 - 0.28 * bowK); ctx.translate(0, 4.35 + 0.5 * bowK); }
+        }
 
         // ---- buste (légèrement mobile)
         ctx.save(); ctx.translate(lean, bob * 0.6);
@@ -1732,7 +2237,8 @@ const BuiltinCharacter = (() => {
         ctx.restore();
 
         // ---- tête (pivot au cou)
-        ctx.save(); ctx.translate(lean, -7.1 + bob + nodY); ctx.rotate(tilt); ctx.scale(soft ? 1.2 : 1.16, soft ? 1.18 : 1.16); ctx.translate(0, 7.1);
+        const hsq = (a.onset || 0) * (E.surprise + E.fear + E.excited > 0.45 ? 0.04 : -0.025);   // squash & stretch de la tête sur le choc émotionnel
+        ctx.save(); ctx.translate(lean, -7.1 + bob + nodY); ctx.rotate(tilt); ctx.scale((soft ? 1.2 : 1.16) * (1 - hsq * 0.6), (soft ? 1.18 : 1.16) * (1 + hsq)); ctx.translate(0, 7.1);
         const hy = -8.6;
         ctx.fillStyle = skinDk; ctx.beginPath(); ctx.ellipse(-0.98, hy + 0.12, 0.16, 0.26, 0, 0, TAU); ctx.ellipse(0.98, hy + 0.12, 0.16, 0.26, 0, 0, TAU); ctx.fill();   // oreilles
         const hg = ctx.createRadialGradient(-0.3, hy - 0.4, 0.2, 0, hy, 1.35); hg.addColorStop(0, skinLt); hg.addColorStop(1, skin);
@@ -1794,7 +2300,7 @@ const BuiltinCharacter = (() => {
         // visage (les traits glissent un peu quand la tête se tourne)
         ctx.save(); ctx.translate(yaw * 0.16, 0);
         const bl0 = a.blink !== undefined ? a.blink : (() => { const p = t % 3.4; const b1 = p < 0.14 ? Math.sin(Math.PI * p / 0.14) : 0; const q = (t + 1.3) % 7.1; const b2 = q < 0.12 ? Math.sin(Math.PI * q / 0.12) : 0; return Math.max(b1, b2); })();
-        const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98, yawnK * 0.9);      // rire : yeux plissés ; sommeil : yeux fermés
+        const bl = Math.max(bl0, laughK * 0.92, sleepK * 0.98, yawnK * 0.9, DN ? DN.closed * danceK * 0.95 : 0);      // rire : yeux plissés ; sommeil : yeux fermés
         const look0 = a.eye || a.look, look1 = pro ? { x: look0.x + Math.sin(t * 2.3) * 0.04, y: look0.y + Math.sin(t * 1.7 + 1) * 0.03 } : look0;
         const look = { x: look1.x + 1.2 * E.shy + 1.3 * E.smug - 1.0 * E.disgust, y: look1.y + 1.3 * E.shy - 0.5 * E.tired };
         [-0.38, 0.38].forEach(x => {
@@ -1804,7 +2310,7 @@ const BuiltinCharacter = (() => {
             const px = x + look.x * 0.06, py = ey + look.y * 0.035;
             const ig = ctx.createRadialGradient(px, py, ir * 0.1, px, py, ir); if (anime) { ig.addColorStop(0, '#9af0ff'); ig.addColorStop(0.5, '#2f86d8'); ig.addColorStop(1, '#14275f'); } else { ig.addColorStop(0, '#6a3a18'); ig.addColorStop(0.65, '#3a1d0c'); ig.addColorStop(1, '#1b0e07'); }
             ctx.fillStyle = ig; ctx.beginPath(); ctx.ellipse(px, py, ir, Math.min(ir, ry * 0.98), 0, 0, TAU); ctx.fill();
-            ctx.fillStyle = '#0a0503'; ctx.beginPath(); ctx.ellipse(px, py, ir * 0.45, Math.min(ir * 0.45, ry * 0.5), 0, 0, TAU); ctx.fill();
+            { const pr = Math.max(0.28, 0.45 + 0.17 * E.love + 0.08 * E.joy - 0.13 * Math.min(1, E.fear + E.surprise)); ctx.fillStyle = '#0a0503'; ctx.beginPath(); ctx.ellipse(px, py, ir * pr, Math.min(ir * pr, ry * 0.5), 0, 0, TAU); ctx.fill(); }
             if (anime && lid > 0.35) { ctx.strokeStyle = 'rgba(160,240,255,0.75)'; ctx.lineWidth = 0.025; ctx.beginPath(); ctx.arc(px, py + ir * 0.16, ir * 0.78, 0.15, Math.PI - 0.15); ctx.stroke(); }
             if (lid > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px + 0.045, py - 0.05, anime ? 0.045 : soft ? 0.04 : 0.034, 0, TAU); ctx.fill(); ctx.globalAlpha = 0.78; ctx.beginPath(); ctx.arc(px - 0.045, py + 0.045, anime ? 0.021 : soft ? 0.019 : 0.016, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
                 if (anime && E.joy + E.love + E.excited + E.proud > 0.75) { ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(px - ir * 0.38, py + ir * 0.32, ir * 0.12, 0, TAU); ctx.fill(); }
@@ -1817,6 +2323,8 @@ const BuiltinCharacter = (() => {
                 ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.beginPath(); ctx.arc(px - ir * 0.5, py + ir * 0.5, ir * 0.1, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(px + ir * 0.62, py + ir * 0.12, ir * 0.06, 0, TAU); ctx.fill();
                 if (lid > 0.6) { const sx = px - ir * 0.18, sy = py - ir * 0.62, sr = ir * 0.2; ctx.beginPath(); ctx.moveTo(sx, sy - sr); ctx.quadraticCurveTo(sx, sy, sx + sr, sy); ctx.quadraticCurveTo(sx, sy, sx, sy + sr); ctx.quadraticCurveTo(sx, sy, sx - sr, sy); ctx.quadraticCurveTo(sx, sy, sx, sy - sr); ctx.fill(); }   // éclat en étoile
             }
+            { const wet = clamp(1.1 * E.sad + 0.55 * E.love + 0.5 * E.proud * E.joy + 0.3 * E.fear, 0, 1);   // yeux brillants, humides : tristesse, amour, émotion
+              if (wet > 0.25 && lid > 0.35) { ctx.save(); ctx.strokeStyle = 'rgba(200,232,255,' + (0.7 * wet).toFixed(2) + ')'; ctx.lineWidth = 0.034; ctx.beginPath(); ctx.ellipse(x, ey + ry * 0.12, eyeRx * 0.93, ry * 0.92, 0, 0.2, Math.PI - 0.2); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,' + (0.55 * wet).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(px + 0.07, py - 0.02, 0.028 + 0.02 * wet, 0, TAU); ctx.fill(); ctx.restore(); } }
             ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.beginPath(); ctx.ellipse(x, ey - ry * 0.55, eyeRx, ry * 0.5, 0, 0, TAU); ctx.fill();
             ctx.strokeStyle = anime || soft ? '#180d18' : '#1a0f09'; ctx.lineWidth = anime ? 0.125 : soft ? 0.082 : 0.07; ctx.beginPath(); ctx.ellipse(x, ey, eyeRx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
             { const so = x < 0 ? -1 : 1; ctx.lineWidth = anime ? 0.05 : soft ? 0.045 : 0.04; ctx.beginPath(); ctx.moveTo(x + so * eyeRx * 0.92, ey - ry * 0.35); ctx.lineTo(x + so * eyeRx * 1.35, ey - ry * 0.85); ctx.moveTo(x + so * eyeRx * 0.72, ey - ry * 0.78); ctx.lineTo(x + so * eyeRx * 1.05, ey - ry * 1.2); ctx.stroke();
@@ -1834,7 +2342,7 @@ const BuiltinCharacter = (() => {
         // sourcils : hauteur, inclinaison et asymétrie selon l'émotion
         ctx.strokeStyle = '#120d0b'; ctx.lineWidth = anime ? 0.105 : soft ? 0.095 : 0.085;
         [-1, 1].forEach(sd => {
-            const raise = browRaise + (sd < 0 ? 0.55 : -0.2) * asym + (sd > 0 ? 0.7 : -0.2) * E.smug;
+            const raise = browRaise + (DN ? DN.brow * sd * danceK : 0) + (sd < 0 ? 0.55 : -0.2) * asym + (sd > 0 ? 0.7 : -0.2) * E.smug;
             const x0 = sd * 0.62, x1 = sd * 0.14, by = hy - 0.36 - 0.17 * raise;
             const yOut = by + 0.05 * browAngle, yIn = by - 0.13 * browAngle;
             ctx.beginPath(); ctx.moveTo(x0, yOut); ctx.quadraticCurveTo((x0 + x1) / 2, by - 0.08 - 0.05 * raise, x1, yIn); ctx.stroke();
@@ -1872,7 +2380,7 @@ const BuiltinCharacter = (() => {
                 ctx.lineWidth = 0.035; ctx.beginPath(); ctx.moveTo(0.36, my - 0.24); ctx.quadraticCurveTo(0.44, my - 0.14, 0.35, my - 0.06); ctx.stroke();
             } else {
                 const cl = my - 0.1 * curve + 0.04 * asym, cr = my - 0.1 * curve - 0.07 * asym - 0.05 * E.proud;
-                if (curve > 0.66) {                                       // grand sourire avec les dents
+                if (curve > 0.6) {                                       // grand sourire avec les dents
                     ctx.fillStyle = '#3a0f12'; ctx.beginPath(); ctx.moveTo(-0.32, cl); ctx.quadraticCurveTo(0, my + 0.42 * curve, 0.32, cr); ctx.closePath(); ctx.fill();
                     ctx.fillStyle = '#fafafa'; ctx.beginPath(); ctx.moveTo(-0.27, cl + 0.01); ctx.lineTo(0.27, cr + 0.01); ctx.lineTo(0.25, cr + 0.1); ctx.quadraticCurveTo(0, cl + 0.16, -0.25, cl + 0.1); ctx.closePath(); ctx.fill();
                     ctx.strokeStyle = lip; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.moveTo(-0.32, cl); ctx.quadraticCurveTo(0, my + 0.42 * curve, 0.32, cr); ctx.stroke();
@@ -1882,12 +2390,20 @@ const BuiltinCharacter = (() => {
             }
         } else {
             const S = { aa: [0.27, 0.05 + 0.3, 0], ee: [0.34, 0.04 + 0.13, 1], ih: [0.26, 0.04 + 0.16, 1], oh: [0.19, 0.08 + 0.26, 0], ou: [0.13, 0.07 + 0.17, 0] }[vow] || [0.25, 0.2, 0];
-            const rx = S[0] * (1 + 0.12 * curve), ry = Math.max(0.03, S[1] * open);
-            ctx.fillStyle = '#3a0f12'; ctx.beginPath(); ctx.ellipse(0, my + ry * 0.35, rx, ry, 0, 0, TAU); ctx.fill();
-            if (S[2] || ry > 0.16) { ctx.fillStyle = '#fafafa'; ctx.beginPath(); ctx.ellipse(0, my + ry * 0.35 - ry * 0.55, rx * 0.8, ry * 0.3, 0, 0, TAU); ctx.fill(); }
-            ctx.fillStyle = '#c2555c'; ctx.beginPath(); ctx.ellipse(0, my + ry * 0.35 + ry * 0.5, rx * 0.55, ry * 0.4, 0, 0, TAU); ctx.fill();
-            ctx.strokeStyle = lip; ctx.lineWidth = 0.07; ctx.beginPath(); ctx.ellipse(0, my + ry * 0.35, rx, ry, 0, 0, TAU); ctx.stroke();
+            // bouche qui parle ET qui ressent : coins relevés par la joie, tombants par la tristesse, crispée par la colère, dents et langue
+            const rx = S[0] * (1 + 0.28 * Math.max(0, curve) + 0.1 * E.angry - 0.1 * E.sad - 0.08 * Math.max(0, -curve)), ry = Math.max(0.03, S[1] * open * (1 - 0.22 * E.angry));
+            const cy = my + ry * 0.35, corner = 0.17 * curve + 0.03 * E.proud, cl = cy - corner + 0.04 * asym, cr = cy - corner - 0.07 * asym;
+            const cu = (cy - ry - (cl + cr) / 8) / 0.75, cd = (cy + ry - (cl + cr) / 8) / 0.75;
+            const mouthPath = () => { ctx.beginPath(); ctx.moveTo(-rx, cl); ctx.bezierCurveTo(-rx * 0.62, cu, rx * 0.62, cu, rx, cr); ctx.bezierCurveTo(rx * 0.62, cd, -rx * 0.62, cd, -rx, cl); ctx.closePath(); };
+            mouthPath(); ctx.fillStyle = '#3a0f12'; ctx.fill();
+            ctx.save(); mouthPath(); ctx.clip();
+            if (S[2] || ry > 0.16 || curve > 0.4 || E.angry > 0.4) { ctx.fillStyle = '#fafafa'; ctx.fillRect(-rx, cy - ry - 0.02, rx * 2, Math.min(ry * 0.95, 0.1 + 0.09 * Math.max(0, curve) + 0.06 * E.angry)); }
+            ctx.fillStyle = '#c2555c'; ctx.beginPath(); ctx.ellipse(0, cy + ry * 0.78, rx * 0.62, ry * 0.5, 0, 0, TAU); ctx.fill();
+            ctx.restore();
+            mouthPath(); ctx.strokeStyle = lip; ctx.lineWidth = 0.07; ctx.stroke();
+            if (curve > 0.35) { ctx.strokeStyle = 'rgba(20,6,10,' + (0.22 * clamp((curve - 0.35) / 0.4, 0, 1)).toFixed(2) + ')'; ctx.lineWidth = 0.032; [-1, 1].forEach(sd => { const ex = sd * (rx + 0.07), ey2 = (sd < 0 ? cl : cr) - 0.02; ctx.beginPath(); ctx.moveTo(ex, ey2 - 0.08); ctx.quadraticCurveTo(ex + sd * 0.1, ey2 + 0.02, ex, ey2 + 0.12); ctx.stroke(); }); }   // fossettes du sourire
         }
+        if (DN && DN.tongue * danceK > 0.4 && open < 0.06) { ctx.fillStyle = '#e0707a'; ctx.strokeStyle = '#7a2a33'; ctx.lineWidth = 0.035; ctx.beginPath(); ctx.moveTo(-0.15, my + 0.04); ctx.quadraticCurveTo(-0.17, my + 0.42, 0, my + 0.44); ctx.quadraticCurveTo(0.17, my + 0.42, 0.15, my + 0.04); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, my + 0.12); ctx.lineTo(0, my + 0.34); ctx.stroke(); }   // langue dehors
         if (pro && open < 0.06 && mouthO <= 0.3) { ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.beginPath(); ctx.ellipse(0, my + 0.1 - 0.06 * curve, 0.1, 0.02, 0, 0, TAU); ctx.fill(); }
         // larmes de rire qui giclent vers l'extérieur
         if (laughK > 0.3) { [-1, 1].forEach((k, i) => { const q = (t * 1.7 + i * 0.5) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q) * laughK).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(k * (0.5 + 0.4 * q), hy + 0.12 + 0.5 * q, 0.07, 0.11, k * 0.5, 0, TAU); ctx.fill(); }); }
@@ -1896,6 +2412,18 @@ const BuiltinCharacter = (() => {
         if (tearK > 0.5) { const q = (t * (cryK > 0.5 ? 1.15 : 0.7)) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q) * tearK).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(-0.47, hy + 0.2 + 0.85 * q, 0.07, 0.11, 0, 0, TAU); ctx.ellipse(0.47, hy + 0.2 + 0.72 * q, 0.07, 0.11, 0, 0, TAU); ctx.fill(); }
         if (E.fear > 0.45) { const q = (t * 0.9) % 1; ctx.fillStyle = 'rgba(120,190,255,' + (0.9 * (1 - q * 0.6)).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(0.82, hy - 0.55 + 0.5 * q, 0.07, 0.12, 0, 0, TAU); ctx.fill(); }
         ctx.restore();
+        // danse : notes de musique qui montent et gouttes de sueur qui giclent
+        if (DN && danceK > 0.2) {
+            ctx.save(); const cols = ['#ffd23f', '#ff6b9d', '#6cc9ff'];
+            for (let k = 0; k < 3; k++) {
+                const ph = (t * 0.7 + k / 3) % 1, nx = (k - 1) * 1.7 + Math.sin(ph * 6 + k * 2) * 0.35, ny = hy - 1.3 - ph * 2.0;
+                ctx.globalAlpha = clamp(Math.sin(Math.PI * ph) * danceK, 0, 1); ctx.fillStyle = cols[k]; ctx.strokeStyle = '#13102a'; ctx.lineWidth = 0.06;
+                ctx.beginPath(); ctx.ellipse(nx, ny, 0.2, 0.14, -0.45, 0, TAU); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(nx + 0.17, ny - 0.05); ctx.lineTo(nx + 0.17, ny - 0.75); ctx.quadraticCurveTo(nx + 0.5, ny - 0.62, nx + 0.4, ny - 0.38); ctx.stroke();
+            }
+            if (DN.sweat > 0.5) { ctx.fillStyle = 'rgba(140,200,255,0.92)'; ctx.globalAlpha = 1; for (let k = 0; k < 6; k++) { const sd = k % 2 ? 1 : -1, ph = (t * 1.6 + k * 0.17) % 1; ctx.beginPath(); ctx.ellipse(sd * (0.9 + 1.5 * ph), hy - 0.4 - 0.9 * ph + 1.6 * ph * ph, 0.07, 0.11, sd * 0.6, 0, TAU); ctx.fill(); } }
+            ctx.restore();
+        }
         // petites icônes de bande dessinée au-dessus de la tête
         if (a.sym) {
             const age = a.symAge, k = Math.min(age / 0.25, 1), pop = clamp(1 + 1.5 * Math.pow(k - 1, 3) + 1.5 * Math.pow(k - 1, 2), 0, 1.15);
@@ -2154,6 +2682,12 @@ const ActingSfx = (() => {
         laugh: (a, o, t) => { for (let k = 0; k < 6; k++) { const tt = t + 0.15 + k * 0.17; tone(a, o, 330 - k * 14, 250 - k * 14, tt, 0.12, 0.05, 'sawtooth'); burst(a, o, tt, 0.1, 0.04, 1800, 0.8); } },
         run: (a, o, t) => { for (let k = 0; k < 9; k++) burst(a, o, t + 0.1 + k * 0.33, 0.08, 0.3, 600, 0.8); },
         fall: (a, o, t) => { tone(a, o, 900, 250, t + 0.2, 0.42, 0.04, 'triangle'); tone(a, o, 110, 40, t + 0.66, 0.28, 0.16); burst(a, o, t + 0.66, 0.14, 0.1, 320, 0.7); },
+        walk: (a, o, t) => { for (let k = 0; k < 6; k++) burst(a, o, t + 0.15 + k * 0.45, 0.07, 0.12, 500, 0.8); },
+        crouch: (a, o, t) => sweep(a, o, t + 0.1, 0.3, 0.04, 900, 300),
+        kneel: (a, o, t) => { sweep(a, o, t + 0.1, 0.3, 0.03, 900, 300); tone(a, o, 120, 60, t + 0.5, 0.25, 0.1); burst(a, o, t + 0.5, 0.1, 0.08, 300, 0.7); },
+        bow: (a, o, t) => sweep(a, o, t + 0.1, 0.4, 0.03, 500, 900),
+        kick: (a, o, t) => { sweep(a, o, t + 0.35, 0.15, 0.1, 600, 2200); burst(a, o, t + 0.5, 0.1, 0.15, 300, 0.7); },
+        stretch: (a, o, t) => tone(a, o, 300, 520, t + 0.2, 0.7, 0.03, 'triangle'),
     };
     function stop() { nodes.forEach(n => { try { n.stop(); } catch (_) {} }); nodes = []; }
     // project : le projet ; t0 : heure audio de départ ; from : seconde de la vidéo où l'on commence
@@ -2246,6 +2780,13 @@ const OBJECT_RULES = [
     ['globe', 'monde mondial pays afrique international global world'.split(' ')],
     ['shield', 'securite protection confiance protege secure trust'.split(' ')],
 ];
+// Décors spéciaux déclenchés par le CONTENU de l'histoire (jamais au hasard)
+const SCENERY_RULES = [
+    { id: 'maquis', score: 3, words: 'maquis maquisard buvette terrasse brochette brochettes poulet braise braiser grillade grillades garba alloco attieke kedjenou biere bar'.split(' ') },
+    { id: 'city_night', score: 2, words: 'nuit soir minuit etoile etoiles lune gratte-ciel gratte ciel metropole luxe luxueux luxueuse clubbing boite discotheque lumieres illumine'.split(' ') },
+    { id: 'african_day', score: 2, words: 'afrique africain africaine africains africaines village roi reine royaume palais pagne kente baobab savane griot tradition traditionnel traditionnelle ancetre ancetres matin soleil'.split(' ') },
+];
+const SCENERY_RESET = 'ville bureau ecole hopital bureau voyage avion lendemain'.split(' ');
 const LOCATION_RULES = [
     { id: 'church', words: 'eglise church chapelle paroisse cathedrale messe'.split(' '), stay: true },
     { id: 'mosque', words: 'mosquee mosque imam musulman islam prier priere ramadan'.split(' '), stay: true },
@@ -2423,6 +2964,19 @@ class ScenePlanner {
         return ok.find(l => !(l1 === l && l2 === l)) || ok[0];
     }
 
+    // Choisit un décor spécial selon les mots de la phrase ; la scène suivante garde le décor tant que l'histoire ne change pas de lieu.
+    pickScenery(tokens, prevPlans) {
+        let best = null, bestScore = 0;
+        for (const r of SCENERY_RULES) {
+            const sc = countHits(tokens, r.words) * r.score;
+            if (sc > bestScore) { best = r.id; bestScore = sc; }
+        }
+        if (best) return best;
+        const prevBg = prevPlans && prevPlans.length ? prevPlans[prevPlans.length - 1].bg : null;
+        if (prevBg && SCENERY_RULES.some(r => r.id === prevBg) && countHits(tokens, SCENERY_RESET) === 0) return prevBg;
+        return null;
+    }
+
     planScene(sentence, i, n, ctx, prevPlans, spec) {
         const tokens = tokenize(sentence);
         const sent = this.sentiment(tokens);
@@ -2459,6 +3013,8 @@ class ScenePlanner {
         const bgs = (STYLE_BG[ctx.style] || STYLE_BG.cinematic)[mood];
         let bg = bgs[i % bgs.length];
         if (spec && ASSETS.backgrounds.some(b => b.id === spec.background)) bg = spec.background;
+        const sceneryBg = this.pickScenery(tokens, prevPlans);
+        if (sceneryBg) bg = sceneryBg;
 
         let keyText = this.extractKeyText(sentence, tokens, ctx);
         if (spec && typeof spec.keyText === 'string' && spec.keyText.trim()) keyText = spec.keyText.trim().slice(0, 22);
@@ -3408,10 +3964,404 @@ class CanvasRenderer {
         ctx.restore();
     }
 
+    // ---------- Décors de lieu : Afrique luxe (jour), ville de luxe (nuit), Vidéo Plus Maquis ----------
+    drawVignette() {
+        const W = this.width, H = this.height;
+        if (!this.vig) {
+            this.vig = this.aux();
+            const vc = this.vig.getContext('2d');
+            const vg = vc.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.hypot(W, H) * 0.62);
+            vg.addColorStop(0, 'rgba(0,0,0,0)');
+            vg.addColorStop(1, 'rgba(0,0,0,0.34)');
+            vc.fillStyle = vg;
+            vc.fillRect(0, 0, W, H);
+        }
+        this.ctx.drawImage(this.vig, 0, 0);
+    }
+
+    drawScenery(kind, t) {
+        const defs = this.sceneryDefs || (this.sceneryDefs = {
+            african_day: ['AfBack', 'AfDynA', 'AfFront', 'AfDynB'],
+            city_night: ['CiBack', 'CiDynA', 'CiFront', 'CiDynB'],
+            maquis: ['MqBack', 'MqDynA', 'MqFront', 'MqDynB'],
+        });
+        const d = defs[kind]; if (!d) return;
+        const real = this.ctx;
+        this.sceneryCache = this.sceneryCache || {};
+        let c = this.sceneryCache[kind];
+        if (!c) {
+            // Couches fixes dessinées UNE seule fois puis recopiées (très rapide) ; seules les animations sont redessinées à chaque image.
+            c = this.sceneryCache[kind] = { back: this.aux(), front: d[2] ? this.aux() : null };
+            try {
+                this.ctx = c.back.getContext('2d'); this['scenery' + d[0]](0, c);
+                if (c.front) { this.ctx = c.front.getContext('2d'); this['scenery' + d[2]](0, c); }
+            } finally { this.ctx = real; }
+        }
+        real.drawImage(c.back, 0, 0);
+        this['scenery' + d[1]](t, c);
+        if (c.front) real.drawImage(c.front, 0, 0);
+        this['scenery' + d[3]](t, c);
+    }
+
+    glowSprite(c, rgb, r, a) {
+        const cache = this.glows || (this.glows = {});
+        const key = rgb + '|' + Math.round(r) + '|' + a;
+        if (!cache[key]) {
+            const s = Math.ceil(r * 2), cv = document.createElement('canvas'); cv.width = cv.height = s;
+            const x = cv.getContext('2d'), g = x.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, r);
+            g.addColorStop(0, 'rgba(' + rgb + ',' + a + ')'); g.addColorStop(1, 'rgba(' + rgb + ',0)');
+            x.fillStyle = g; x.fillRect(0, 0, s, s); cache[key] = cv;
+        }
+        return cache[key];
+    }
+
+    sceneryPalm(x, baseY, h, sway, t) {
+        const ctx = this.ctx, k = this.k, tx = x + sway * h * 0.05, ty = baseY - h;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = h * 0.055;
+        ctx.beginPath(); ctx.moveTo(x, baseY); ctx.quadraticCurveTo(x + h * 0.06, baseY - h * 0.5, tx, ty); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = h * 0.012;
+        for (let i = 1; i < 7; i++) { const f = i / 7; ctx.beginPath(); ctx.moveTo(x + h * 0.06 * f - h * 0.02, baseY - h * f); ctx.lineTo(x + h * 0.06 * f + h * 0.02, baseY - h * f); ctx.stroke(); }
+        for (let i = 0; i < 8; i++) {
+            const a = -Math.PI / 2 + (i - 3.5) * 0.46 + Math.sin(t * 1.3 + i) * 0.04;
+            const len = h * 0.46, ex = tx + Math.cos(a) * len, ey = ty + Math.sin(a) * len + len * 0.34;
+            ctx.strokeStyle = i % 2 ? '#1f7a3a' : '#2e9a4b'; ctx.lineWidth = h * 0.05;
+            ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo(tx + Math.cos(a) * len * 0.6, ty + Math.sin(a) * len * 0.6 - len * 0.15, ex, ey); ctx.stroke();
+        }
+        ctx.fillStyle = '#7b4b22';
+        ctx.beginPath(); ctx.arc(tx - h * 0.025, ty + h * 0.03, h * 0.03, 0, Math.PI * 2); ctx.arc(tx + h * 0.025, ty + h * 0.035, h * 0.03, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+    }
+
+    sceneryAfBack(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        const sky = ctx.createLinearGradient(0, 0, 0, gy);
+        sky.addColorStop(0, '#1d8fd1'); sky.addColorStop(0.62, '#8fd3f2'); sky.addColorStop(1, '#ffe3a8');
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+        const sx = W * 0.70, sy = H * 0.125;
+        const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.3);
+        sg.addColorStop(0, 'rgba(255,244,190,0.95)'); sg.addColorStop(0.25, 'rgba(255,226,130,0.4)'); sg.addColorStop(1, 'rgba(255,226,130,0)');
+        ctx.fillStyle = sg; ctx.fillRect(0, 0, W, gy);
+    }
+
+    sceneryAfDynA(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        const sx = W * 0.70, sy = H * 0.125, pulse = 1 + 0.04 * Math.sin(t * 1.4);
+        ctx.save(); ctx.translate(sx, sy); ctx.rotate(t * 0.08);
+        ctx.fillStyle = 'rgba(255,240,170,0.35)';
+        for (let i = 0; i < 12; i++) { ctx.rotate(TAU / 12); ctx.beginPath(); ctx.moveTo(W * 0.045 * pulse, -6 * k); ctx.lineTo(W * 0.15, 0); ctx.lineTo(W * 0.045 * pulse, 6 * k); ctx.closePath(); ctx.fill(); }
+        ctx.restore();
+        ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(sx, sy, W * 0.055 * pulse, 0, TAU); ctx.fill();
+        // nuages qui dérivent
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        [[0.1, 0.1, 0.9, 6], [0.45, 0.2, 0.7, 9], [0.85, 0.27, 0.6, 12]].forEach(([cx, cy, s, sp]) => {
+            const x = ((cx * W + t * sp * k) % (W * 1.3)) - W * 0.15, y = cy * H;
+            ctx.beginPath(); ctx.arc(x, y, 22 * s * k, 0, TAU); ctx.arc(x + 26 * s * k, y - 10 * s * k, 30 * s * k, 0, TAU); ctx.arc(x + 56 * s * k, y, 20 * s * k, 0, TAU); ctx.fill();
+        });
+    }
+
+    sceneryAfFront(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        // collines de savane
+        ctx.fillStyle = '#d9b46a';
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(0, gy - H * 0.17); ctx.quadraticCurveTo(W * 0.25, gy - H * 0.27, W * 0.5, gy - H * 0.19); ctx.quadraticCurveTo(W * 0.78, gy - H * 0.1, W, gy - H * 0.22); ctx.lineTo(W, gy); ctx.closePath(); ctx.fill();
+        // baobabs (seule la cime dépasse du palais)
+        const baobab = (x, by, hh) => {
+            ctx.fillStyle = '#6b4a2a';
+            ctx.beginPath(); ctx.moveTo(x - hh * 0.2, by); ctx.quadraticCurveTo(x - hh * 0.3, by - hh * 0.45, x - hh * 0.12, by - hh * 0.7); ctx.lineTo(x + hh * 0.12, by - hh * 0.7); ctx.quadraticCurveTo(x + hh * 0.3, by - hh * 0.45, x + hh * 0.2, by); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = hh * 0.06; ctx.lineCap = 'round';
+            [-0.34, -0.12, 0.12, 0.34].forEach(o => { ctx.beginPath(); ctx.moveTo(x + o * hh * 0.3, by - hh * 0.68); ctx.lineTo(x + o * hh * 1.1, by - hh * 0.92); ctx.stroke(); });
+            ctx.fillStyle = '#3f8a3e';
+            [-0.38, -0.12, 0.14, 0.4].forEach(o => { ctx.beginPath(); ctx.ellipse(x + o * hh * 1.05, by - hh * 0.96, hh * 0.2, hh * 0.1, 0, 0, TAU); ctx.fill(); });
+        };
+        const wallTop = gy - H * 0.24;
+        baobab(W * 0.2, wallTop + 4 * k, H * 0.22); baobab(W * 0.84, wallTop + 4 * k, H * 0.17);
+        // palais
+        const pw = W * 0.86, px = (W - pw) / 2;
+        const gold = (x0, y0, x1, y1) => { const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, '#fff0a6'); g.addColorStop(0.5, '#e0a81e'); g.addColorStop(1, '#a8740e'); return g; };
+        const wall = ctx.createLinearGradient(0, wallTop, 0, gy);
+        wall.addColorStop(0, '#fbe9c4'); wall.addColorStop(1, '#d9b27a');
+        ctx.fillStyle = wall; ctx.fillRect(px, wallTop, pw, gy - wallTop);
+        // tours latérales
+        [px - W * 0.005, px + pw - W * 0.075].forEach(tx => {
+            const tw = W * 0.08, top = wallTop - H * 0.09;
+            ctx.fillStyle = '#f6dfb2'; ctx.fillRect(tx, top, tw, gy - top);
+            ctx.fillStyle = gold(tx, top - H * 0.05, tx + tw, top);
+            ctx.beginPath(); ctx.moveTo(tx - 3 * k, top); ctx.lineTo(tx + tw / 2, top - H * 0.07); ctx.lineTo(tx + tw + 3 * k, top); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#ffe266'; ctx.beginPath(); ctx.arc(tx + tw / 2, top - H * 0.075, 4 * k, 0, TAU); ctx.fill();
+            ctx.fillStyle = '#3a2250'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(tx + tw * 0.3, top + H * 0.03, tw * 0.4, H * 0.045, tw * 0.2) : ctx.rect(tx + tw * 0.3, top + H * 0.03, tw * 0.4, H * 0.045); ctx.fill();
+        });
+        // tour centrale + dôme doré
+        const cw = W * 0.30, cx0 = W / 2 - cw / 2, ctop = wallTop - H * 0.07;
+        ctx.fillStyle = '#fff0cf'; ctx.fillRect(cx0, ctop, cw, gy - ctop);
+        ctx.fillStyle = gold(cx0, ctop - H * 0.1, cx0 + cw, ctop);
+        ctx.beginPath(); ctx.ellipse(W / 2, ctop, cw * 0.5, H * 0.095, 0, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = '#a8740e'; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.ellipse(W / 2, ctop, cw * 0.5, H * 0.095, 0, Math.PI, 0); ctx.stroke();
+        ctx.strokeStyle = '#ffe266'; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.moveTo(W / 2, ctop - H * 0.095); ctx.lineTo(W / 2, ctop - H * 0.13); ctx.stroke();
+        ctx.fillStyle = '#ffe266'; ctx.beginPath(); ctx.arc(W / 2, ctop - H * 0.135, 5 * k, 0, TAU); ctx.fill();
+        // corniche dorée + bande kente
+        ctx.fillStyle = gold(0, wallTop - 8 * k, 0, wallTop + 4 * k); ctx.fillRect(px - 5 * k, wallTop - 7 * k, pw + 10 * k, 11 * k);
+        const bandY = wallTop + H * 0.02, bandH = H * 0.024, cols = ['#c8202f', '#f2b705', '#0b8a3e', '#151515'], tw2 = bandH * 1.4;
+        for (let x = px, i = 0; x < px + pw; x += tw2, i++) { ctx.fillStyle = cols[i % 4]; ctx.beginPath(); ctx.moveTo(x, bandY + bandH); ctx.lineTo(x + tw2 / 2, bandY); ctx.lineTo(x + tw2, bandY + bandH); ctx.closePath(); ctx.fill(); }
+        ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(px, bandY + bandH, pw, 3 * k);
+        // fenêtres en arc, lumière chaude
+        const arch = (x, y, w, h, fill, stroke) => {
+            ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + w / 2); ctx.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w, y + h); ctx.closePath();
+            ctx.fillStyle = fill; ctx.fill(); if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 3 * k; ctx.stroke(); }
+        };
+        for (let i = 0; i < 8; i++) {
+            if (i === 3 || i === 4) continue;
+            const ww = W * 0.045, x = px + pw * (0.07 + 0.86 * i / 7) - ww / 2, y = wallTop + H * 0.075;
+            arch(x, y, ww, H * 0.085, 'rgba(255,196,90,' + 0.82 + ')', '#c9951c');
+            ctx.fillStyle = 'rgba(70,40,10,0.5)'; ctx.fillRect(x + ww / 2 - 1 * k, y + ww / 2, 2 * k, H * 0.085 - ww / 2);
+        }
+        // grande porte + rideaux rouges
+        const dw = W * 0.14, dh = H * 0.17;
+        arch(W / 2 - dw / 2 - 6 * k, gy - dh - 6 * k, dw + 12 * k, dh + 6 * k, gold(0, gy - dh, 0, gy), null);
+        arch(W / 2 - dw / 2, gy - dh, dw, dh, '#3b1a14', null);
+        ctx.fillStyle = '#b3121f'; ctx.fillRect(W / 2 - dw / 2, gy - dh + dw / 2, dw * 0.28, dh - dw / 2); ctx.fillRect(W / 2 + dw / 2 - dw * 0.28, gy - dh + dw / 2, dw * 0.28, dh - dw / 2);
+        // colonnes dorées
+        [px + pw * 0.31, px + pw * 0.69].forEach(x => { ctx.fillStyle = gold(x - 7 * k, 0, x + 7 * k, 0); ctx.fillRect(x - 7 * k, wallTop + H * 0.06, 14 * k, gy - wallTop - H * 0.06); ctx.fillRect(x - 11 * k, wallTop + H * 0.06, 22 * k, 7 * k); });
+        // terrasse en marbre
+        const fl = ctx.createLinearGradient(0, gy, 0, H);
+        fl.addColorStop(0, '#efd8a4'); fl.addColorStop(1, '#b98a4a');
+        ctx.fillStyle = fl; ctx.fillRect(0, gy, W, H - gy);
+        ctx.fillStyle = gold(0, gy, 0, gy + 8 * k); ctx.fillRect(0, gy - 2 * k, W, 8 * k);
+        ctx.strokeStyle = 'rgba(120,80,30,0.28)'; ctx.lineWidth = 1.5 * k;
+        for (let i = 1; i < 9; i++) { const y = gy + (H - gy) * Math.pow(i / 9, 1.7); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+        for (let i = -8; i <= 8; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * W * 0.03, gy); ctx.lineTo(W / 2 + i * W * 0.2, H); ctx.stroke(); }
+        // tapis rouge et or
+        ctx.fillStyle = '#a3131f';
+        ctx.beginPath(); ctx.moveTo(W / 2 - W * 0.08, gy); ctx.lineTo(W / 2 + W * 0.08, gy); ctx.lineTo(W / 2 + W * 0.36, H); ctx.lineTo(W / 2 - W * 0.36, H); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#f2b705'; ctx.lineWidth = 5 * k;
+        ctx.beginPath(); ctx.moveTo(W / 2 - W * 0.065, gy); ctx.lineTo(W / 2 - W * 0.31, H); ctx.moveTo(W / 2 + W * 0.065, gy); ctx.lineTo(W / 2 + W * 0.31, H); ctx.stroke();
+    }
+
+    sceneryAfDynB(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        const sw = Math.sin(t * 1.2);
+        this.sceneryPalm(W * 0.06, gy + H * 0.02, H * 0.34, sw, t);
+        this.sceneryPalm(W * 0.95, gy + H * 0.02, H * 0.38, -sw, t);
+        // bannières kente suspendues
+        [[W * 0.02], [W * 0.885]].forEach(([bx]) => {
+            const bw = W * 0.095, bh = H * 0.2, sway = Math.sin(t * 1.5 + bx) * 3 * k;
+            ctx.save(); ctx.translate(bx + bw / 2, 0); ctx.rotate(sway / 200); ctx.translate(-bw / 2, 0);
+            ctx.fillStyle = '#7a4a1a'; ctx.fillRect(-4 * k, 0, bw + 8 * k, 6 * k);
+            ctx.beginPath(); ctx.moveTo(0, 6 * k); ctx.lineTo(bw, 6 * k); ctx.lineTo(bw, bh); ctx.lineTo(bw / 2, bh + bw * 0.4); ctx.lineTo(0, bh); ctx.closePath(); ctx.clip();
+            const bc = ['#c8202f', '#f2b705', '#0b8a3e', '#151515'];
+            for (let r = 0; r * bw * 0.25 < bh + bw; r++) for (let c = 0; c < 4; c++) { ctx.fillStyle = bc[(r + c) % 4]; ctx.fillRect(c * bw / 4, 6 * k + r * bw * 0.25, bw / 4, bw * 0.25); }
+            ctx.restore();
+        });
+        // oiseaux
+        ctx.strokeStyle = 'rgba(40,40,60,0.7)'; ctx.lineWidth = 2 * k; ctx.lineCap = 'round';
+        [[0.3, 0.28, 0], [0.38, 0.25, 1.4], [0.5, 0.33, 2.6]].forEach(([bx, by, ph]) => {
+            const x = ((bx * W + t * 14 * k) % (W * 1.2)) - W * 0.1, y = by * H + Math.sin(t * 0.9 + ph) * 8 * k, f = Math.sin(t * 7 + ph) * 5 * k;
+            ctx.beginPath(); ctx.moveTo(x - 9 * k, y - f); ctx.quadraticCurveTo(x - 4 * k, y - 4 * k, x, y); ctx.quadraticCurveTo(x + 4 * k, y - 4 * k, x + 9 * k, y - f); ctx.stroke();
+        });
+    }
+
+    sceneryCiBack(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        const R = rng(0x51ab); c.R = R;
+        const sky = ctx.createLinearGradient(0, 0, 0, gy);
+        sky.addColorStop(0, '#04061a'); sky.addColorStop(0.55, '#1a1648'); sky.addColorStop(1, '#6a2a74');
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+        const mx = W * 0.2, my = H * 0.14, mr = W * 0.06;
+        c.stars = [];
+        for (let i = 0; i < 70; i++) {
+            const x = R() * W, y = R() * gy * 0.62, ph = R() * 6.28, s = (0.6 + R() * 1.6) * k;
+            if (Math.hypot(x - mx, y - my) > mr * 1.3) c.stars.push([x, y, ph, s]);
+        }
+        const mg = ctx.createRadialGradient(mx, my, mr * 0.5, mx, my, mr * 3.2);
+        mg.addColorStop(0, 'rgba(255,245,210,0.45)'); mg.addColorStop(1, 'rgba(255,245,210,0)');
+        ctx.fillStyle = mg; ctx.fillRect(0, 0, W * 0.6, H * 0.4);
+        ctx.fillStyle = '#fff4d0'; ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(190,170,130,0.35)';
+        [[-0.3, -0.2, 0.2], [0.25, 0.1, 0.25], [-0.1, 0.35, 0.15]].forEach(([dx, dy, rr]) => { ctx.beginPath(); ctx.arc(mx + dx * mr, my + dy * mr, rr * mr, 0, TAU); ctx.fill(); });
+    }
+
+    sceneryCiDynA(t, c) {
+        const ctx = this.ctx, k = this.k, TAU = Math.PI * 2;
+        for (const [x, y, ph, s] of c.stars) {
+            ctx.fillStyle = 'rgba(255,255,255,' + (0.35 + 0.55 * (0.5 + 0.5 * Math.sin(t * 2 + ph))) + ')';
+            ctx.beginPath(); ctx.arc(x, y, s, 0, TAU); ctx.fill();
+        }
+    }
+
+    sceneryCiFront(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        const R = c.R; c.flick = [];
+        const hz = ctx.createLinearGradient(0, gy - H * 0.2, 0, gy);
+        hz.addColorStop(0, 'rgba(255,120,160,0)'); hz.addColorStop(1, 'rgba(255,140,120,0.35)');
+        ctx.fillStyle = hz; ctx.fillRect(0, gy - H * 0.2, W, H * 0.2);
+        const skyline = (n, minH, maxH, base, body, edge, lit) => {
+            let x = -W * 0.02;
+            for (let i = 0; i < n && x < W; i++) {
+                const bw = W * (0.07 + R() * 0.07), bh = H * (minH + R() * (maxH - minH));
+                ctx.fillStyle = body; ctx.fillRect(x, base - bh, bw, bh);
+                ctx.fillStyle = edge; ctx.fillRect(x, base - bh, 2 * k, bh);
+                const cw = 7 * k, ch = 9 * k, gx = 5 * k, gh = 8 * k;
+                for (let wy = base - bh + 8 * k; wy < base - ch; wy += ch + gh) for (let wx = x + 6 * k; wx < x + bw - cw - 2 * k; wx += cw + gx) {
+                    const r = R();
+                    if (r < lit) { const col = (r < lit * 0.25 ? 'rgba(160,220,255,' : 'rgba(255,214,120,'); if (hashStr('w' + i + ':' + Math.round(wx) + ':' + Math.round(wy)) % 97 === 0) c.flick.push([wx, wy, cw, ch, col]); else { ctx.fillStyle = col + '0.85)'; ctx.fillRect(wx, wy, cw, ch); } }
+                }
+                x += bw + W * (0.004 + R() * 0.01);
+            }
+        };
+        skyline(12, 0.12, 0.26, gy - H * 0.01, '#161b47', 'rgba(150,170,255,0.25)', 0.35);
+        skyline(10, 0.18, 0.40, gy, '#0c1033', 'rgba(255,210,120,0.35)', 0.5);
+        const tx = W * 0.78, tw = W * 0.07, tb = gy, th = H * 0.5;
+        const tg = ctx.createLinearGradient(tx, 0, tx + tw, 0); tg.addColorStop(0, '#1c2360'); tg.addColorStop(0.5, '#3a4590'); tg.addColorStop(1, '#10163f');
+        ctx.fillStyle = tg;
+        ctx.beginPath(); ctx.moveTo(tx - tw * 0.1, tb); ctx.lineTo(tx + tw * 1.1, tb); ctx.lineTo(tx + tw * 0.8, tb - th * 0.85); ctx.lineTo(tx + tw * 0.5, tb - th); ctx.lineTo(tx + tw * 0.2, tb - th * 0.85); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#e8c35a'; ctx.lineWidth = 2 * k;
+        for (let i = 1; i < 12; i++) { const y = tb - th * 0.8 * i / 12; ctx.beginPath(); ctx.moveTo(tx + tw * 0.05, y); ctx.lineTo(tx + tw * 0.95, y); ctx.stroke(); }
+        ctx.strokeStyle = '#cfd6ff'; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.moveTo(tx + tw * 0.5, tb - th); ctx.lineTo(tx + tw * 0.5, tb - th - H * 0.05); ctx.stroke();
+        const rd = ctx.createLinearGradient(0, gy, 0, H); rd.addColorStop(0, '#171a3a'); rd.addColorStop(1, '#07091c');
+        ctx.fillStyle = rd; ctx.fillRect(0, gy, W, H - gy);
+        for (let i = 0; i < 16; i++) {
+            const x = R() * W, w = (3 + R() * 6) * k, col = R() < 0.5 ? '255,214,120' : '150,200,255';
+            const rg = ctx.createLinearGradient(0, gy, 0, H); rg.addColorStop(0, 'rgba(' + col + ',0.28)'); rg.addColorStop(1, 'rgba(' + col + ',0)');
+            ctx.fillStyle = rg; ctx.fillRect(x, gy, w, (H - gy) * (0.5 + R() * 0.5));
+        }
+        [W * 0.07, W * 0.93].forEach(x => {
+            const top = gy - H * 0.22;
+            ctx.strokeStyle = '#2b2f66'; ctx.lineWidth = 5 * k; ctx.beginPath(); ctx.moveTo(x, gy + H * 0.04); ctx.lineTo(x, top); ctx.stroke();
+            const lg = ctx.createRadialGradient(x, top, 0, x, top, H * 0.16);
+            lg.addColorStop(0, 'rgba(255,225,150,0.75)'); lg.addColorStop(1, 'rgba(255,225,150,0)');
+            ctx.fillStyle = lg; ctx.fillRect(x - H * 0.16, top - H * 0.16, H * 0.32, H * 0.32);
+            ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(x, top, 7 * k, 0, TAU); ctx.fill();
+        });
+        ctx.fillStyle = 'rgba(255,215,130,0.22)'; ctx.fillRect(0, gy - 2 * k, W, 3 * k);
+    }
+
+    sceneryCiDynB(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.70, TAU = Math.PI * 2;
+        const tx = W * 0.78, tw = W * 0.07, tb = gy, th = H * 0.5;
+        for (const [wx, wy, cw, ch, col] of c.flick) { ctx.fillStyle = col + (0.85 * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 3 + wx)))) + ')'; ctx.fillRect(wx, wy, cw, ch); }
+        const bk = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 3));
+        ctx.fillStyle = 'rgba(255,60,70,' + bk + ')'; ctx.beginPath(); ctx.arc(tx + tw * 0.5, tb - th - H * 0.052, 4 * k, 0, TAU); ctx.fill();
+        const bg2 = ctx.createRadialGradient(tx + tw * 0.5, tb - th - H * 0.052, 0, tx + tw * 0.5, tb - th - H * 0.052, 22 * k);
+        bg2.addColorStop(0, 'rgba(255,60,70,' + bk * 0.5 + ')'); bg2.addColorStop(1, 'rgba(255,60,70,0)'); ctx.fillStyle = bg2; ctx.fillRect(tx - 30 * k, tb - th - H * 0.1, tw + 60 * k, H * 0.1);
+        ctx.strokeStyle = 'rgba(255,230,160,0.4)'; ctx.lineWidth = 3 * k; ctx.setLineDash([14 * k, 16 * k]); ctx.lineDashOffset = -t * 60 * k;
+        ctx.beginPath(); ctx.moveTo(W / 2, gy); ctx.lineTo(W / 2, H); ctx.stroke(); ctx.setLineDash([]);
+        for (let i = 0; i < 5; i++) {
+            const p = ((t * 0.3 + i / 5) % 1), y = gy + (H - gy) * p * p, w = W * (0.05 + 0.35 * p * p) * 0.5, red = i % 2 === 0;
+            ctx.fillStyle = red ? 'rgba(255,70,80,' + (0.7 * p) + ')' : 'rgba(255,245,200,' + (0.7 * p) + ')';
+            const x = red ? W / 2 + w * 0.9 : W / 2 - w * 0.9; ctx.fillRect(x - w * 0.25, y, w * 0.5, (2 + 4 * p) * k);
+        }
+    }
+
+    sceneryMqBack(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.72, TAU = Math.PI * 2;
+        const R = rng(0x4a91);
+        const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+        // mur du fond : ocre avec bande de motifs
+        const wl = ctx.createLinearGradient(0, 0, 0, gy); wl.addColorStop(0, '#6a2f16'); wl.addColorStop(1, '#b8622b');
+        ctx.fillStyle = wl; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = 'rgba(255,230,170,0.16)';
+        for (let r = 0; r < 6; r++) for (let c = 0; c < 8; c++) rr(c * W / 8 + 3 * k + (r % 2) * W / 16, H * 0.31 + r * H * 0.055, W / 8 - 6 * k, H * 0.05, 3 * k), ctx.fill();
+        const by = H * 0.57, bh = H * 0.028, bc = ['#f2b705', '#c8202f', '#0b8a3e', '#f4ead0'], bw2 = bh * 1.5;
+        for (let x = 0, i = 0; x < W; x += bw2, i++) { ctx.fillStyle = bc[i % 4]; ctx.beginPath(); ctx.moveTo(x, by + bh); ctx.lineTo(x + bw2 / 2, by); ctx.lineTo(x + bw2, by + bh); ctx.closePath(); ctx.fill(); }
+        // toit de chaume + poutre
+        ctx.fillStyle = '#7e5a22'; ctx.fillRect(0, 0, W, H * 0.27);
+        ctx.strokeStyle = 'rgba(40,24,6,0.45)'; ctx.lineWidth = 2 * k;
+        for (let i = 0; i < 90; i++) { const x = R() * W, y = R() * H * 0.26; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (R() - 0.5) * 10 * k, y + 16 * k); ctx.stroke(); }
+        ctx.fillStyle = '#9a7430';
+        ctx.beginPath(); ctx.moveTo(0, H * 0.25); for (let x = 0; x <= W + 12 * k; x += 12 * k) ctx.lineTo(x, H * 0.27 + ((x / (12 * k)) % 2 ? 9 * k : 0)); ctx.lineTo(W, H * 0.25); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#3a2112'; ctx.fillRect(0, H * 0.285, W, H * 0.018);
+        ctx.fillStyle = '#4a2a15'; ctx.fillRect(W * 0.012, H * 0.285, W * 0.03, gy - H * 0.285); ctx.fillRect(W * 0.958, H * 0.285, W * 0.03, gy - H * 0.285);
+        const sw = W * 0.72, sh = H * 0.115, sx = (W - sw) / 2, sy = H * 0.145;
+        ctx.strokeStyle = '#2a170c'; ctx.lineWidth = 3 * k;
+        ctx.beginPath(); ctx.moveTo(sx + sw * 0.12, H * 0.285); ctx.lineTo(sx + sw * 0.12, sy + sh); ctx.moveTo(sx + sw * 0.88, H * 0.285); ctx.lineTo(sx + sw * 0.88, sy + sh); ctx.stroke();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; rr(sx + 5 * k, sy + 7 * k, sw, sh, 14 * k); ctx.fill();
+        const wg = ctx.createLinearGradient(0, sy, 0, sy + sh); wg.addColorStop(0, '#3a1f10'); wg.addColorStop(1, '#1f1008');
+        ctx.fillStyle = wg; rr(sx, sy, sw, sh, 14 * k); ctx.fill();
+        ctx.strokeStyle = '#f2b705'; ctx.lineWidth = 4 * k; rr(sx + 6 * k, sy + 6 * k, sw - 12 * k, sh - 12 * k, 10 * k); ctx.stroke();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+        let fs1 = sh * 0.32; ctx.font = '900 ' + fs1 + 'px ' + FONT_STACK;
+        const l1 = 'VIDÉO PLUS', w1 = ctx.measureText(l1).width; if (w1 > sw * 0.8) { fs1 *= sw * 0.8 / w1; ctx.font = '900 ' + fs1 + 'px ' + FONT_STACK; }
+        ctx.fillStyle = '#f4ead0'; ctx.fillText(l1, W / 2, sy + sh * 0.3);
+        let fs2 = sh * 0.46; ctx.font = '900 ' + fs2 + 'px ' + FONT_STACK;
+        const l2 = 'MAQUIS', w2 = ctx.measureText(l2).width; if (w2 > sw * 0.8) { fs2 *= sw * 0.8 / w2; ctx.font = '900 ' + fs2 + 'px ' + FONT_STACK; }
+        ctx.strokeStyle = '#7a1a10'; ctx.lineWidth = fs2 * 0.12; ctx.strokeText(l2, W / 2, sy + sh * 0.68);
+        ctx.fillStyle = '#ffc928'; ctx.fillText(l2, W / 2, sy + sh * 0.68);
+        for (let g = 0; g < 2; g++) {
+            const y0 = H * (0.305 + g * 0.035), sag = H * (0.05 + g * 0.012);
+            ctx.strokeStyle = 'rgba(20,10,4,0.8)'; ctx.lineWidth = 1.5 * k; ctx.beginPath(); ctx.moveTo(0, y0); ctx.quadraticCurveTo(W / 2, y0 + sag * 2, W, y0); ctx.stroke();
+        }
+        const shx = W * 0.72, shy = H * 0.50, shw = W * 0.26;
+        ctx.fillStyle = '#3a2112'; ctx.fillRect(shx, shy, shw, 5 * k); ctx.fillRect(shx, shy - H * 0.095, shw, 5 * k);
+        [shy, shy - H * 0.095].forEach((yy, row) => { for (let i = 0; i < 7; i++) {
+            const x = shx + shw * (0.06 + 0.13 * i), c = ['#2f8f3f', '#c58a1c', '#8a3a1a', '#d8d8c8'][(i + row) % 4], bh2 = H * 0.06;
+            ctx.fillStyle = c; rr(x - 5 * k, yy - bh2, 10 * k, bh2, 3 * k); ctx.fill(); ctx.fillRect(x - 2 * k, yy - bh2 - 8 * k, 4 * k, 9 * k);
+            ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x - 3 * k, yy - bh2 * 0.9, 1.5 * k, bh2 * 0.6);
+        } });
+        // sol : terre battue + carrelage en perspective
+        const fl = ctx.createLinearGradient(0, gy, 0, H); fl.addColorStop(0, '#7a4a2a'); fl.addColorStop(1, '#3a2214');
+        ctx.fillStyle = fl; ctx.fillRect(0, gy, W, H - gy);
+        ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1.5 * k;
+        for (let i = 1; i < 8; i++) { const y = gy + (H - gy) * Math.pow(i / 8, 1.6); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+        for (let i = -7; i <= 7; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * W * 0.035, gy); ctx.lineTo(W / 2 + i * W * 0.2, H); ctx.stroke(); }
+        const tx = W * 0.86, tby = gy + H * 0.06;
+        ctx.fillStyle = '#c8202f'; [[-W * 0.075, 0], [W * 0.075, 0]].forEach(([dx]) => { rr(tx + dx - W * 0.03, tby - H * 0.085, W * 0.06, H * 0.012, 3 * k); ctx.fill(); rr(tx + dx - W * 0.03, tby - H * 0.085, W * 0.012, H * 0.09, 3 * k); ctx.fill(); ctx.fillRect(tx + dx - W * 0.027, tby - H * 0.03, W * 0.054, H * 0.012); ctx.fillRect(tx + dx - W * 0.022, tby - H * 0.02, W * 0.006, H * 0.07); ctx.fillRect(tx + dx + W * 0.016, tby - H * 0.02, W * 0.006, H * 0.07); });
+        ctx.fillStyle = '#e8d9b0'; rr(tx - W * 0.07, tby - H * 0.06, W * 0.14, H * 0.014, 4 * k); ctx.fill();
+        ctx.fillStyle = '#8a6a3a'; ctx.fillRect(tx - W * 0.055, tby - H * 0.046, W * 0.012, H * 0.09); ctx.fillRect(tx + W * 0.043, tby - H * 0.046, W * 0.012, H * 0.09);
+        ctx.fillStyle = '#2f8f3f'; rr(tx - W * 0.03, tby - H * 0.1, 8 * k, H * 0.04, 3 * k); ctx.fill();
+        ctx.fillStyle = '#f4ead0'; ctx.beginPath(); ctx.ellipse(tx + W * 0.025, tby - H * 0.064, W * 0.03, H * 0.008, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#c8741c'; ctx.beginPath(); ctx.ellipse(tx + W * 0.025, tby - H * 0.07, W * 0.022, H * 0.007, 0, 0, TAU); ctx.fill();
+    }
+
+    sceneryMqDynA(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.72, TAU = Math.PI * 2;
+        const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+        const sw = W * 0.72, sh = H * 0.115, sx = (W - sw) / 2, sy = H * 0.145;
+        const flick = 0.85 + 0.15 * Math.sin(t * 9);
+        for (let i = 0; i <= 14; i++) { const x = sx + 12 * k + (sw - 24 * k) * i / 14; ctx.fillStyle = 'rgba(255,230,140,' + (0.6 + 0.4 * Math.sin(t * 5 + i)) * flick + ')'; ctx.beginPath(); ctx.arc(x, sy + 3 * k, 3 * k, 0, TAU); ctx.arc(x, sy + sh - 3 * k, 3 * k, 0, TAU); ctx.fill(); }
+        for (let g = 0; g < 2; g++) {
+            const y0 = H * (0.305 + g * 0.035), sag = H * (0.05 + g * 0.012);
+            for (let i = 1; i < 12; i++) {
+                const u = i / 12, x = W * u, y = y0 + 2 * sag * u * (1 - u) * 2 + Math.sin(t * 1.6 + i + g) * 1.5 * k;
+                const on = 0.7 + 0.3 * Math.sin(t * 4 + i * 1.7), c0 = (i + g) % 3 === 0 ? '255,120,80' : (i + g) % 3 === 1 ? '255,224,120' : '140,255,180';
+                ctx.globalAlpha = on; ctx.drawImage(this.glowSprite(c, c0, 20 * k, 0.55), x - 20 * k, y - 15 * k); ctx.globalAlpha = 1;
+
+                ctx.fillStyle = 'rgba(' + c0 + ',' + on + ')'; ctx.beginPath(); ctx.ellipse(x, y + 5 * k, 3.5 * k, 5 * k, 0, 0, TAU); ctx.fill();
+            }
+        }
+        const gx = W * 0.15, gby = gy + H * 0.055, gwd = W * 0.19;
+        const em = ctx.createRadialGradient(gx, gby - H * 0.06, 0, gx, gby - H * 0.06, W * 0.3);
+        em.addColorStop(0, 'rgba(255,140,40,' + (0.38 + 0.08 * Math.sin(t * 11)) + ')'); em.addColorStop(1, 'rgba(255,140,40,0)'); ctx.fillStyle = em; ctx.fillRect(0, gy - H * 0.2, W * 0.5, H * 0.4);
+    }
+
+    sceneryMqFront(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.72, TAU = Math.PI * 2;
+        const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+        const gx = W * 0.15, gby = gy + H * 0.055, gwd = W * 0.19;
+        ctx.fillStyle = '#2a2a30'; ctx.beginPath(); ctx.moveTo(gx - gwd / 2, gby - H * 0.09); ctx.lineTo(gx + gwd / 2, gby - H * 0.09); ctx.lineTo(gx + gwd * 0.38, gby); ctx.lineTo(gx - gwd * 0.38, gby); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ff7a1c'; ctx.fillRect(gx - gwd * 0.46, gby - H * 0.098, gwd * 0.92, H * 0.016);
+        ctx.strokeStyle = '#8a8a92'; ctx.lineWidth = 2 * k;
+        ctx.beginPath(); for (let i = 0; i < 5; i++) { const y = gby - H * 0.102 + i * 0; ctx.moveTo(gx - gwd * 0.5, y); ctx.lineTo(gx + gwd * 0.5, y); } ctx.stroke();
+        ctx.fillStyle = '#8a4a1c'; for (let i = 0; i < 4; i++) { rr(gx - gwd * 0.34 + i * gwd * 0.2, gby - H * 0.115, gwd * 0.15, H * 0.014, 5 * k); ctx.fill(); }
+        const am = ctx.createLinearGradient(0, 0, 0, H); am.addColorStop(0, 'rgba(255,170,60,0.06)'); am.addColorStop(1, 'rgba(60,20,0,0.22)'); ctx.fillStyle = am; ctx.fillRect(0, 0, W, H);
+    }
+
+    sceneryMqDynB(t, c) {
+        const ctx = this.ctx, W = this.width, H = this.height, k = this.k, gy = H * 0.72, TAU = Math.PI * 2;
+        const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+        const gx = W * 0.15, gby = gy + H * 0.055, gwd = W * 0.19;
+        for (let i = 0; i < 9; i++) { const x = gx - gwd * 0.42 + gwd * 0.84 * i / 8, f = 0.5 + 0.5 * Math.sin(t * 9 + i * 2); ctx.fillStyle = 'rgba(255,' + (150 + 80 * f | 0) + ',40,' + (0.7 + 0.3 * f) + ')'; ctx.beginPath(); ctx.moveTo(x - 5 * k, gby - H * 0.098); ctx.quadraticCurveTo(x, gby - H * (0.13 + 0.03 * f), x + 5 * k, gby - H * 0.098); ctx.closePath(); ctx.fill(); }
+        for (let i = 0; i < 7; i++) { const p = ((t * 0.28 + i / 7) % 1), x = gx + Math.sin(t * 1.5 + i * 2) * 16 * k * p + (i - 3) * 4 * k, y = gby - H * 0.12 - p * H * 0.27; ctx.fillStyle = 'rgba(235,235,240,' + 0.28 * (1 - p) + ')'; ctx.beginPath(); ctx.arc(x, y, (8 + 20 * p) * k, 0, TAU); ctx.fill(); }
+        for (let i = 0; i < 5; i++) { const p = ((t * 0.7 + i * 0.37) % 1), x = gx + Math.sin(i * 5.3) * gwd * 0.35 + Math.sin(t * 3 + i) * 5 * k, y = gby - H * 0.1 - p * H * 0.1; ctx.fillStyle = 'rgba(255,190,60,' + (1 - p) + ')'; ctx.beginPath(); ctx.arc(x, y, 1.6 * k, 0, TAU); ctx.fill(); }
+        [[0.35, 0.34], [0.65, 0.34]].forEach(([lx, ly], i) => { const x = W * lx, y = H * ly + Math.sin(t * 1.4 + i * 3) * 3 * k; ctx.strokeStyle = '#2a170c'; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.moveTo(x, H * 0.303); ctx.lineTo(x, y); ctx.stroke(); const g = ctx.createRadialGradient(x, y + 14 * k, 0, x, y + 14 * k, 46 * k); g.addColorStop(0, 'rgba(255,200,100,0.6)'); g.addColorStop(1, 'rgba(255,200,100,0)'); ctx.fillStyle = g; ctx.fillRect(x - 46 * k, y - 32 * k, 92 * k, 92 * k); ctx.fillStyle = 'rgba(255,214,120,' + (0.85 + 0.1 * Math.sin(t * 8 + i)) + ')'; rr(x - 8 * k, y, 16 * k, 26 * k, 5 * k); ctx.fill(); ctx.strokeStyle = '#6a3c14'; ctx.lineWidth = 2.5 * k; rr(x - 8 * k, y, 16 * k, 26 * k, 5 * k); ctx.stroke(); });
+    }
+
+
     // ---------- Arrière-plans animés ----------
     drawBackground(scene, t, idx, style, seed) {
         const ctx = this.ctx, W = this.width, H = this.height, k = this.k;
         const bg = ASSETS.backgrounds.find(b => b.id === scene.background) || ASSETS.backgrounds[0];
+        if (bg.scenery) { this.drawScenery(bg.id, t); this.drawVignette(); return; }
         const diag = Math.hypot(W, H) / 2;
         const ang = 0.95 + 0.35 * Math.sin(t * 0.25 + idx);
         const g = ctx.createLinearGradient(W / 2 - Math.cos(ang) * diag, H / 2 - Math.sin(ang) * diag, W / 2 + Math.cos(ang) * diag, H / 2 + Math.sin(ang) * diag);
@@ -4147,6 +5097,7 @@ async function loadProject(id) {
     const project = projects.find(p => p.id === id);
     if (project) {
         state.project = forceUniqueRiveCharacter(project);
+        { const fx = StoryMind.repairProject(state.project); if (fx.length) { console.info('[StoryMind] réparations', fx); setTimeout(() => showToast('🧠 ' + fx.length + ' correction' + (fx.length > 1 ? 's' : '') + ' automatique' + (fx.length > 1 ? 's' : '') + ' appliquée' + (fx.length > 1 ? 's' : '')), 600); } }
         saveProject();
         state.currentTime = 0;
         showScreen('editorScreen');
@@ -4684,7 +5635,7 @@ async function llmBrain({ idea, script, options, cfg }) {
     const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. First build a private semantic model of each sentence: subject, literal action, object, time, cause, consequence, uncertainty, negation, metaphor, contrast and emotional intensity. Then choose visuals that make the meaning obvious in the first second.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
-        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression.';
+        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression. Backgrounds african_day (luxurious African daytime setting), city_night (luxury city at night) and maquis (the open-air restaurant called Vidéo Plus Maquis) must be chosen only when the story itself takes place there; never pick them at random.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -4711,7 +5662,7 @@ async function llmBrain({ idea, script, options, cfg }) {
 // ===== JEU DU PERSONNAGE : frise modifiable + réalisateur IA =====
 const ACT_LABELS = {
     emo: { joy: 'Joie', sad: 'Tristesse', angry: 'Colère', surprise: 'Surprise', fear: 'Peur', think: 'Réflexion', proud: 'Fierté', love: 'Amour', doubt: 'Doute', excited: 'Excitation', disgust: 'Dégoût', shy: 'Gêne', tired: 'Fatigue', smug: 'Malice' },
-    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', draw: 'Puiser de l’eau', plant: 'Planter une graine', water: 'Arroser', run: 'Courir', fall: 'Tomber', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
+    gesture: { wave: 'Saluer', smile: 'Sourire profond', wink: 'Clin d’œil', turn: 'Se retourner', draw: 'Puiser de l’eau', plant: 'Planter une graine', water: 'Arroser', run: 'Courir', fall: 'Tomber', walk: 'Marcher', crouch: 'S’accroupir', kneel: 'S’agenouiller', bow: 'S’incliner', kick: 'Coup de pied', stretch: 'S’étirer', laugh: 'Rire', beckon: 'Inviter', clap: 'Applaudir', thumbs: 'Pouce levé', headhands: 'Mains sur la tête', shush: 'Chut', stop: 'Stop', facepalm: 'Main sur le front', cross: 'Bras croisés', shrug: 'Hausser les épaules', hips: 'Poings sur les hanches', wide: 'Bras ouverts', up: 'Montrer en haut', down: 'Montrer en bas', money: 'Paumes (argent)', chin: 'Main au menton', heart: 'Main sur le cœur', present: 'Présenter', side: 'Montrer le côté', viewer: 'Montrer le public', self: 'Se montrer' },
     prop: { phone: 'Téléphone Android', keypad: 'Téléphone à touches', laptop: 'Ordinateur portable', tablet: 'Tablette', camera: 'Appareil photo', radio: 'Radio', mango: 'Mangue', banana: 'Banane', orange: 'Orange', apple: 'Pomme', watermelon: 'Pastèque', pineapple: 'Ananas', lemon: 'Citron', coconut: 'Noix de coco', grapes: 'Raisin', money: 'Billets', book: 'Livre', mic: 'Micro' },
     count: { 1: '1 doigt', 2: '2 doigts', 3: '3 doigts', 4: '4 doigts', 5: '5 doigts' },
     shot: { close: 'Gros plan', wide: 'Plan large' },
@@ -4762,10 +5713,10 @@ function actingPlay(i) {
 }
 // Le réalisateur IA lit toute l'histoire et écrit la partition de jeu de chaque scène (mot par mot)
 async function directorBrain(scenes, cfg) {
-    const list = scenes.map((s, i) => '[' + i + '] ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
+    const list = scenes.map((s, i) => '[' + i + '] (' + (Math.round((s.duration || 5) * 10) / 10) + 's) ' + splitWords(s.narration).map((w, k) => k + ':' + w).join(' ')).join('\n');
     const prompt = 'You are the acting director of an animated film. ONE animated presenter character tells the story below. For each scene decide how the character acts, word by word. The words of each scene are numbered (index:word). Understand the whole story: negation (\"not sad\" means relieved), irony, contrast (\"but\"), the emotional arc across scenes, and what is physically described.\n' +
         'Return ONLY valid JSON, no markdown: {\"scenes\":[{\"i\": scene number, \"base\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"strength\": number 0.4-1, \"events\":[{\"w\": word index, and exactly ONE of: \"emo\": one of [' + ActingBrain.LISTS.emos.join(', ') + '], \"gesture\": one of [' + ActingBrain.LISTS.gestures.join(', ') + ', count, hold], \"n\": 1-5 (only with gesture count), \"prop\": one of [' + ActingBrain.LISTS.props.join(', ') + '] (only with gesture hold), \"shot\": close or wide, \"head\": nod or shake, \"look\": left, right, up, down or cam}]}]}\n' +
-        'Rules: 2 to 8 events per scene, only where the acting is meaningful. Put an emotion event on each meaningful change, on the word that triggers it. An emotion event becomes the active emotional state until the next emotion event or the end of the scene; do not reset to the base after a few seconds. Keep the base as the starting mood, and include an emotion cue after a real contrast such as ‘but’ when the story changes direction. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone (phone = Android smartphone, keypad = button phone)/laptop/tablet/camera/radio/a fruit (mango, banana, orange, apple, watermelon, pineapple, lemon, coconut, grapes)/money/book/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors, detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
+        'Rules: each scene shows its duration in seconds. Give about ONE gesture event per sentence, or one every 2.5 to 3 seconds of narration (never leave a sentence of more than 2 seconds without a gesture), plus emotion events on each real change: up to 14 events per scene. Choose each gesture for the FUNCTION of the sentence: question = chin, enumeration = count, speaking to the viewer (tu/vous) = viewer, pointing at something or somewhere = side, important point or presenting something = present, large quantity or inclusiveness = wide, uncertainty = shrug, speaking about oneself = self, success = thumbs or up, setback = down. Vary the gestures; never use the same gesture twice in a row. Put the gesture on the most meaningful word of the sentence. Put an emotion event on each meaningful change, on the word that triggers it. An emotion event becomes the active emotional state until the next emotion event or the end of the scene; do not reset to the base after a few seconds. Keep the base as the starting mood, and include an emotion cue after a real contrast such as ‘but’ when the story changes direction. Gestures must match the meaning of the words (wave for greetings, stop for warnings, count with n for enumerations, hold with a prop when a phone (phone = Android smartphone, keypad = button phone)/laptop/tablet/camera/radio/a fruit (mango, banana, orange, apple, watermelon, pineapple, lemon, coconut, grapes)/money/book/mic is mentioned, plant for a literal seed-planting action, water for literally watering a plant, wide or heart for collective help or generosity, proud/hips for perseverance after mockery or criticism, shrug for uncertainty, heart for affection, run when the character runs or flees, fall ONLY when the character literally trips or falls down (never for prices, numbers or markets falling), jump when the character jumps or bounces, dance when the character dances or celebrates, cry when the character cries or is in tears, shake when the character trembles from fear or cold, sleep when the character sleeps or goes to bed, laugh when the character laughs or jokes, walk when the character walks, crouch when the character crouches, bends down or picks something up, kneel when the character kneels or prays, bow when the character bows, kick when the character kicks, stretch when the character stretches, yawns or wakes up). Read the whole sentence before choosing an action: distinguish literal physical actions from metaphors and idioms (\"pleurer de rire\" = laughing, \"tomber amoureux\" = love, falling prices are not a person falling), detect irony (a cheerful word in a bitter sentence = smug or angry, not joy), detect hypotheticals (\"imagine that you run\" is not running), detect negation ("not crying" means relief, do not play cry), detect contrast ("sad but successful" changes toward joy), and prefer the action attached to the subject doing it. Use a close shot only for the strongest emotional moment (max one per scene). Never repeat the same event twice in a row. base is the overall mood of the scene.\n\nSCENES:\n' + list;
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 45000);
     try {
@@ -4789,6 +5740,12 @@ const LITERAL_ACTION_RE = {
     shake: /\b(?:trembl\w*|frissonn\w*|grelott\w*)\b/i,
     sleep: /\b(?:dorm\w*|somnole\w*|sommeill\w*|au lit|bonne nuit)\b/i,
     laugh: /\b(?:rigo\w*|eclat\w* de rire|fourir\w*|haha|hihi|blague|drole)\b/i,
+    walk: /\b(?:march\w*|promen\w*|avanc\w*|arpent\w*|a pied)\b/i,
+    crouch: /\b(?:accroupi\w*|baiss\w*|ramass\w*|courb\w*)\b/i,
+    kneel: /\b(?:agenouill\w*|a genoux|genoux|prie\w*|priere)\b/i,
+    bow: /\b(?:incline\w*|reverence|penche\w*|salue\w*)\b/i,
+    kick: /\b(?:coup de pied|shoot\w*|ballon|botte\w*)\b/i,
+    stretch: /\b(?:etire\w*|etirement\w*|baille\w*|reveill\w*)\b/i,
 };
 const BODY_ACTIONS = new Set(Object.keys(LITERAL_ACTION_RE));
 function actingContextWords(words, i) {
@@ -4821,7 +5778,7 @@ function actingIsNegatedOrHypothetical(words, i) {
 function cleanActing(raw, scene) {
     const words = splitWords(scene.narration), text = norm(scene.narration), nW = words.length, L = ActingBrain.LISTS, ok = (v, arr) => arr.includes(v);
     const events = [], seen = new Set();
-    (Array.isArray(raw.events) ? raw.events : []).slice(0, 12).forEach(e => {
+    (Array.isArray(raw.events) ? raw.events : []).slice(0, 20).forEach(e => {
         if (!e || typeof e !== 'object') return;
         const w = Math.max(0, Math.min(nW - 1, Math.round(+e.w || 0))), ev = { w };
         if (ok(e.emo, L.emos)) ev.emo = e.emo;
@@ -4838,12 +5795,13 @@ function cleanActing(raw, scene) {
         // Un geste corporel n’est conservé que si l’action est réellement décrite,
         // et jamais dans une négation ou une hypothèse (« si tu cours », « ne pleure pas »).
         if (BODY_ACTIONS.has(ev.gesture) && (!LITERAL_ACTION_RE[ev.gesture].test(text) || actingIsNegatedOrHypothetical(words, w))) return;
+        try { const M = StoryMind.read(scene, LipSync.info(scene)); if (!M.open && ev.gesture && ev.gesture !== 'count' && ev.gesture !== 'hold' && !M.okGesture(w, ev.gesture)) return; } catch (_) {}
         if (ev.shot === 'close' && events.some(x => x.shot === 'close')) return;
         seen.add(key);
         events.push(ev);
     });
     events.sort((a, b) => a.w - b.w);
-    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events: events.slice(0, 8) };
+    return { src: 'ia', base: ok(raw.base, L.emos) ? raw.base : 'joy', strength: Math.max(0.3, Math.min(1, +raw.strength || 0.6)), events: events.slice(0, 14) };
 }
 let directorBusy = false;
 async function runDirector(silent) {
@@ -4858,7 +5816,9 @@ async function runDirector(silent) {
         (out.scenes || []).forEach(r => {
             const sc = state.project.scenes[+r.i];
             if (!sc || !r || (sc.acting && sc.acting.src === 'manual')) return;      // ce que tu as réglé à la main n'est jamais écrasé
-            sc.acting = cleanActing(r, sc); n++;
+            const ca = cleanActing(r, sc);
+            if (!ca.events.length && Array.isArray(r.events) && r.events.length) return;      // tout a été rejeté (contresens) : le cerveau local garde la main
+            sc.acting = ca; n++;
         });
         if (!n) throw new Error('réponse vide');
         saveProject(); renderCurrentFrame();
@@ -4921,6 +5881,7 @@ async function runBrain(auto) {
             updatedAt: new Date().toISOString(),
         };
         forceUniqueRiveCharacter(state.project);
+        StoryMind.repairProject(state.project);
         normalizeSocialProject(state.project);
         state.currentTime = 0;
         state.selectedSceneId = null;
@@ -4954,6 +5915,7 @@ function previewSize(format) {
 
 function initEditor() {
     forceUniqueRiveCharacter(state.project);
+    StoryMind.repairProject(state.project);
     normalizeSocialProject(state.project);
     document.getElementById('editorTitle').textContent = state.project.title;
     const pv = previewSize(state.project.format);
@@ -4985,7 +5947,8 @@ function sceneBrainLine(scene) {
     if (!b) return '';
     const pose = POSE_FR[b.pose] || '';
     const txt = (b.chars && b.chars.length) ? ('◇ Personnage' + (pose ? ' · ' + pose : '')) : ('🎬 ' + (b.why || 'sans personnage'));
-    return '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + esc(txt) + '</div>';
+    const ins = ActingBrain.insight(scene);
+    return '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + esc(txt) + '</div>' + (ins ? '<div style="font-size:11px;color:var(--primary);margin-top:2px;">🧠 ' + esc(ins) + '</div>' : '');
 }
 
 function renderSceneList() {
@@ -5028,11 +5991,19 @@ function renderCurrentFrame() {
     if (!renderer || !state.project) return;
     const result = timeline.getSceneAtTime(state.currentTime);
     if (result) {
-        renderer.renderScene(result.scene, result.timeInScene);
-        const previewCanvas = document.getElementById('previewCanvas');
-        const ctx = previewCanvas.getContext('2d');
-        ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-        ctx.drawImage(renderer.canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        try {
+            renderer.renderScene(result.scene, result.timeInScene);
+            const previewCanvas = document.getElementById('previewCanvas');
+            const ctx = previewCanvas.getContext('2d');
+            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            ctx.drawImage(renderer.canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        } catch (e) {
+            // auto-réparation : une erreur de dessin ne doit jamais figer la lecture
+            renderer.__errs = (renderer.__errs || 0) + 1;
+            if (renderer.__errs <= 3) console.warn('Image réparée après erreur', e);
+            if (renderer.__errs === 1) showToast('Une image a été réparée automatiquement');
+            try { Character.reset(); } catch (_) {}
+        }
     }
 }
 
