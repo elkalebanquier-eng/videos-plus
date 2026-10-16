@@ -732,6 +732,10 @@ function hideLoading() {
 }
 
 let lastProgressPaint = 0;
+function resetProgressClock() {
+    exportStartedAt = performance.now();
+    lastProgressPaint = 0;
+}
 function updateProgress(progress) {
     progress = Math.max(0, Math.min(1, progress));
     const nowP = performance.now();
@@ -8224,12 +8228,16 @@ const WCExport = (() => {
         try {
             if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof MessageChannel === 'undefined') return null;
             const { W, H, bitrate } = dims(project, lite);
-            let codec = '';
-            for (const c of (lite ? ['avc1.42E028', 'avc1.4d0028'] : ['avc1.640028', 'avc1.4d0028', 'avc1.42E028'])) {
-                try {
-                    const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
-                    if (r && r.supported) { codec = c; break; }
-                } catch (_) { /* codec suivant */ }
+            let codec = '', hardwareAcceleration = '';
+            const codecs = lite ? ['avc1.42E028', 'avc1.4d0028'] : ['avc1.640028', 'avc1.4d0028', 'avc1.42E028'];
+            for (const acceleration of ['prefer-hardware', 'no-preference']) {
+                for (const c of codecs) {
+                    try {
+                        const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, hardwareAcceleration: acceleration, avc: { format: 'avc' } });
+                        if (r && r.supported) { codec = c; hardwareAcceleration = acceleration; break; }
+                    } catch (_) { /* codec suivant */ }
+                }
+                if (codec) break;
             }
             if (!codec) return null;
             let aacOK = false;
@@ -8239,7 +8247,7 @@ const WCExport = (() => {
                     aacOK = !!(r && r.supported);
                 }
             } catch (_) { aacOK = false; }
-            return { codec, aacOK, lite: !!lite };
+            return { codec, aacOK, lite: !!lite, hardwareAcceleration };
         } catch (e) { return null; }
     }
 
@@ -8311,7 +8319,8 @@ const WCExport = (() => {
                 const pcm = await renderAudio(project, total, useVoice, hasAudio);
                 await encodeAudio(pcm, mux, enc);
             }
-            onStatus('Création de la vidéo…');
+            onStatus('Création de la vidéo sur ce téléphone…');
+            resetProgressClock();
             updateProgress(0);
             Character.setExportQuality(true);
             const renderer = new CanvasRenderer(W, H); renderer.exportClean = true; renderer.exportClean = true;   // export MP4 : sans pastille « moment clé »
@@ -8326,7 +8335,7 @@ const WCExport = (() => {
                 },
                 error: e => { fatal = e; },
             });
-            enc.v.configure({ codec: pl.codec, width: W, height: H, bitrate, framerate: FPS, avc: { format: 'avc' } });
+            enc.v.configure({ codec: pl.codec, width: W, height: H, bitrate, framerate: FPS, ...(pl.hardwareAcceleration ? { hardwareAcceleration: pl.hardwareAcceleration } : {}), avc: { format: 'avc' } });
             const frameUs = Math.round(1e6 / FPS);
             for (let i = 0; i < frames; i++) {
                 if (fatal) throw fatal;
@@ -8369,9 +8378,9 @@ function pickRecorderMime() {
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
 function pickAudioRecorderMime() {
-    // Certains navigateurs annoncent MP4 comme supporté mais abandonnent la piste
-    // audio avec MediaRecorder. Opus/WebM est prioritaire dès qu’une piste sonore existe.
-    const list = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2'];
+    // MP4 H.264/AAC est prioritaire : les navigateurs mobiles peuvent l’encoder
+    // avec le moteur matériel du téléphone. WebM n’est qu’un candidat non livrable.
+    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
@@ -8382,34 +8391,7 @@ function exportVideoBitrate(width, height, quality) {
     return Math.max(minimum, Math.round(pixelsPerSecond * 0.13));
 }
 
-const SOCIAL_MP4_CONVERTER_URL = 'https://videos-plus-converter-live.onrender.com/convert';
-const MAX_SAFE_CONVERSION_BYTES = 150 * 1024 * 1024;
-async function convertRecordedVideoToSocialMp4(sourceBlob) {
-    const fail = message => Object.assign(new Error(message), { userMessage: message });
-    if (!sourceBlob || !sourceBlob.size) throw fail('L’export est vide; relance la création de la vidéo.');
-    if (sourceBlob.size > MAX_SAFE_CONVERSION_BYTES) throw fail('Export trop volumineux pour une conversion sûre sur ce téléphone (limite 150 Mo). Réduis la durée ou la qualité, puis réessaie.');
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8 * 60 * 1000);
-    try {
-        const form = new FormData();
-        form.append('video', sourceBlob, 'videos-plus-source.webm');
-        const response = await fetch(SOCIAL_MP4_CONVERTER_URL, { method: 'POST', body: form, signal: controller.signal });
-        if (!response.ok) {
-            let detail = '';
-            try { const payload = await response.json(); detail = payload.error || ''; } catch (_) {}
-            throw fail(detail || 'Le convertisseur MP4 est temporairement indisponible. Aucun fichier WebM ne sera téléchargé; réessaie dans un instant.');
-        }
-        if (!String(response.headers.get('content-type') || '').toLowerCase().includes('video/mp4')) throw fail('Le convertisseur n’a pas renvoyé un fichier MP4 valide. Aucun fichier n’a été téléchargé.');
-        const result = await response.blob();
-        const head = new Uint8Array(await result.slice(0, 12).arrayBuffer());
-        if (head.length < 12 || String.fromCharCode(...head.slice(4, 8)) !== 'ftyp') throw fail('Le fichier reçu n’est pas un conteneur MP4 valide. Aucun fichier n’a été téléchargé.');
-        return new Blob([result], { type: 'video/mp4' });
-    } catch (e) {
-        if (e && e.userMessage) throw e;
-        if (e && e.name === 'AbortError') throw fail('La conversion MP4 a pris trop de temps. Aucun fichier WebM n’a été téléchargé; réessaie avec une vidéo plus courte.');
-        throw fail('Conversion MP4 impossible (connexion interrompue). Aucun fichier WebM n’a été téléchargé; vérifie le réseau puis réessaie.');
-    } finally { clearTimeout(timer); }
-}
+const MAX_SAFE_LOCAL_EXPORT_BYTES = 150 * 1024 * 1024;
 
 function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n, s) => n + Number(s.duration || 0), 0); }
 
@@ -8443,6 +8425,9 @@ async function exportVideoCore() {
     const wantsAudio = !!state.project.music
         || state.project.scenes.some(scene => String(scene.narration || '').trim())
         || Settings.get().charSfx !== 'off';
+    const mobileNativeMp4 = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '')
+        && durationSeconds <= 300
+        && (wantsAudio ? pickAudioRecorderMime() : pickRecorderMime()).toLowerCase().includes('mp4');
     // Toujours préférer le vrai MP4 H.264/AAC. Si le téléphone ne propose que WebM,
     // ce format ne sera qu’un intermédiaire et ne sera jamais livré à l’utilisateur.
     const wcPlan = detectedWcPlan;
@@ -8494,7 +8479,7 @@ async function exportVideoCore() {
     updateProgress(0);
     try { await Promise.race([Character.prepare(state.project), new Promise(r => setTimeout(r, 15000))]); } catch (e) { console.warn('Personnage', e); }
     // --- Export MP4 moderne (WebCodecs) : vrai MP4 H.264/AAC, 30 i/s constantes, durée correcte ---
-    if (wcPlan) {
+    if (wcPlan && !mobileNativeMp4) {
         const hasAudio = !!state.project.music || useVoice || Settings.get().charSfx !== 'off';
         if (hasAudio && !wcPlan.aacOK) {
             console.warn('Encodeur AAC absent : mode compatible');
@@ -8605,6 +8590,7 @@ async function exportVideoCore() {
         activeRecorder = mediaRecorder;
         const actualMime = mediaRecorder.mimeType || mime || 'video/webm';
         const recorderHasMp4 = actualMime.toLowerCase().includes('mp4');
+        if (!recorderHasMp4) throw Object.assign(new Error('Aucun encodeur MP4 local disponible.'), { userMessage: 'Ce navigateur ne peut pas créer un MP4 H.264 directement sur ce téléphone. Aucun fichier ne sera envoyé sur Render ni téléchargé dans un autre format. Essaie Chrome à jour ou un appareil compatible avec l’encodeur H.264.' });
         if (directWriter && !recorderHasMp4) throw Object.assign(new Error('L’appareil a choisi un format non MP4 pour cet export long.'), { userMessage: 'L’appareil n’a pas confirmé un encodage MP4 fiable. Aucun fichier incompatible n’a été créé; raccourcis la vidéo ou utilise un navigateur compatible.' });
         const longFileName = videoFileBase() + (recorderHasMp4 ? '.mp4' : '.webm');
         let nativeWriteQueue = Promise.resolve(), nativeWriteError = null;
@@ -8627,8 +8613,8 @@ async function exportVideoCore() {
                 directWriteQueue = directWriteQueue.then(() => directWriter.write(e.data)).catch(err => { directWriteError = err; });
             } else {
                 const nextSize = recordedBytes + (e.data.size || 0);
-                if (nextSize > MAX_SAFE_CONVERSION_BYTES) {
-                    recorderError = Object.assign(new Error('Buffer MP4 trop volumineux.'), { userMessage: 'Export arrêté avant saturation de la mémoire (limite 150 Mo). Réduis la durée ou la qualité, puis réessaie.' });
+                if (nextSize > MAX_SAFE_LOCAL_EXPORT_BYTES) {
+                    recorderError = Object.assign(new Error('Buffer vidéo trop volumineux.'), { userMessage: 'Export arrêté avant saturation de la mémoire du téléphone (limite 150 Mo). Réduis la durée ou la qualité, puis réessaie.' });
                     try { if (mediaRecorder.state === 'recording') mediaRecorder.stop(); } catch (_) {}
                     return;
                 }
@@ -8647,6 +8633,9 @@ async function exportVideoCore() {
         // Première image avant de démarrer l'enregistrement
         const first = exportTimeline.getSceneAtTime(0);
         if (first) await exportRenderer.renderScene(first.scene, 0);
+        showLoading('Création de la vidéo sur ce téléphone…', true);
+        resetProgressClock();
+        updateProgress(0);
         mediaRecorder.start(1000);
         if (manualFrameCapture && videoTrack) videoTrack.requestFrame();
         let voiceN = 0;
@@ -8698,10 +8687,9 @@ async function exportVideoCore() {
         }
         const filename = nativeStream ? longFileName : (videoFileBase() + '.mp4');
         if (!nativeStream && !directWriter) {
-            showLoading(recorderHasMp4 ? 'Enregistrement du MP4…' : 'Conversion en MP4 H.264/AAC pour les réseaux…', true);
+            showLoading('Enregistrement du MP4 local…', true);
             updateProgress(1);
-            const finalBlob = recorderHasMp4 ? blob : await convertRecordedVideoToSocialMp4(blob);
-            await saveBlobToDevice(finalBlob, filename);
+            await saveBlobToDevice(blob, filename);
         }
         hideLoading();
         showToast('MP4 prête (H.264, 30 i/s' + (audioDest ? (voiceN ? ', avec voix' + (state.project.music ? ' et musique' : '') : ', avec audio') : ', sans audio') + ')');
