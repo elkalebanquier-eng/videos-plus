@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.3.8-mobile-fast-mp4">
-    <title>Vidéos Plus — VideoStory 3.3.8</title>
-    <meta name="description" content="Vidéos Plus 3.3.8 : export MP4 mobile accéléré avec repli compatible.">
+    <meta name="videostory-build" content="3.3.9-mobile-export-diagnostics">
+    <title>Vidéos Plus — VideoStory 3.3.9</title>
+    <meta name="description" content="Vidéos Plus 3.3.9 : export MP4 mobile accéléré avec diagnostic précis des erreurs.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,11 +16,11 @@
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.8">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.9">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.8">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.9">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -197,7 +197,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.8">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.9">
 <style id="vp-modern-dl">
 /* ===== Génération + téléchargement : style moderne (carte floue qui se précise, feuille « vidéo prête ») ===== */
 .loading-overlay{background:rgba(6,9,22,.74)!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
@@ -771,7 +771,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.8', channel: 'web', publicBuildId: 'videos-plus-3.3.8-mobile-fast-mp4' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.9', channel: 'web', publicBuildId: 'videos-plus-3.3.9-mobile-export-diagnostics' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -8227,15 +8227,18 @@ const WCExport = (() => {
     }
 
     // Renvoie { codec, aacOK } si l'appareil sait encoder du H.264, sinon null (=> ancien mode).
-    async function plan(project, lite) {
+    async function plan(project, lite, safeMode = false) {
         try {
             if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof MessageChannel === 'undefined') return null;
-            const { W, H, bitrate } = dims(project, lite);
+            const { W, H, bitrate: baseBitrate } = dims(project, lite);
+            // Le second essai évite de répéter le même profil matériel et réduit son débit cible.
+            const bitrate = safeMode ? Math.round(baseBitrate * 0.65) : baseBitrate;
             let codec = '', hardwareAcceleration = '';
             const codecs = lite
                 ? ['avc1.42E01F', 'avc1.4d001f', 'avc1.42E028', 'avc1.4d0028']
                 : ['avc1.640028', 'avc1.4d0028', 'avc1.42E028', 'avc1.64001F', 'avc1.4d001f', 'avc1.42E01F'];
-            for (const acceleration of ['prefer-hardware', 'no-preference']) {
+            const accelerationModes = safeMode ? ['no-preference'] : ['prefer-hardware', 'no-preference'];
+            for (const acceleration of accelerationModes) {
                 for (const c of codecs) {
                     try {
                         const r = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate, framerate: FPS, hardwareAcceleration: acceleration, avc: { format: 'avc' } });
@@ -8252,7 +8255,7 @@ const WCExport = (() => {
                     aacOK = !!(r && r.supported);
                 }
             } catch (_) { aacOK = false; }
-            return { codec, aacOK, lite: !!lite, hardwareAcceleration };
+            return { codec, aacOK, lite: !!lite, hardwareAcceleration, bitrate, safeMode: !!safeMode };
         } catch (e) { return null; }
     }
 
@@ -8309,7 +8312,8 @@ const WCExport = (() => {
     }
 
     async function run(project, pl, useVoice, hasAudio, onStatus) {
-        const { W, H, bitrate } = dims(project, pl.lite);
+        const { W, H, bitrate: baseBitrate } = dims(project, pl.lite);
+        const bitrate = Number.isFinite(pl.bitrate) ? pl.bitrate : baseBitrate;
         const timeline = new TimelineEngine(project.scenes);
             const total = timeline.getTotalDuration();
             const frames = Math.max(1, Math.round(total * FPS));
@@ -8507,15 +8511,15 @@ async function exportVideoCore() {
         } else {
             let res = null;
             for (let attempt = 0; attempt < 2 && !res; attempt++) {
-                const plan = attempt === 0 ? wcPlan : await WCExport.plan(state.project, true);
+                const plan = attempt === 0 ? wcPlan : await WCExport.plan(state.project, true, true);
                 if (!plan || (hasAudio && !plan.aacOK)) break;
                 try {
                     res = await WCExport.run(state.project, plan, useVoice, hasAudio, txt => showLoading(txt, true));
                 } catch (e) {
                     console.warn('Export MP4 moderne échoué (essai ' + (attempt + 1) + ')', e);
                     if (e && e.code === 'VOICE_EXPORT_INVALID') { hideLoading(); showToast(e.message, 'error'); return; }
-                    if (attempt === 0) showToast('Nouvel essai MP4 en mode sécurisé…', 'error');
-                    showLoading('Export MP4 (mode sécurisé)... garde l\'écran allumé', true);
+                    if (attempt === 0) showToast('Nouvel essai MP4 avec un profil d’encodage allégé…', 'error');
+                    showLoading('Export MP4 (profil de secours)… garde l’écran allumé', true);
                     updateProgress(0);
                     await new Promise(r => setTimeout(r, 400));
                 }
@@ -8527,7 +8531,7 @@ async function exportVideoCore() {
             }
             if (!res) {
                 showToast('Préparation du MP4 compatible…', 'error');
-                showLoading('Export en cours... garde l\'écran allumé', true);
+                showLoading(mobileDevice ? 'Mode compatible MP4 : rendu en temps réel…' : 'Export en cours... garde l’écran allumé', true);
                 updateProgress(0);
             }
             if (res) {
@@ -8654,7 +8658,7 @@ async function exportVideoCore() {
         // Première image avant de démarrer l'enregistrement
         const first = exportTimeline.getSceneAtTime(0);
         if (first) await exportRenderer.renderScene(first.scene, 0);
-        showLoading(mobileDevice ? 'Création MP4 locale 720p…' : 'Création de la vidéo sur cet appareil…', true);
+        showLoading(mobileDevice ? 'Mode compatible : MP4 720p en temps réel…' : 'Création de la vidéo sur cet appareil…', true);
         resetProgressClock();
         updateProgress(0);
         mediaRecorder.start(1000);
@@ -8725,7 +8729,14 @@ async function exportVideoCore() {
         VoiceStudio.stopExport();
         if (stream) stream.getTracks().forEach(tr => tr.stop());
         hideLoading();
-        showToast(error && error.code === 'VOICE_EXPORT_INVALID' ? error.message : error && error.userMessage ? error.userMessage : 'Export interrompu. Vérifie l’espace disponible puis réessaie.', 'error');
+        const errText = String(error && (error.message || error) || '');
+        const looksLikeQuota = error && error.name === 'QuotaExceededError' || /quota|storage full|disk full|not enough space|espace insuffisant/i.test(errText);
+        const message = error && error.code === 'VOICE_EXPORT_INVALID' ? errText
+            : error && error.userMessage ? error.userMessage
+            : looksLikeQuota ? 'Espace de stockage insuffisant pour enregistrer le MP4. Libère de l’espace puis réessaie.'
+            : errText ? 'Échec de l’export : ' + errText.slice(0, 150)
+            : 'Échec de l’export. Réessaie avec une vidéo plus courte.';
+        showToast(message, 'error');
     }
 }
 
