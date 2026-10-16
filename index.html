@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.3.6-speechify-empty-response-recovery">
-    <title>Vidéos Plus — VideoStory 3.3.6</title>
-    <meta name="description" content="Vidéos Plus 3.3.6 : personnages cartoon avec tenues contextuelles et export MP4 sûr.">
+    <meta name="videostory-build" content="3.3.7-mobile-export-adaptive">
+    <title>Vidéos Plus — VideoStory 3.3.7</title>
+    <meta name="description" content="Vidéos Plus 3.3.7 : personnages cartoon avec export MP4 mobile adaptatif.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,11 +16,11 @@
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.6">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.7">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.6">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.7">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -197,7 +197,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.6">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.7">
 <style id="vp-modern-dl">
 /* ===== Génération + téléchargement : style moderne (carte floue qui se précise, feuille « vidéo prête ») ===== */
 .loading-overlay{background:rgba(6,9,22,.74)!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
@@ -771,7 +771,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.6', channel: 'web', publicBuildId: 'videos-plus-3.3.6-wardrobe-outfits-mp4-safe' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.7', channel: 'web', publicBuildId: 'videos-plus-3.3.7-mobile-export-adaptive' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -2166,10 +2166,11 @@ const BuiltinCharacter = (() => {
         return reducedMotionQuery.matches;
     }
     // le moteur d'export / de lecture signale chaque intervalle entre deux images : si le téléphone peine, les effets s'allègent tout seuls
-    function noteFrame(ms) {
-        if (lite || exportQuality) return false;
-        slow = ms > 55 ? slow + 1 : Math.max(0, slow - 1);
-        if (slow >= 12) { lite = true; return true; }
+    function noteFrame(ms, adaptiveExport = false) {
+        if (lite || (exportQuality && !adaptiveExport)) return false;
+        const slowThreshold = adaptiveExport ? 90 : 55;
+        slow = ms > slowThreshold ? slow + 1 : Math.max(0, slow - 1);
+        if (slow >= (adaptiveExport ? 8 : 12)) { lite = true; return true; }
         return false;
     }
     function applyMotionComfort(a, scale) {
@@ -8349,8 +8350,12 @@ const WCExport = (() => {
             });
             enc.v.configure({ codec: pl.codec, width: W, height: H, bitrate, framerate: FPS, ...(pl.hardwareAcceleration ? { hardwareAcceleration: pl.hardwareAcceleration } : {}), avc: { format: 'avc' } });
             const frameUs = Math.round(1e6 / FPS);
+            let previousFrameStart = performance.now();
             for (let i = 0; i < frames; i++) {
                 if (fatal) throw fatal;
+                const frameStart = performance.now();
+                if (i > 0 && BuiltinCharacter.noteFrame(frameStart - previousFrameStart, isMobileExportDevice())) showToast('Rendu mobile allégé pour éviter le blocage');
+                previousFrameStart = frameStart;
                 const t = Math.min(i / FPS, Math.max(0, total - 0.001));
                 const r = timeline.getSceneAtTime(t);
                 if (r) { try { await withTimeout(renderer.renderScene(r.scene, r.timeInScene), 8000, 'dessin de la scène'); } catch (e) { if (e.code !== 'WC_TIMEOUT') throw e; /* on garde l'image précédente */ } }
@@ -8667,7 +8672,7 @@ async function exportVideoCore() {
         while (true) {
             if (recorderError) throw recorderError;
             const frameStart = performance.now();
-            if (prevStart && BuiltinCharacter.noteFrame(frameStart - prevStart)) showToast('Effets du personnage allégés pour garder la fluidité');
+            if (prevStart && BuiltinCharacter.noteFrame(frameStart - prevStart, mobileDevice)) showToast('Rendu mobile allégé pour éviter le blocage');
             prevStart = frameStart;
             const elapsed = (frameStart - renderStartMs) / 1000;
             if (elapsed >= total) break;
