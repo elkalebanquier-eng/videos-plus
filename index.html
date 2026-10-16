@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.3.7-mobile-export-adaptive">
-    <title>Vidéos Plus — VideoStory 3.3.7</title>
-    <meta name="description" content="Vidéos Plus 3.3.7 : personnages cartoon avec export MP4 mobile adaptatif.">
+    <meta name="videostory-build" content="3.3.8-mobile-fast-mp4">
+    <title>Vidéos Plus — VideoStory 3.3.8</title>
+    <meta name="description" content="Vidéos Plus 3.3.8 : export MP4 mobile accéléré avec repli compatible.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,11 +16,11 @@
     <link rel="canonical" href="https://elka-jobnet.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.7">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.8">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://elka-jobnet.vercel.app/">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.7">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.8">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://elka-jobnet.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://elka-jobnet.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
@@ -197,7 +197,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.7">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.8">
 <style id="vp-modern-dl">
 /* ===== Génération + téléchargement : style moderne (carte floue qui se précise, feuille « vidéo prête ») ===== */
 .loading-overlay{background:rgba(6,9,22,.74)!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
@@ -771,7 +771,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.7', channel: 'web', publicBuildId: 'videos-plus-3.3.7-mobile-export-adaptive' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.8', channel: 'web', publicBuildId: 'videos-plus-3.3.8-mobile-fast-mp4' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -8332,7 +8332,7 @@ const WCExport = (() => {
                 const pcm = await renderAudio(project, total, useVoice, hasAudio);
                 await encodeAudio(pcm, mux, enc);
             }
-            onStatus(isMobileExportDevice() ? 'Création MP4 locale 720p sur ce téléphone…' : 'Création de la vidéo…');
+            onStatus(isMobileExportDevice() ? 'Encodage MP4 accéléré 720p sur ce téléphone…' : 'Création de la vidéo…');
             resetProgressClock();
             updateProgress(0);
             Character.setExportQuality(true);
@@ -8444,7 +8444,9 @@ async function exportVideoCore() {
     const wantsAudio = !!state.project.music
         || state.project.scenes.some(scene => String(scene.narration || '').trim())
         || Settings.get().charSfx !== 'off';
-    const mobileNativeMp4 = mobileDevice
+    // Le chemin MediaRecorder mobile est fiable, mais encode à vitesse réelle.
+    // Préférer WebCodecs lorsqu'il annonce H.264 compatible; MediaRecorder reste le repli.
+    const mobileNativeMp4 = mobileDevice && !detectedWcPlan
         && durationSeconds <= 300
         && (wantsAudio ? pickAudioRecorderMime() : pickRecorderMime()).toLowerCase().includes('mp4');
     // Toujours préférer le vrai MP4 H.264/AAC. Si le téléphone ne propose que WebM,
