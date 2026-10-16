@@ -8195,6 +8195,7 @@ const Mp4Mux = (() => {
 // ===== EXPORT MP4 MODERNE : WebCodecs (H.264 + AAC), rendu image par image =====
 // Pas d'enregistrement en direct : chaque image est dessinée puis encodée, 30 i/s constantes,
 // l'audio est calculé à part (OfflineAudioContext). Résultat : vrai MP4 avec durée correcte.
+const MAX_MOBILE_EXPORT_WORKING_BYTES = 160 * 1024 * 1024;
 const WCExport = (() => {
     const FPS = 30, SR = 44100;
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -8218,9 +8219,10 @@ const WCExport = (() => {
     function dims(project, lite) {
         const cfg = Settings.get();
         const base = RESOLUTIONS[project.format] || RESOLUTIONS['9:16'];
-        const sc = cfg.quality === '720' ? 2 / 3 : 1;
+        const quality = isMobileExportDevice() ? '720' : cfg.quality;
+        const sc = quality === '720' ? 2 / 3 : 1;
         const W = Math.round(base.width * sc / 2) * 2, H = Math.round(base.height * sc / 2) * 2;
-        return { W, H, bitrate: Math.round(exportVideoBitrate(W, H, cfg.quality) * (lite ? 0.6 : 1)) };
+        return { W, H, bitrate: Math.round(exportVideoBitrate(W, H, quality) * (lite ? 0.6 : 1)) };
     }
 
     // Renvoie { codec, aacOK } si l'appareil sait encoder du H.264, sinon null (=> ancien mode).
@@ -8229,7 +8231,9 @@ const WCExport = (() => {
             if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof MessageChannel === 'undefined') return null;
             const { W, H, bitrate } = dims(project, lite);
             let codec = '', hardwareAcceleration = '';
-            const codecs = lite ? ['avc1.42E028', 'avc1.4d0028'] : ['avc1.640028', 'avc1.4d0028', 'avc1.42E028'];
+            const codecs = lite
+                ? ['avc1.42E01F', 'avc1.4d001f', 'avc1.42E028', 'avc1.4d0028']
+                : ['avc1.640028', 'avc1.4d0028', 'avc1.42E028', 'avc1.64001F', 'avc1.4d001f', 'avc1.42E01F'];
             for (const acceleration of ['prefer-hardware', 'no-preference']) {
                 for (const c of codecs) {
                     try {
@@ -8306,10 +8310,18 @@ const WCExport = (() => {
     async function run(project, pl, useVoice, hasAudio, onStatus) {
         const { W, H, bitrate } = dims(project, pl.lite);
         const timeline = new TimelineEngine(project.scenes);
-        const total = timeline.getTotalDuration();
-        const frames = Math.max(1, Math.round(total * FPS));
-        const withAudio = !!pl.aacOK && !!hasAudio;
-        const mux = Mp4Mux.create({ width: W, height: H, fps: FPS, sampleRate: SR, channels: 1, withAudio });
+            const total = timeline.getTotalDuration();
+            const frames = Math.max(1, Math.round(total * FPS));
+            const withAudio = !!pl.aacOK && !!hasAudio;
+            if (isMobileExportDevice()) {
+                const estimatedMp4Bytes = Math.ceil((bitrate + (withAudio ? 128000 : 0)) * total / 8);
+                const audioWorkBytes = withAudio ? Math.ceil(total * SR * 4) : 0;
+                const estimatedWorkingBytes = estimatedMp4Bytes + audioWorkBytes + 32 * 1024 * 1024;
+                if (estimatedWorkingBytes > MAX_MOBILE_EXPORT_WORKING_BYTES) {
+                    throw Object.assign(new Error('Export local trop volumineux pour la mémoire disponible.'), { userMessage: 'Cette vidéo risque de faire fermer Chrome pendant l’export. Raccourcis-la ou sépare-la en plusieurs vidéos, puis réessaie en MP4 local 720p.' });
+                }
+            }
+            const mux = Mp4Mux.create({ width: W, height: H, fps: FPS, sampleRate: SR, channels: 1, withAudio });
         const enc = { v: null, a: null };
         let fatal = null, lock = null;
         try { if (navigator.wakeLock) lock = await navigator.wakeLock.request('screen'); } catch (_) { lock = null; }
@@ -8319,7 +8331,7 @@ const WCExport = (() => {
                 const pcm = await renderAudio(project, total, useVoice, hasAudio);
                 await encodeAudio(pcm, mux, enc);
             }
-            onStatus('Création de la vidéo sur ce téléphone…');
+            onStatus(isMobileExportDevice() ? 'Création MP4 locale 720p sur ce téléphone…' : 'Création de la vidéo…');
             resetProgressClock();
             updateProgress(0);
             Character.setExportQuality(true);
@@ -8371,16 +8383,17 @@ const WCExport = (() => {
 })();
 
 // ===== EXPORT VIDEO =====
+function isMobileExportDevice() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || ''); }
 function pickRecorderMime() {
     // « video/mp4 » seul est retiré : sur certains appareils il produit du VP9/AV1 dans un MP4, que les réseaux sociaux refusent
-    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=h264,aac', 'video/webm;codecs=vp8,opus', 'video/webm'];
+    const list = ['video/mp4;codecs=avc1.42E01F,mp4a.40.2', 'video/mp4;codecs=avc1.4d001f,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=h264,aac', 'video/webm;codecs=vp8,opus', 'video/webm'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
 function pickAudioRecorderMime() {
     // MP4 H.264/AAC est prioritaire : les navigateurs mobiles peuvent l’encoder
     // avec le moteur matériel du téléphone. WebM n’est qu’un candidat non livrable.
-    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus'];
+    const list = ['video/mp4;codecs=avc1.42E01F,mp4a.40.2', 'video/mp4;codecs=avc1.4d001f,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4d0028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus'];
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
     return list.find(t => MediaRecorder.isTypeSupported(t)) || '';
 }
@@ -8421,11 +8434,12 @@ async function exportVideoCore() {
     }
     normalizeSocialProject(state.project);
     const durationSeconds = totalPreviewSeconds(state.project);
-    const detectedWcPlan = await WCExport.plan(state.project);
+    const mobileDevice = isMobileExportDevice();
+    const detectedWcPlan = await WCExport.plan(state.project, mobileDevice);
     const wantsAudio = !!state.project.music
         || state.project.scenes.some(scene => String(scene.narration || '').trim())
         || Settings.get().charSfx !== 'off';
-    const mobileNativeMp4 = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '')
+    const mobileNativeMp4 = mobileDevice
         && durationSeconds <= 300
         && (wantsAudio ? pickAudioRecorderMime() : pickRecorderMime()).toLowerCase().includes('mp4');
     // Toujours préférer le vrai MP4 H.264/AAC. Si le téléphone ne propose que WebM,
@@ -8532,9 +8546,9 @@ async function exportVideoCore() {
     try {
         const cfg = Settings.get();
         const base = RESOLUTIONS[state.project.format] || RESOLUTIONS['9:16'];
-        // La résolution choisie reste celle de l’utilisateur : l’ancienne version
-        // produisait de meilleures vidéos parce qu’elle ne baissait pas sans prévenir en 540p.
-        const sc = cfg.quality === '720' ? 2 / 3 : 1;
+        // En Android, 720p réduit la charge du Canvas et évite que Chrome ferme l’onglet.
+        const outputQuality = mobileDevice ? '720' : cfg.quality;
+        const sc = outputQuality === '720' ? 2 / 3 : 1;
         const W = Math.round(base.width * sc / 2) * 2;
         const H = Math.round(base.height * sc / 2) * 2;
         Character.setExportQuality(true);
@@ -8580,7 +8594,7 @@ async function exportVideoCore() {
 
         const mime = audioDest ? (pickAudioRecorderMime() || pickRecorderMime()) : pickRecorderMime();
         let mediaRecorder;
-        const videoBitrate = exportVideoBitrate(W, H, cfg.quality);
+        const videoBitrate = Math.round(exportVideoBitrate(W, H, outputQuality) * (mobileDevice ? 0.72 : 1));
         const recorderOptions = { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: videoBitrate, audioBitsPerSecond: 160000 };
         try { mediaRecorder = new MediaRecorder(stream, recorderOptions); }
         catch (e) {
@@ -8590,7 +8604,7 @@ async function exportVideoCore() {
         activeRecorder = mediaRecorder;
         const actualMime = mediaRecorder.mimeType || mime || 'video/webm';
         const recorderHasMp4 = actualMime.toLowerCase().includes('mp4');
-        if (!recorderHasMp4) throw Object.assign(new Error('Aucun encodeur MP4 local disponible.'), { userMessage: 'Ce navigateur ne peut pas créer un MP4 H.264 directement sur ce téléphone. Aucun fichier ne sera envoyé sur Render ni téléchargé dans un autre format. Essaie Chrome à jour ou un appareil compatible avec l’encodeur H.264.' });
+        if (!recorderHasMp4) throw Object.assign(new Error('Aucun encodeur MP4 local disponible.'), { userMessage: 'Chrome ne propose aucun encodeur H.264/MP4 local compatible sur cet appareil. Aucun fichier ne sera envoyé sur Render ni téléchargé dans un autre format.' });
         if (directWriter && !recorderHasMp4) throw Object.assign(new Error('L’appareil a choisi un format non MP4 pour cet export long.'), { userMessage: 'L’appareil n’a pas confirmé un encodage MP4 fiable. Aucun fichier incompatible n’a été créé; raccourcis la vidéo ou utilise un navigateur compatible.' });
         const longFileName = videoFileBase() + (recorderHasMp4 ? '.mp4' : '.webm');
         let nativeWriteQueue = Promise.resolve(), nativeWriteError = null;
@@ -8633,7 +8647,7 @@ async function exportVideoCore() {
         // Première image avant de démarrer l'enregistrement
         const first = exportTimeline.getSceneAtTime(0);
         if (first) await exportRenderer.renderScene(first.scene, 0);
-        showLoading('Création de la vidéo sur ce téléphone…', true);
+        showLoading(mobileDevice ? 'Création MP4 locale 720p…' : 'Création de la vidéo sur cet appareil…', true);
         resetProgressClock();
         updateProgress(0);
         mediaRecorder.start(1000);
