@@ -4629,9 +4629,9 @@ const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neu
 const VoiceStudio = (() => {
     const LABEL = { speechify: 'SpeechifyAI' };
     const cache = new Map();
+    const inflight = new Map();
     let current = null;
     let exportSources = [];
-    let queue = Promise.resolve();
     const cfg = () => Settings.get();
     const voiceFor = () => String(cfg().speechifyVoice || 'adeline').trim() || 'adeline';
     // Speechify ne propose plus que simba-3.0 (multilingue, français inclus) et simba-3.2 (anglais seulement)
@@ -4752,7 +4752,8 @@ const VoiceStudio = (() => {
         const input = clean(text), key = modelFor() + '|' + voiceFor() + '|' + input;
         if (!input) return null;
         if (cache.has(key)) return cache.get(key);
-        const job = queue.then(async () => {
+        if (inflight.has(key)) return inflight.get(key);
+        const job = (async () => {
             if (cache.has(key)) return cache.get(key);
             const lang = langFor();
             const requestSpeech = async (useWav = false) => {
@@ -4798,8 +4799,9 @@ const VoiceStudio = (() => {
             if (!buf || !buf.length || bufferPeak(buf) < 0.001) throw voiceExportError('Speechify a renvoyé une narration silencieuse. Réessaie la génération avant l’export.');
             cache.set(key, buf); try { SyncBrain.register(input, buf); SyncBrain.setMarks(input, j.speech_marks, buf.duration); } catch (_) {}
             return buf;
-        });
-        queue = job.catch(() => {});
+        })();
+        inflight.set(key, job);
+        job.finally(() => inflight.delete(key)).catch(() => {});
         return job;
     }
     const rateFor = (scene, buf) => clamp(buf.duration / Math.max(.5, scene.duration - .45), 1, 1.12);
@@ -4822,8 +4824,19 @@ const VoiceStudio = (() => {
     async function prepareProject(project,onProgress) {
         const scenes = (project && project.scenes || []).filter(s => clean(s.narration));
         if(!engineOn()) return {done:0,total:scenes.length,changed:false};
-        let done=0,changed=false;
-        for(const sc of scenes){const b=await synth(sc.narration);if(!b)throw voiceExportError('Une narration n’a pas pu être préparée.');done++;if(onProgress)onProgress(done,scenes.length);const need=Math.ceil((b.duration/1.12+.5)*10)/10;if(need>sc.duration+.05){sc.duration=Math.min(need,30);changed=true;}}
+        let done=0,changed=false,next=0;
+        const worker = async () => {
+            while (next < scenes.length) {
+                const sc = scenes[next++];
+                const b = await synth(sc.narration);
+                if (!b) throw voiceExportError('Une narration n’a pas pu être préparée.');
+                done++;
+                if(onProgress)onProgress(done,scenes.length);
+                const need=Math.ceil((b.duration/1.12+.5)*10)/10;
+                if(need>sc.duration+.05){sc.duration=Math.min(need,30);changed=true;}
+            }
+        };
+        await Promise.all(Array.from({length: Math.min(3, scenes.length)}, () => worker()));
         return {done,total:scenes.length,changed};
     }
     async function prefetch(project,onChanged){ if(!project||!engineOn())return; try{await prepareProject(project,(i,n)=>chip('🎙️ Speechify '+i+'/'+n));chip(null);if(onChanged)onChanged();}catch(e){chip(null);console.warn(e);} }
