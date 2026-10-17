@@ -8511,10 +8511,11 @@ const Mp4Mux = (() => {
 })();
 
 // ===== EXPORT MP4 MODERNE : WebCodecs (H.264 + AAC), rendu image par image =====
-// Pas d'enregistrement en direct : chaque image est dessinée puis encodée, 30 i/s constantes,
+// Pas d'enregistrement en direct : chaque image est dessinée puis encodée, 24 i/s constantes,
 // l'audio est calculé à part (OfflineAudioContext). Résultat : vrai MP4 avec durée correcte.
 const WCExport = (() => {
-    const FPS = 30, SR = 44100;
+    // 24 i/s réduit nettement le temps d’export sur téléphone tout en gardant un mouvement fluide.
+    const FPS = 24, SR = 44100;
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const yieldNow = () => new Promise(res => { const c = new MessageChannel(); c.port1.onmessage = () => { c.port1.close(); res(); }; c.port2.postMessage(0); });
     // Anti-blocage : si l'encodeur ou le rendu ne répond plus, on lève une erreur (=> nouvel essai / mode compatible)
@@ -8659,8 +8660,10 @@ const WCExport = (() => {
                 enc.v.encode(vf, { keyFrame: i % (FPS * 2) === 0 });
                 vf.close();
                 if (enc.v.encodeQueueSize > 4) await waitQueue(enc.v, 4, () => fatal, 'vidéo');
-                if (i % 5 === 0) updateProgress(i / frames);
-                if (i % 2 === 0) await yieldNow();
+                if (i % 8 === 0) updateProgress(i / frames);
+                // Rendre la main périodiquement suffit ; une pause toutes les 2 images
+                // ralentissait fortement l’export sur mobile.
+                if (i % 8 === 0) await yieldNow();
             }
             await withTimeout(enc.v.flush(), 60000 + frames * 30, 'finalisation vidéo');
             if (fatal) throw fatal;
@@ -8831,7 +8834,7 @@ async function exportVideoCore() {
                     const fname = videoFileBase() + '.mp4';
                     const saved = await saveBlobToDevice(res.blob, fname);
                     hideLoading();
-                    if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 30 i/s' + (useVoice ? ', narration incluse' : hasAudio ? ', son inclus' : ', sans son') + ')');
+                    if (saved !== false) showToast('MP4 prête (' + res.W + '×' + res.H + ', 24 i/s' + (useVoice ? ', narration incluse' : hasAudio ? ', son inclus' : ', sans son') + ')');
                 } catch (e) {
                     console.error('Enregistrement', e);
                     hideLoading();
@@ -8856,7 +8859,7 @@ async function exportVideoCore() {
         const exportRenderer = new CanvasRenderer(W, H); exportRenderer.exportClean = true;   // vidéo propre : sans pastille « moment clé » ni mot-clé d'aperçu
         const exportTimeline = new TimelineEngine(state.project.scenes);
         const total = exportTimeline.getTotalDuration();
-        const fps = 30;
+        const fps = 24;
 
         let videoTrack = null, manualFrameCapture = false;
         try {
@@ -8963,10 +8966,10 @@ async function exportVideoCore() {
             await new Promise(res => setTimeout(res, Math.max(4, 1000 / fps - (performance.now() - frameStart))));
         }
         updateProgress(1);
-        await new Promise(res => setTimeout(res, 500));
+        await new Promise(res => setTimeout(res, 180));
         if (mediaRecorder.state === 'recording') mediaRecorder.requestData();
         // Laisser au MediaRecorder le temps d’émettre le dernier chunk, proportionnellement au fichier.
-        await new Promise(res => setTimeout(res, Math.max(300, Math.min(3000, total * 8))));
+        await new Promise(res => setTimeout(res, Math.max(180, Math.min(1500, total * 4))));
         if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
         const blob = await recordingComplete;
         MusicEngine.stop();
