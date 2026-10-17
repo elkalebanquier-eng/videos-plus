@@ -624,21 +624,21 @@ function showToast(message, type = 'success') {
 async function saveBlobToDevice(blob, filename) {
     if (!blob || !blob.size) throw new Error('Fichier vidéo vide');
     if (/\.mp4$/i.test(filename) && blob.type !== 'video/mp4') blob = new Blob([blob], { type: 'video/mp4' });   // type MIME propre : le fichier est reconnu comme MP4
-    // Android/WebView : écriture native en morceaux de 96 Ko, conversion base64 faite par le navigateur (rapide, peu de mémoire).
+    // Android/WebView : écriture native en morceaux de 384 Ko, conversion base64 optimisée.
     if (window.AndroidBridge && typeof window.AndroidBridge.beginFile === 'function') {
         try {
             if (window.AndroidBridge.beginFile(filename, blob.type || 'application/octet-stream')) {
-                const step = 0x18000; // multiple de 3 : base64 sans remplissage au milieu du fichier
-                const toB64 = part => new Promise((res, rej) => {
-                    const fr = new FileReader();
-                    fr.onload = () => { const r = String(fr.result); res(r.slice(r.indexOf(',') + 1)); };
-                    fr.onerror = () => rej(fr.error || new Error('lecture impossible'));
-                    fr.readAsDataURL(part);
-                });
-                for (let i = 0, k = 0; i < blob.size; i += step, k++) {
-                    const b64 = await toB64(blob.slice(i, Math.min(i + step, blob.size)));
+                // Un seul passage en mémoire et des blocs de 384 Ko : beaucoup moins
+                // d’appels FileReader/base64 que l’ancien découpage de 96 Ko.
+                const bytes = new Uint8Array(await blob.arrayBuffer());
+                const step = 0x60000; // multiple de 3 : base64 sans remplissage au milieu
+                for (let i = 0, k = 0; i < bytes.length; i += step, k++) {
+                    const part = bytes.subarray(i, Math.min(i + step, bytes.length));
+                    let binary = '';
+                    for (let j = 0; j < part.length; j++) binary += String.fromCharCode(part[j]);
+                    const b64 = btoa(binary);
                     if (!window.AndroidBridge.writeFileChunk(b64)) { window.AndroidBridge.cancelFile(); throw new Error('écriture interrompue'); }
-                    if (k % 16 === 0) await new Promise(r => setTimeout(r, 0));
+                    if (k % 4 === 0) await new Promise(r => setTimeout(r, 0));
                 }
                 if (window.AndroidBridge.finishFile()) return true;
                 window.AndroidBridge.cancelFile();
@@ -653,7 +653,8 @@ async function saveBlobToDevice(blob, filename) {
     setTimeout(() => URL.revokeObjectURL(url), 2 * 60 * 60 * 1000);
     // Après un long export le navigateur peut bloquer le téléchargement automatique (geste utilisateur perdu) :
     // on propose toujours un bouton manuel pour que le MP4 ne soit jamais perdu.
-    offerManualDownload(url, blob, filename);
+    // L’interface de secours ne doit jamais retarder le début du téléchargement.
+    setTimeout(() => offerManualDownload(url, blob, filename), 0);
     return true;
 }
 function offerManualDownload(url, blob, filename) {
