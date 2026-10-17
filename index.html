@@ -6993,7 +6993,28 @@ const ProjectStorage = (() => {
         try { await write; }
         catch (e) { console.warn('Sauvegarde IndexedDB impossible', e); warnStorageFailure(); }
     }
-    return { ready, save, list: () => cache, isReady: () => loaded };
+    async function remove(id) {
+        await ready();
+        if (!cache.some(project => project && project.id === id)) return false;
+        if (!db) {
+            const next = cache.filter(project => project && project.id !== id);
+            try { localStorage.setItem('vse_projects', JSON.stringify(next)); }
+            catch (e) { console.warn('Suppression locale impossible', e); warnStorageFailure(); throw e; }
+            cache = next;
+            return true;
+        }
+        const write = writeQueue.then(() => new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, 'readwrite');
+            tx.objectStore(STORE).delete(id);
+            tx.oncomplete = () => resolve();
+            tx.onerror = tx.onabort = () => reject(tx.error || new Error('Suppression IndexedDB impossible'));
+        }));
+        writeQueue = write.catch(() => {});
+        await write;
+        cache = cache.filter(project => project && project.id !== id);
+        return true;
+    }
+    return { ready, save, remove, list: () => cache, isReady: () => loaded };
 })();
 function readSavedProjects() { return ProjectStorage.list(); }
 function saveProject() {
@@ -7033,7 +7054,28 @@ function loadGoVideos() {
     }
     const projects = readSavedProjects().slice().reverse();
     if (!projects.length) { container.innerHTML = '<div class="empty-state"><div class="icon">🚀</div><h3>Aucune vidéo pour le moment</h3><p>Crée ta première vidéo pour la retrouver ici.</p></div>'; return; }
-    container.innerHTML = projects.map(p => `<div class="project-card" onclick="loadProject('${p.id}')" style="margin-bottom:12px;"><div class="project-thumb"><img src="./assets/clapperboard-clay.webp" alt=""></div><div class="project-info" style="flex:1"><h4>${esc(p.title)}</h4><p>${p.scenes.length} scènes · ${formatTime(p.scenes.reduce((n,sc)=>n+sc.duration,0))} · ${new Date(p.updatedAt).toLocaleDateString()}</p></div><span style="color:var(--primary);font-size:20px">›</span></div>`).join('');
+    container.innerHTML = projects.map(p => `<div class="project-card go-project-card" data-project-id="${esc(p.id)}" style="margin-bottom:12px;"><div class="project-thumb"><img src="./assets/clapperboard-clay.webp" alt=""></div><div class="project-info" style="flex:1"><h4>${esc(p.title)}</h4><p>${p.scenes.length} scènes · ${formatTime(p.scenes.reduce((n,sc)=>n+sc.duration,0))} · ${new Date(p.updatedAt).toLocaleDateString()}</p></div><button type="button" class="go-delete" data-project-id="${esc(p.id)}" aria-label="Supprimer ${esc(p.title)} de GO" style="border:1px solid rgba(220,70,90,.28);background:rgba(220,70,90,.09);color:#b4233d;border-radius:12px;padding:10px 12px;font:600 13px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;cursor:pointer;flex-shrink:0;">Supprimer</button></div>`).join('');
+    container.querySelectorAll('.go-project-card').forEach(card => card.addEventListener('click', () => loadProject(card.dataset.projectId)));
+    container.querySelectorAll('.go-delete').forEach(button => button.addEventListener('click', event => {
+        event.preventDefault(); event.stopPropagation(); deleteGoVideo(button.dataset.projectId);
+    }));
+}
+
+async function deleteGoVideo(id) {
+    const project = readSavedProjects().find(item => item && item.id === id);
+    if (!project) { loadGoVideos(); return; }
+    const title = String(project.title || 'cette vidéo');
+    if (!confirm('Supprimer « ' + title + ' » de GO ? Le projet sauvegardé dans ce navigateur sera effacé. Cette action est irréversible. Le MP4 déjà téléchargé dans les fichiers du téléphone ne sera pas supprimé.')) return;
+    try {
+        const wasOpen = !!(state.project && state.project.id === id);
+        await ProjectStorage.remove(id);
+        if (wasOpen) { state.project = null; showScreen('homeScreen'); }
+        else { loadGoVideos(); loadRecentProjects(); }
+        showToast('Projet supprimé de GO.');
+    } catch (e) {
+        console.error('Suppression du projet', e);
+        showToast('Impossible de supprimer ce projet du stockage du navigateur.', 'error');
+    }
 }
 
 function forceUniqueRiveCharacter(project) {
