@@ -8650,7 +8650,10 @@ const WCExport = (() => {
             }
             onStatus('Création de la vidéo…');
             updateProgress(0);
-            Character.setExportQuality(true);
+            // Ne pas verrouiller le moteur en qualité maximale : sur mobile,
+            // l’ancien comportement allège automatiquement les effets lents.
+            // La résolution du MP4 reste celle choisie dans les paramètres.
+            Character.setExportQuality(false);
             const renderer = new CanvasRenderer(W, H); renderer.exportClean = true;   // export MP4 : sans pastille « moment clé »
             let gotCfg = false, lastTs = -1;
             enc.v = new VideoEncoder({
@@ -8869,7 +8872,9 @@ async function exportVideoCore() {
         const sc = cfg.quality === '720' ? 2 / 3 : 1;
         const W = Math.round(base.width * sc / 2) * 2;
         const H = Math.round(base.height * sc / 2) * 2;
-        Character.setExportQuality(true);
+        // Même logique que l’ancienne version : le personnage peut alléger ses
+        // effets si le téléphone ne tient pas la cadence, sans baisser la résolution.
+        Character.setExportQuality(false);
         const exportRenderer = new CanvasRenderer(W, H); exportRenderer.exportClean = true;   // vidéo propre : sans pastille « moment clé » ni mot-clé d'aperçu
         const exportTimeline = new TimelineEngine(state.project.scenes);
         const total = exportTimeline.getTotalDuration();
