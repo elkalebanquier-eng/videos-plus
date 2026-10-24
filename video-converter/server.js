@@ -132,9 +132,11 @@ async function runRenderJob(job, baseUrl) {
     const page = await browser.newPage({ viewport: { width: 720, height: 1280 }, deviceScaleFactor: 1 });
     page.on('console', message => { if (message.type() === 'error') console.error('[renderer]', message.text()); });
     const callback = `${baseUrl}/render/${job.id}/result`;
-    const renderUrl = `${publicAppUrl}/?serverRender=1&serverCallback=${encodeURIComponent(callback)}`;
+    const renderUrl = new URL('/index.html', publicAppUrl);
+    renderUrl.searchParams.set('serverRender', '1');
+    renderUrl.searchParams.set('serverCallback', callback);
     job.stage = 'loading-renderer';
-    await page.goto(renderUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await page.goto(renderUrl.toString(), { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.evaluate(project => { localStorage.setItem('vse_projects', JSON.stringify([project])); localStorage.setItem('vs_settings', JSON.stringify({ quality: '720' })); }, job.project);
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForFunction(() => typeof window.loadProject === 'function' && typeof window.exportVideo === 'function', null, { timeout: 60000 });
