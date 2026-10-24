@@ -44,6 +44,7 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '4mb' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'videos-plus-renderer', encoder: 'ffmpeg-h264-aac', serverCanvas: true, planMode: 'free-safe', maxRenderSeconds, activeRender }));
+function isAllowedOrigin(req) { return allowedOrigins.has(req.get('origin') || ''); }
 
 function projectDuration(project) { return (project.scenes || []).reduce((total, scene) => total + Number(scene.duration || 0), 0); }
 function validateProject(project) {
@@ -59,6 +60,7 @@ function freeRenderProject(project) {
 }
 
 app.post('/render', (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Origine non autorisée' });
   const error = validateProject(req.body);
   if (error) return res.status(400).json({ error });
   if (activeRender) return res.status(429).json({ error: 'Un rendu est déjà en cours sur le moteur gratuit Render', retryAfterSeconds: 10 });
@@ -80,6 +82,7 @@ app.get('/render/:id', (req, res) => {
 });
 
 app.post('/render/:id/result', express.raw({ type: '*/*', limit: '220mb' }), async (req, res) => {
+  if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Origine non autorisée' });
   const job = jobs.get(req.params.id);
   if (!job) return res.status(404).json({ error: 'Rendu introuvable' });
   if (job.status !== 'rendering') return res.status(409).json({ error: 'Rendu non prêt à recevoir son résultat' });
@@ -108,6 +111,7 @@ app.post('/render/:id/result', express.raw({ type: '*/*', limit: '220mb' }), asy
     res.json({ ok: true });
   } catch (error) {
     await fs.unlink(path.join(os.tmpdir(), `videos-plus-render-${job.id}.input`)).catch(() => {});
+    await fs.unlink(path.join(os.tmpdir(), `videos-plus-render-${job.id}.mp4`)).catch(() => {});
     job.status = 'failed'; job.stage = 'failed'; job.error = error?.message || 'Impossible de stocker le MP4';
     res.status(500).json({ error: job.error });
   }
