@@ -131,6 +131,8 @@ async function runRenderJob(job, baseUrl) {
     browser = await chromium.launch({ headless: true, executablePath: await findChromium(), args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process'] });
     const page = await browser.newPage({ viewport: { width: 720, height: 1280 }, deviceScaleFactor: 1 });
     page.on('console', message => { if (message.type() === 'error') console.error('[renderer]', message.text()); });
+    const pageErrors = [];
+    page.on('pageerror', error => { pageErrors.push(error.message); console.error('[renderer pageerror]', error.message); });
     const callback = `${baseUrl}/render/${job.id}/result`;
     const renderUrl = new URL('/index.html', publicAppUrl);
     renderUrl.searchParams.set('serverRender', '1');
@@ -147,7 +149,13 @@ async function runRenderJob(job, baseUrl) {
     const deadline = Date.now() + 180000;
     while (job.status === 'rendering' && Date.now() < deadline) {
       const event = await Promise.race([exportPromise.then(() => 'export-finished'), new Promise(resolve => setTimeout(() => resolve('wait'), 500))]);
-      if (event === 'export-finished' && job.status !== 'completed') throw new Error('Le rendu navigateur a fini sans transmettre le MP4');
+      if (event === 'export-finished' && job.status !== 'completed') {
+        const diagnostic = await page.evaluate(() => {
+          const params = new URLSearchParams(location.search), callback = params.get('serverCallback');
+          return { serverRender: params.get('serverRender') === '1', callbackHost: callback ? new URL(callback).host : null, toast: [...document.querySelectorAll('.toast.show')].map(node => node.textContent.trim()).filter(Boolean).slice(-3) };
+        }).catch(() => ({}));
+        throw new Error('Le rendu navigateur a fini sans transmettre le MP4; diagnostic=' + JSON.stringify({ ...diagnostic, pageErrors: pageErrors.slice(-3) }));
+      }
       if (job.stage === 'rendering-canvas') job.progress = Math.min(0.85, job.progress + 0.01);
     }
     if (job.status !== 'completed') throw new Error('Délai dépassé pendant le rendu gratuit Render');
