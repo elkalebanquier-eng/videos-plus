@@ -97,7 +97,8 @@ app.post('/render/:id/result', express.raw({ type: () => true, limit: '220mb' })
       job.stage = 'finalizing-mp4'; job.progress = 0.92;
       await fs.writeFile(input, req.body);
       await new Promise((resolve, reject) => {
-        const args = ['-y', '-i', input, '-map', '0:v:0', '-map', '0:a:0?', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output];
+        const duration = projectDuration(job.project).toFixed(3);
+        const args = ['-y', '-i', input, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'tpad=stop_mode=clone:stop_duration=60', '-fps_mode', 'cfr', '-r', '30', '-t', duration, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output];
         const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
         let stderr = '';
         child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-4000); });
