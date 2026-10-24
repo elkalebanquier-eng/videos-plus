@@ -128,9 +128,10 @@ async function runRenderJob(job, baseUrl) {
   let browser;
   job.status = 'rendering'; job.stage = 'starting-chromium';
   try {
-    browser = await chromium.launch({ headless: true, executablePath: await findChromium(), args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process'] });
+    browser = await chromium.launch({ headless: true, executablePath: await findChromium(), args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--autoplay-policy=no-user-gesture-required'] });
     const page = await browser.newPage({ viewport: { width: 720, height: 1280 }, deviceScaleFactor: 1 });
-    page.on('console', message => { if (message.type() === 'error') console.error('[renderer]', message.text()); });
+    const consoleErrors = [];
+    page.on('console', message => { if (message.type() === 'error') { consoleErrors.push(message.text()); console.error('[renderer]', message.text()); } });
     const pageErrors = [];
     page.on('pageerror', error => { pageErrors.push(error.message); console.error('[renderer pageerror]', error.message); });
     const callback = `${baseUrl}/render/${job.id}/result`;
@@ -139,7 +140,7 @@ async function runRenderJob(job, baseUrl) {
     renderUrl.searchParams.set('serverCallback', callback);
     job.stage = 'loading-renderer';
     await page.goto(renderUrl.toString(), { waitUntil: 'domcontentloaded', timeout: 120000 });
-    await page.evaluate(project => { localStorage.setItem('vse_projects', JSON.stringify([project])); localStorage.setItem('vs_settings', JSON.stringify({ quality: '720' })); }, job.project);
+    await page.evaluate(project => { localStorage.setItem('vse_projects', JSON.stringify([project])); localStorage.setItem('vs_settings', JSON.stringify({ quality: '720', charSfx: project.renderSettings?.charSfx === 'off' ? 'off' : 'on' })); }, job.project);
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForFunction(() => typeof window.loadProject === 'function' && typeof window.exportVideo === 'function', null, { timeout: 60000 });
     await page.evaluate(id => window.loadProject(id), job.project.id);
@@ -154,7 +155,7 @@ async function runRenderJob(job, baseUrl) {
           const params = new URLSearchParams(location.search), callback = params.get('serverCallback');
           return { serverRender: params.get('serverRender') === '1', callbackHost: callback ? new URL(callback).host : null, toast: [...document.querySelectorAll('.toast.show')].map(node => node.textContent.trim()).filter(Boolean).slice(-3) };
         }).catch(() => ({}));
-        throw new Error('Le rendu navigateur a fini sans transmettre le MP4; diagnostic=' + JSON.stringify({ ...diagnostic, pageErrors: pageErrors.slice(-3) }));
+        throw new Error('Le rendu navigateur a fini sans transmettre le MP4; diagnostic=' + JSON.stringify({ ...diagnostic, pageErrors: pageErrors.slice(-3), consoleErrors: consoleErrors.slice(-5) }));
       }
       if (job.stage === 'rendering-canvas') job.progress = Math.min(0.85, job.progress + 0.01);
     }

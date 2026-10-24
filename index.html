@@ -9234,7 +9234,7 @@ async function tryFreeServerRender(project, durationSeconds) {
         if (!health.ok || durationSeconds > Number(health.maxRenderSeconds || 0)) return false;
         showLoading('Envoi du projet au moteur Render…', true);
         const startResponse = await abortableFetch(SERVER_RENDER_URL + '/render', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(project)
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...project, renderSettings: { charSfx: Settings.get().charSfx === 'off' ? 'off' : 'on' } })
         });
         const startData = await startResponse.json().catch(() => ({}));
         if (!startResponse.ok) throw new Error(startData.error || 'Le moteur Render refuse ce projet');
