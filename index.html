@@ -623,7 +623,6 @@ function showToast(message, type = 'success') {
 
 async function saveBlobToDevice(blob, filename) {
     if (!blob || !blob.size) throw new Error('Fichier vidéo vide');
-    if (/\.mp4$/i.test(filename) && blob.type !== 'video/mp4') blob = new Blob([blob], { type: 'video/mp4' });   // type MIME propre : le fichier est reconnu comme MP4
     const renderParams = new URLSearchParams(location.search);
     if (renderParams.get('serverRender') === '1') {
         const callback = renderParams.get('serverCallback') || '';
@@ -632,6 +631,7 @@ async function saveBlobToDevice(blob, filename) {
         if (!response.ok) throw new Error('Le serveur n’a pas reçu la vidéo (' + response.status + ')');
         return true;
     }
+    if (/\.mp4$/i.test(filename) && blob.type !== 'video/mp4') blob = new Blob([blob], { type: 'video/mp4' });   // type MIME propre : le fichier est reconnu comme MP4
     // Android/WebView : écriture native en morceaux de 96 Ko, conversion base64 faite par le navigateur (rapide, peu de mémoire).
     if (window.AndroidBridge && typeof window.AndroidBridge.beginFile === 'function') {
         try {
@@ -9249,7 +9249,7 @@ async function tryFreeServerRender(project, durationSeconds) {
             if (status.status === 'failed') throw new Error(status.error || 'Le rendu serveur a échoué');
             if (status.stage !== lastStage) {
                 lastStage = status.stage;
-                const labels = { 'starting-chromium': 'Démarrage du moteur vidéo…', 'loading-renderer': 'Chargement du studio vidéo…', 'rendering-canvas': 'Rendu de la vidéo sur Render…', completed: 'Téléchargement du résultat…' };
+                const labels = { 'starting-chromium': 'Démarrage du moteur vidéo…', 'loading-renderer': 'Chargement du studio vidéo…', 'rendering-canvas': 'Rendu de la vidéo sur Render…', 'finalizing-mp4': 'Finalisation du fichier MP4…', completed: 'Téléchargement du résultat…' };
                 showLoading(labels[status.stage] || 'Rendu serveur en cours…', true);
             }
             updateProgress(status.status === 'completed' ? 1 : Math.max(0.05, Math.min(0.9, Number(status.progress || 0))));

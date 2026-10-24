@@ -86,10 +86,28 @@ app.post('/render/:id/result', express.raw({ type: '*/*', limit: '220mb' }), asy
   if (!req.body?.length) return res.status(400).json({ error: 'Résultat vidéo vide' });
   try {
     const output = path.join(os.tmpdir(), `videos-plus-render-${job.id}.mp4`);
-    await fs.writeFile(output, req.body);
+    const input = path.join(os.tmpdir(), `videos-plus-render-${job.id}.input`);
+    const isMp4 = req.body.length > 12 && req.body.subarray(4, 8).toString() === 'ftyp';
+    if (isMp4) {
+      await fs.writeFile(output, req.body);
+    } else {
+      job.stage = 'finalizing-mp4'; job.progress = 0.92;
+      await fs.writeFile(input, req.body);
+      await new Promise((resolve, reject) => {
+        const args = ['-y', '-i', input, '-map', '0:v:0', '-map', '0:a:0?', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output];
+        const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+        let stderr = '';
+        child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-4000); });
+        child.on('error', reject);
+        child.on('close', code => code === 0 ? resolve() : reject(new Error(stderr || `ffmpeg exit ${code}`)));
+      });
+      await fs.unlink(input).catch(() => {});
+    }
+    await fs.access(output);
     job.output = output; job.status = 'completed'; job.stage = 'completed'; job.progress = 1;
     res.json({ ok: true });
   } catch (error) {
+    await fs.unlink(path.join(os.tmpdir(), `videos-plus-render-${job.id}.input`)).catch(() => {});
     job.status = 'failed'; job.stage = 'failed'; job.error = error?.message || 'Impossible de stocker le MP4';
     res.status(500).json({ error: job.error });
   }
