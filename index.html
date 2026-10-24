@@ -5267,26 +5267,38 @@ const VoiceStudio = (() => {
                 return [code, message].filter(Boolean).join(': ');
             };
             let result = await requestSpeech(false), j = normalizeResponse(result.payload);
+            let requestId = result.res.headers.get('speechify-request-id') || result.payload.request_id || '', usedWav = false;
             if (!j.audio_data) {
                 const firstReason = responseReason(result.payload);
-                const requestId = result.res.headers.get('speechify-request-id') || result.payload.request_id || '';
                 // Un seul secours pour un HTTP réussi mais vide; pas de nouvelle tentative si Speechify renvoie une erreur explicite.
                 if (firstReason) throw new Error('Speechify : ' + firstReason + (requestId ? ' (requête ' + requestId + ')' : ''));
                 const primaryInfo = 'PCM HTTP ' + result.res.status + ', champs: ' + Object.keys(result.payload).slice(0, 8).join(', ');
                 result = await requestSpeech(true);
+                usedWav = true;
                 j = normalizeResponse(result.payload);
+                requestId = result.res.headers.get('speechify-request-id') || result.payload.request_id || requestId;
                 if (!j.audio_data) {
                     const reason = responseReason(result.payload);
-                    const retryId = result.res.headers.get('speechify-request-id') || result.payload.request_id || requestId;
                     const detail = reason || ('aucun audio_data; réponse ' + Object.keys(result.payload).slice(0, 8).join(', '));
-                    throw new Error('Speechify n’a fourni aucun audio après le secours WAV (' + primaryInfo + '; ' + detail + (retryId ? '; requête ' + retryId : '') + '). Réessaie dans un instant.');
+                    throw new Error('Speechify n’a fourni aucun audio après le secours WAV (' + primaryInfo + '; ' + detail + (requestId ? '; requête ' + requestId : '') + '). Réessaie dans un instant.');
                 }
             }
             let buf;
             const ctx = getAudioCtx();
             if (!ctx) throw new Error('Le moteur audio du navigateur n’est pas disponible.');
             buf = decodeSpeechifyAudio(ctx, j);
-            if (!buf || !buf.length || bufferPeak(buf) < 0.001) throw voiceExportError('Speechify a renvoyé une narration silencieuse. Réessaie la génération avant l’export.');
+            if (!buf || !buf.length) throw voiceExportError('Speechify a renvoyé une réponse audio vide.');
+            if (bufferPeak(buf) < 0.001) {
+                if (usedWav) throw voiceExportError('Speechify a renvoyé une narration silencieuse en PCM et en WAV. Réessaie dans un instant.' + (requestId ? ' (requête ' + requestId + ')' : ''));
+                console.warn('[Speechify] réponse PCM silencieuse; nouvel essai unique en WAV', requestId || '');
+                result = await requestSpeech(true);
+                usedWav = true;
+                j = normalizeResponse(result.payload);
+                requestId = result.res.headers.get('speechify-request-id') || result.payload.request_id || requestId;
+                if (!j.audio_data) throw voiceExportError('Speechify n’a fourni aucun audio lors du nouvel essai WAV.' + (requestId ? ' (requête ' + requestId + ')' : ''));
+                buf = decodeSpeechifyAudio(ctx, j);
+                if (!buf || !buf.length || bufferPeak(buf) < 0.001) throw voiceExportError('Speechify a renvoyé une narration silencieuse après un nouvel essai en WAV. Réessaie dans un instant.' + (requestId ? ' (requête ' + requestId + ')' : ''));
+            }
             cache.set(key, buf); try { SyncBrain.register(input, buf); SyncBrain.setMarks(input, j.speech_marks, buf.duration); } catch (_) {}
             return buf;
         });
