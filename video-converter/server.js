@@ -41,7 +41,7 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
-app.use(express.json({ limit: '768kb' }));
+app.use(express.json({ limit: '4mb' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'videos-plus-renderer', encoder: 'ffmpeg-h264-aac', serverCanvas: true, planMode: 'free-safe', maxRenderSeconds, activeRender }));
 
@@ -119,10 +119,15 @@ async function runRenderJob(job, baseUrl) {
     await page.evaluate(id => window.loadProject(id), job.project.id);
     await page.waitForTimeout(700);
     job.stage = 'rendering-canvas'; job.progress = 0.1;
-    await page.evaluate(() => window.exportVideo());
+    const exportPromise = page.evaluate(() => window.exportVideo());
     const deadline = Date.now() + 180000;
-    while (job.status === 'rendering' && Date.now() < deadline) { await new Promise(resolve => setTimeout(resolve, 500)); if (job.stage === 'rendering-canvas') job.progress = Math.min(0.85, job.progress + 0.02); }
+    while (job.status === 'rendering' && Date.now() < deadline) {
+      const event = await Promise.race([exportPromise.then(() => 'export-finished'), new Promise(resolve => setTimeout(() => resolve('wait'), 500))]);
+      if (event === 'export-finished' && job.status !== 'completed') throw new Error('Le rendu navigateur a fini sans transmettre le MP4');
+      if (job.stage === 'rendering-canvas') job.progress = Math.min(0.85, job.progress + 0.01);
+    }
     if (job.status !== 'completed') throw new Error('Délai dépassé pendant le rendu gratuit Render');
+    await exportPromise;
   } finally {
     if (browser) await browser.close().catch(() => {});
     activeRender = false;
