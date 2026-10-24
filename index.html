@@ -628,7 +628,7 @@ async function saveBlobToDevice(blob, filename) {
         const callback = renderParams.get('serverCallback') || '';
         if (!/^https:\/\/videos-plus-converter-live\.onrender\.com\/render\/render_[\w-]+\/result$/.test(callback)) throw new Error('Adresse de retour du rendu serveur invalide');
         const response = await fetch(callback, { method: 'POST', headers: { 'Content-Type': blob.type || 'video/mp4' }, body: blob });
-        if (!response.ok) throw new Error('Le serveur n’a pas reçu la vidéo (' + response.status + ')');
+        if (!response.ok) { const detail = await response.text().catch(() => ''); throw new Error('Le serveur n’a pas reçu la vidéo (' + response.status + ')' + (detail ? ' : ' + detail.slice(0, 240) : '')); }
         return true;
     }
     if (/\.mp4$/i.test(filename) && blob.type !== 'video/mp4') blob = new Blob([blob], { type: 'video/mp4' });   // type MIME propre : le fichier est reconnu comme MP4
@@ -9215,8 +9215,8 @@ function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n
 
 const SERVER_RENDER_URL = 'https://videos-plus-converter-live.onrender.com';
 async function tryFreeServerRender(project, durationSeconds) {
-    // Le service gratuit se met en veille et accepte au plus 45 s : on le réserve aux clips mobiles moyens/longs.
-    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || durationSeconds < 18 || durationSeconds > 45) return false;
+    // Le service gratuit se met en veille et accepte au plus 60 s : on le réserve aux clips mobiles moyens/longs.
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || durationSeconds < 18 || durationSeconds > 60) return false;
     const abortableFetch = async (url, options = {}, timeoutMs = 90000) => {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -9239,7 +9239,7 @@ async function tryFreeServerRender(project, durationSeconds) {
         const startData = await startResponse.json().catch(() => ({}));
         if (!startResponse.ok) throw new Error(startData.error || 'Le moteur Render refuse ce projet');
         if (!startData.jobId) throw new Error('Réponse Render invalide');
-        const deadline = Date.now() + 210000;
+        const deadline = Date.now() + 270000;
         let lastStage = '';
         while (Date.now() < deadline) {
             await new Promise(resolve => setTimeout(resolve, 1500));

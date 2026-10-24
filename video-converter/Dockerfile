@@ -6,6 +6,6 @@ RUN npm install --omit=dev
 COPY server.js ./
 ENV NODE_ENV=production
 ENV CHROMIUM_PATH=/usr/bin/chromium
-ENV MAX_RENDER_SECONDS=45
+ENV MAX_RENDER_SECONDS=60
 EXPOSE 10000
 CMD ["npm", "start"]

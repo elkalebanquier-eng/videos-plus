@@ -10,7 +10,7 @@ import { chromium } from 'playwright-core';
 const app = express();
 const port = Number(process.env.PORT || 10000);
 const maxBytes = 220 * 1024 * 1024;
-const maxRenderSeconds = Number(process.env.MAX_RENDER_SECONDS || 45);
+const maxRenderSeconds = Number(process.env.MAX_RENDER_SECONDS || 60);
 const publicAppUrl = process.env.PUBLIC_APP_URL || 'https://elka-jobnet.vercel.app';
 const allowedOrigins = new Set([process.env.ALLOWED_ORIGIN || publicAppUrl, 'https://elka-jobnet.vercel.app']);
 const upload = multer({ limits: { fileSize: maxBytes }, storage: multer.memoryStorage() });
@@ -81,7 +81,7 @@ app.get('/render/:id', (req, res) => {
   res.json(data);
 });
 
-app.post('/render/:id/result', express.raw({ type: '*/*', limit: '220mb' }), async (req, res) => {
+app.post('/render/:id/result', express.raw({ type: () => true, limit: '220mb' }), async (req, res) => {
   if (!isAllowedOrigin(req)) return res.status(403).json({ error: 'Origine non autorisée' });
   const job = jobs.get(req.params.id);
   if (!job) return res.status(404).json({ error: 'Rendu introuvable' });
@@ -147,7 +147,7 @@ async function runRenderJob(job, baseUrl) {
     await page.waitForTimeout(700);
     job.stage = 'rendering-canvas'; job.progress = 0.1;
     const exportPromise = page.evaluate(() => window.exportVideo());
-    const deadline = Date.now() + 180000;
+    const deadline = Date.now() + 240000;
     while (job.status === 'rendering' && Date.now() < deadline) {
       const event = await Promise.race([exportPromise.then(() => 'export-finished'), new Promise(resolve => setTimeout(() => resolve('wait'), 500))]);
       if (event === 'export-finished' && job.status !== 'completed') {
