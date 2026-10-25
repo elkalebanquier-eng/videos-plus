@@ -24,19 +24,49 @@ export default async function handler(req, res) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 40000);
   try {
-    const upstream = await fetch(`https://api.speechify.ai${path}`, {
+    const send = async (requestBody) => fetch(`https://api.speechify.ai${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
       },
-      ...(method === 'POST' ? { body: JSON.stringify(payload) } : {}),
+      ...(method === 'POST' ? { body: JSON.stringify(requestBody) } : {}),
       signal: controller.signal,
     });
-    const content = Buffer.from(await upstream.arrayBuffer());
+    let upstream = await send(payload);
+    let content = Buffer.from(await upstream.arrayBuffer());
+    let retryRequestId = '';
+
+    // Speechify may occasionally return a successful but silent PCM payload.
+    // Retry once as WAV server-side so already-open clients can recover too.
+    if (method === 'POST' && /\/v1\/audio\/speech(?:\?|$)/.test(path)
+      && upstream.ok && payload?.output_format === 'pcm_24000') {
+      try {
+        const data = JSON.parse(content.toString('utf8'));
+        const layers = [data, data?.data, data?.result, data?.output].filter(x => x && typeof x === 'object');
+        const audio = [...layers].reverse().map(x => x.audio_data || (typeof x.audio === 'string' ? x.audio : '') || x.audio?.audio_data || x.audio?.data).find(x => typeof x === 'string' && x.trim());
+        if (audio) {
+          let encoded = audio.replace(/^data:audio\/[^;,]+;base64,/i, '').replace(/^base64,/i, '').replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+          encoded += '='.repeat((4 - encoded.length % 4) % 4);
+          const pcm = Buffer.from(encoded, 'base64');
+          if (pcm.length >= 2048 && pcm.length % 2 === 0) {
+            let peak = 0;
+            for (let i = 0; i + 1 < pcm.length; i += 2) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i)) / 32768);
+            if (peak < 0.001) {
+              retryRequestId = upstream.headers.get('speechify-request-id') || '';
+              upstream = await send({ ...payload, output_format: undefined, audio_format: 'wav' });
+              content = Buffer.from(await upstream.arrayBuffer());
+            }
+          }
+        }
+      } catch (retryError) {
+        if (retryError?.name === 'AbortError') throw retryError;
+        // Keep the original response on inspection/parsing errors; browser still validates audio.
+      }
+    }
     res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json');
     res.setHeader('Cache-Control', 'no-store');
-    const requestId = upstream.headers.get('speechify-request-id');
+    const requestId = upstream.headers.get('speechify-request-id') || retryRequestId;
     if (requestId) res.setHeader('Speechify-Request-Id', requestId);
     return res.status(upstream.status).send(content);
   } catch (error) {
