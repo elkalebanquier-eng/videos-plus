@@ -53,7 +53,7 @@ function validateProject(project) {
   if (project.scenes.length > 50) return 'Maximum 50 scènes par rendu Modal';
   const duration = projectDuration(project);
   if (!Number.isFinite(duration) || duration <= 0) return 'Durée de vidéo invalide';
-  if (duration > maxRenderSeconds) return `Durée maximale du rendu Modal : ${maxRenderSeconds} secondes`;
+  if (duration > maxRenderSeconds + 0.1) return `Durée maximale du rendu Modal : ${maxRenderSeconds} secondes`;
   return null;
 }
 function freeRenderProject(project) {

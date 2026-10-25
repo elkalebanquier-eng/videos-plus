@@ -9228,7 +9228,7 @@ function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n
 const SERVER_RENDER_URL = 'https://elkalebanquier--videos-plus-renderer.us-east.modal.run';
 async function tryModalCpuRender(project, durationSeconds) {
     // Le worker Modal CPU passe à zéro après inactivité et accepte les clips jusqu'à 180 s.
-    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || durationSeconds < 18 || durationSeconds > 180) return false;
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || durationSeconds < 18 || durationSeconds > 180.1) return false;
     const abortableFetch = async (url, options = {}, timeoutMs = 90000) => {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -9241,7 +9241,7 @@ async function tryModalCpuRender(project, durationSeconds) {
         const healthResponse = await abortableFetch(SERVER_RENDER_URL + '/health', {}, 120000);
         if (!healthResponse.ok) throw new Error('Moteur Modal indisponible');
         const health = await healthResponse.json();
-        if (!health.ok || durationSeconds > Number(health.maxRenderSeconds || 0)) return false;
+        if (!health.ok || durationSeconds > Number(health.maxRenderSeconds || 0) + 0.1) return false;
         showLoading('Envoi du projet au moteur Modal CPU…', true);
         const startResponse = await abortableFetch(SERVER_RENDER_URL + '/render', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...project, renderSettings: { charSfx: Settings.get().charSfx === 'off' ? 'off' : 'on' } })
