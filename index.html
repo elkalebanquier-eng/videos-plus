@@ -626,7 +626,7 @@ async function saveBlobToDevice(blob, filename) {
     const renderParams = new URLSearchParams(location.search);
     if (renderParams.get('serverRender') === '1') {
         const callback = renderParams.get('serverCallback') || '';
-        if (!/^https:\/\/videos-plus-converter-live\.onrender\.com\/render\/render_[\w-]+\/result$/.test(callback)) throw new Error('Adresse de retour du rendu serveur invalide');
+        if (!/^https:\/\/elkalebanquier--videos-plus-renderer\.us-east\.modal\.run\/render\/render_[\w-]+\/result$/.test(callback)) throw new Error('Adresse de retour du rendu Modal invalide');
         const response = await fetch(callback, { method: 'POST', headers: { 'Content-Type': blob.type || 'video/mp4' }, body: blob });
         if (!response.ok) { const detail = await response.text().catch(() => ''); throw new Error('Le serveur n’a pas reçu la vidéo (' + response.status + ')' + (detail ? ' : ' + detail.slice(0, 240) : '')); }
         return true;
@@ -9225,10 +9225,10 @@ function exportVideoBitrate(width, height, quality) {
 
 function totalPreviewSeconds(project) { return (project?.scenes || []).reduce((n, s) => n + Number(s.duration || 0), 0); }
 
-const SERVER_RENDER_URL = 'https://videos-plus-converter-live.onrender.com';
-async function tryFreeServerRender(project, durationSeconds) {
-    // Le service gratuit se met en veille et accepte au plus 60 s : on le réserve aux clips mobiles moyens/longs.
-    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || durationSeconds < 18 || durationSeconds > 60) return false;
+const SERVER_RENDER_URL = 'https://elkalebanquier--videos-plus-renderer.us-east.modal.run';
+async function tryModalCpuRender(project, durationSeconds) {
+    // Le worker Modal CPU passe à zéro après inactivité et accepte les clips jusqu'à 180 s.
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || durationSeconds < 18 || durationSeconds > 180) return false;
     const abortableFetch = async (url, options = {}, timeoutMs = 90000) => {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -9236,22 +9236,20 @@ async function tryFreeServerRender(project, durationSeconds) {
         finally { clearTimeout(timer); }
     };
     try {
-        showLoading('Réveil du moteur Render gratuit… cela peut prendre quelques secondes', true);
+        showLoading('Réveil du moteur Modal CPU… le premier démarrage peut prendre un moment', true);
         updateProgress(0.02);
-        const healthStarted = performance.now();
-        const healthResponse = await abortableFetch(SERVER_RENDER_URL + '/health', {}, 15000);
-        if (!healthResponse.ok) throw new Error('Moteur Render indisponible');
-        if (performance.now() - healthStarted > 8000) throw new Error('Moteur Render gratuit en veille; export local plus rapide');
+        const healthResponse = await abortableFetch(SERVER_RENDER_URL + '/health', {}, 120000);
+        if (!healthResponse.ok) throw new Error('Moteur Modal indisponible');
         const health = await healthResponse.json();
         if (!health.ok || durationSeconds > Number(health.maxRenderSeconds || 0)) return false;
-        showLoading('Envoi du projet au moteur Render…', true);
+        showLoading('Envoi du projet au moteur Modal CPU…', true);
         const startResponse = await abortableFetch(SERVER_RENDER_URL + '/render', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...project, renderSettings: { charSfx: Settings.get().charSfx === 'off' ? 'off' : 'on' } })
         });
         const startData = await startResponse.json().catch(() => ({}));
-        if (!startResponse.ok) throw new Error(startData.error || 'Le moteur Render refuse ce projet');
-        if (!startData.jobId) throw new Error('Réponse Render invalide');
-        const deadline = Date.now() + 270000;
+        if (!startResponse.ok) throw new Error(startData.error || 'Le moteur Modal refuse ce projet');
+        if (!startData.jobId) throw new Error('Réponse Modal invalide');
+        const deadline = Date.now() + 660000;
         let lastStage = '';
         while (Date.now() < deadline) {
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -9261,26 +9259,26 @@ async function tryFreeServerRender(project, durationSeconds) {
             if (status.status === 'failed') throw new Error(status.error || 'Le rendu serveur a échoué');
             if (status.stage !== lastStage) {
                 lastStage = status.stage;
-                const labels = { 'starting-chromium': 'Démarrage du moteur vidéo…', 'loading-renderer': 'Chargement du studio vidéo…', 'rendering-canvas': 'Rendu de la vidéo sur Render…', 'finalizing-mp4': 'Finalisation du fichier MP4…', completed: 'Téléchargement du résultat…' };
+                const labels = { 'starting-chromium': 'Démarrage du moteur vidéo…', 'loading-renderer': 'Chargement du studio vidéo…', 'rendering-canvas': 'Rendu de la vidéo sur Modal CPU…', 'finalizing-mp4': 'Finalisation du fichier MP4…', completed: 'Téléchargement du résultat…' };
                 showLoading(labels[status.stage] || 'Rendu serveur en cours…', true);
             }
             updateProgress(status.status === 'completed' ? 1 : Math.max(0.05, Math.min(0.9, Number(status.progress || 0))));
             if (status.status === 'completed') {
-                if (!String(status.downloadUrl || '').startsWith(SERVER_RENDER_URL + '/render/')) throw new Error('Lien de téléchargement Render invalide');
+                if (!String(status.downloadUrl || '').startsWith(SERVER_RENDER_URL + '/render/')) throw new Error('Lien de téléchargement Modal invalide');
                 const downloadResponse = await abortableFetch(status.downloadUrl, {}, 60000);
                 if (!downloadResponse.ok) throw new Error('Téléchargement du rendu serveur impossible');
                 const blob = await downloadResponse.blob();
                 await saveBlobToDevice(blob, videoFileBase() + '.mp4');
                 hideLoading();
-                showToast('Vidéo rendue sur le moteur Render gratuit et enregistrée');
+                showToast('Vidéo rendue sur Modal CPU et enregistrée');
                 return true;
             }
         }
-        throw new Error('Le rendu Render a dépassé le délai prévu');
+        throw new Error('Le rendu Modal a dépassé le délai prévu');
     } catch (error) {
-        console.warn('Rendu serveur gratuit indisponible; reprise du rendu local', error);
+        console.warn('Rendu Modal CPU indisponible; reprise du rendu local', error);
         hideLoading();
-        showToast('Rendu serveur indisponible : reprise de l’export sur cet appareil', 'error');
+        showToast('Modal indisponible : reprise de l’export sur cet appareil', 'error');
         return false;
     }
 }
@@ -9311,7 +9309,7 @@ async function exportVideoCore() {
     }
     normalizeSocialProject(state.project);
     const durationSeconds = totalPreviewSeconds(state.project);
-    if (await tryFreeServerRender(state.project, durationSeconds)) return;
+    if (await tryModalCpuRender(state.project, durationSeconds)) return;
     const detectedWcPlan = await WCExport.plan(state.project);
     const wantsAudio = !!state.project.music
         || state.project.scenes.some(scene => String(scene.narration || '').trim())
