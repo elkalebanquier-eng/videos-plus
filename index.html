@@ -9265,12 +9265,11 @@ async function tryModalCpuRender(project, durationSeconds) {
             updateProgress(status.status === 'completed' ? 1 : Math.max(0.05, Math.min(0.9, Number(status.progress || 0))));
             if (status.status === 'completed') {
                 if (!String(status.downloadUrl || '').startsWith(SERVER_RENDER_URL + '/render/')) throw new Error('Lien de téléchargement Modal invalide');
-                const downloadResponse = await abortableFetch(status.downloadUrl, {}, 60000);
-                if (!downloadResponse.ok) throw new Error('Téléchargement du rendu serveur impossible');
-                const blob = await downloadResponse.blob();
-                await saveBlobToDevice(blob, videoFileBase() + '.mp4');
                 hideLoading();
-                showToast('Vidéo rendue sur Modal CPU et enregistrée');
+                showToast('Vidéo prête : téléchargement MP4 en cours');
+                // L’endpoint Modal renvoie Content-Disposition: attachment. Laisser Android/Chrome
+                // enregistrer directement le flux évite de charger une seconde copie du MP4 en mémoire.
+                window.location.assign(status.downloadUrl);
                 return true;
             }
         }
