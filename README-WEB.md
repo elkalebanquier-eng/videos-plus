@@ -2,6 +2,10 @@
 
 `index.html` contient VideoStory 3.3.4 et charge `pastel-theme.css` : interface pastel tactile sur tous les écrans, accueil mobile avec mascotte 3D, cartes de projets assorties et icône PWA coordonnée. Les illustrations transparentes sont optimisées en WebP. Le mix audio est normalisé; chaque narration est vérifiée avant planification. Speechify est demandé en PCM brut signé 16 bits à 24 kHz; le client convertit directement les échantillons en `AudioBuffer` sans décodeur de conteneur du navigateur. Si une réponse HTTP réussie ne contient pas d’audio, l’application essaie une seule fois le WAV et accepte plusieurs enveloppes; si l’audio manque encore, elle affiche le motif/identifiant Speechify pour faciliter le diagnostic. L’export reste bloqué si une voix manque ou est silencieuse. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
 
+## Sous-titres automatiques
+
+Les sous-titres sont incrustés dans les vidéos exportées. Depuis l’éditeur, le bouton **CC** télécharge aussi un fichier `.srt` UTF‑8 autonome, découpé comme les sous-titres affichés et synchronisé avec les repères de parole Speechify lorsqu’ils sont disponibles (sinon, le minutage estimé des mots est utilisé). Le fichier porte le même nom de base que la vidéo et peut être importé séparément sur les plateformes qui acceptent les pistes de sous-titres.
+
 ## Déploiement et Speechify
 
 Les changements poussés sur `main` sont déployés automatiquement par Vercel. La narration utilise `/api/speechify`; la clé est conservée uniquement côté serveur dans `SPEECHIFY_API_KEY`. Dans **Vercel → projet → Settings → Environment Variables**, vérifie que cette variable est configurée pour Production (et Preview si nécessaire), puis relance un déploiement après toute modification. Ne mets jamais la clé dans le HTML, le navigateur ou GitHub.
