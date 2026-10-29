@@ -339,7 +339,7 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
                     <button class="header-btn" onclick="showScreen('homeScreen')">←</button>
                     <h1 id="editorTitle" style="font-size: 16px;">Projet</h1>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px"><button id="lastVideoBtn" class="header-btn" style="display:none;font-size:20px" onclick="reopenLastExport()" aria-label="Ma dernière vidéo">🎞️</button><button class="btn-primary" onclick="exportVideo()" style="padding: 10px 20px; font-size: 14px;">📥 Exporter MP4</button></div>
+                <div style="display:flex;align-items:center;gap:8px"><button id="lastVideoBtn" class="header-btn" style="display:none;font-size:20px" onclick="reopenLastExport()" aria-label="Ma dernière vidéo">🎞️</button><button class="header-btn" onclick="downloadSubtitles()" style="font-size:13px;font-weight:700;white-space:nowrap" aria-label="Télécharger les sous-titres SRT" title="Télécharger les sous-titres (.srt)">CC</button><button class="btn-primary" onclick="exportVideo()" style="padding: 10px 12px; font-size: 14px;">📥 Exporter MP4</button></div>
             </header>
             <div class="editor-main">
                 <div class="preview-area">
@@ -718,6 +718,72 @@ function showExportSheet() {
     document.body.appendChild(wrap);
 }
 function videoFileBase() { const t = String((state.project && state.project.title) || 'video').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase(); return (t || 'video').slice(0, 60); }
+function buildSubtitleSrt(project) {
+    const cues = [];
+    let offset = 0;
+    const scenes = Array.isArray(project && project.scenes) ? project.scenes : [];
+    const timestamp = ms => {
+        const total = Math.max(0, Math.round(ms));
+        const hours = Math.floor(total / 3600000);
+        const minutes = Math.floor(total % 3600000 / 60000);
+        const seconds = Math.floor(total % 60000 / 1000);
+        const millis = total % 1000;
+        return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0') + ',' + String(millis).padStart(3, '0');
+    };
+    scenes.forEach(scene => {
+        const duration = Math.max(0, Number(scene && scene.duration) || 0);
+        const words = splitWords(String(scene && scene.narration || ''));
+        if (!duration || !words.length) { offset += duration; return; }
+        const starts = wordStarts(words, duration);
+        const chunks = [];
+        let current = [];
+        words.forEach((word, index) => {
+            const length = current.map(item => item.word).join(' ').length + (current.length ? 1 : 0) + word.length;
+            if (current.length && (length > 24 || current.length >= 4)) { chunks.push(current); current = []; }
+            current.push({ word, index });
+        });
+        if (current.length) chunks.push(current);
+        chunks.forEach((chunk, index) => {
+            const sceneEnd = Math.round((offset + duration) * 1000);
+            const maxStart = Math.max(0, duration - 0.1);
+            const localStart = Math.max(0, Math.min(maxStart, Number(starts[chunk[0].index]) || 0));
+            const startMs = Math.round((offset + localStart) * 1000);
+            const nextStart = index + 1 < chunks.length ? Number(starts[chunks[index + 1][0].index]) : duration;
+            const localEnd = Math.max(localStart + 0.1, Math.min(duration, Number.isFinite(nextStart) ? nextStart : duration));
+            const endMs = Math.min(Math.max(startMs + 100, Math.round((offset + localEnd) * 1000)), Math.max(sceneEnd, startMs + 100));
+            cues.push({ startMs, endMs, text: chunk.map(item => item.word).join(' ') });
+        });
+        offset += duration;
+    });
+    return cues.map((cue, index) => (index + 1) + '\n' + timestamp(cue.startMs) + ' --> ' + timestamp(cue.endMs) + '\n' + cue.text).join('\n\n') + (cues.length ? '\n' : '');
+}
+async function downloadSubtitles() {
+    if (!state.project || !Array.isArray(state.project.scenes)) { showToast('Aucun projet à sous-titrer', 'error'); return; }
+    const srt = buildSubtitleSrt(state.project);
+    if (!srt.trim()) { showToast('Aucune narration à sous-titrer', 'error'); return; }
+    const filename = videoFileBase() + '.srt';
+    const blob = new Blob(['\uFEFF', srt], { type: 'application/x-subrip;charset=utf-8' });
+    if (window.AndroidBridge && typeof window.AndroidBridge.beginFile === 'function') {
+        try {
+            if (window.AndroidBridge.beginFile(filename, blob.type)) {
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result).slice(String(reader.result).indexOf(',') + 1));
+                    reader.onerror = () => reject(reader.error || new Error('lecture impossible'));
+                    reader.readAsDataURL(blob);
+                });
+                if (window.AndroidBridge.writeFileChunk(dataUrl) && window.AndroidBridge.finishFile()) { showToast('Sous-titres téléchargés : ' + filename); return; }
+                window.AndroidBridge.cancelFile();
+            }
+        } catch (error) { console.warn('Enregistrement SRT Android indisponible', error); try { window.AndroidBridge.cancelFile(); } catch (_) {} }
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; link.rel = 'noopener'; link.style.display = 'none';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    showToast('Sous-titres téléchargés : ' + filename);
+}
 let exportStartedAt = 0;
 function showLoading(text, showProgress = false) {
     document.getElementById('loadingText').textContent = text;
