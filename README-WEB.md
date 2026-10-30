@@ -2,6 +2,11 @@
 
 `index.html` contient VideoStory 3.3.4 et charge `pastel-theme.css` : interface pastel tactile sur tous les écrans, accueil mobile avec mascotte 3D, cartes de projets assorties et icône PWA coordonnée. Les illustrations transparentes sont optimisées en WebP. Le mix audio est normalisé; chaque narration est vérifiée avant planification. Speechify est demandé en PCM brut signé 16 bits à 24 kHz; le client convertit directement les échantillons en `AudioBuffer` sans décodeur de conteneur du navigateur. Si une réponse HTTP réussie ne contient pas d’audio, l’application essaie une seule fois le WAV et accepte plusieurs enveloppes; si l’audio manque encore, elle affiche le motif/identifiant Speechify pour faciliter le diagnostic. L’export reste bloqué si une voix manque ou est silencieuse. Le domaine de production actuel reste `https://elka-jobnet.vercel.app/`.
 
+## Comptes Firebase
+
+Le bouton de compte sur l’accueil utilise Google Sign-In avec Firebase Authentication dans le projet `devconect-e6a5d`. La première connexion crée automatiquement le compte Firebase de l’utilisateur; les connexions suivantes retrouvent le même compte. Le domaine `elka-jobnet.vercel.app` est autorisé dans Firebase Auth. L’application utilise le flux popup car le site est hébergé sur Vercel, pas sur Firebase Hosting; voir les [instructions Firebase pour les redirections OAuth](https://firebase.google.com/docs/auth/web/redirect-best-practices). Le module n’envoie pas encore les projets ou les vidéos à Firebase ou Cloudinary : le stockage et la reprise des rendus à distance restent à intégrer séparément.
+L’en-tête Vercel `Cross-Origin-Opener-Policy` est réglé sur `same-origin-allow-popups` pour permettre le retour de la fenêtre OAuth; les autres en-têtes COEP et d’indexation restent inchangés.
+
 ## Sous-titres automatiques
 
 Les sous-titres sont incrustés dans les vidéos exportées. Depuis l’éditeur, le bouton **CC** télécharge aussi un fichier `.srt` UTF‑8 autonome, découpé comme les sous-titres affichés et synchronisé avec les repères de parole Speechify lorsqu’ils sont disponibles (sinon, le minutage estimé des mots est utilisé). Le fichier porte le même nom de base que la vidéo et peut être importé séparément sur les plateformes qui acceptent les pistes de sous-titres.
