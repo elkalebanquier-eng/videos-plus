@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://elka-jobnet.vercel.app/sitemap.xml
+Sitemap: https://videos-plus.vercel.app/sitemap.xml

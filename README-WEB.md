@@ -22,8 +22,8 @@ Les exports sonores de **2 minutes ou plus** utilisent par prudence le chemin d�
 
 L’export haute qualité peut être plus lent et consommer davantage de mémoire sur téléphone. Le chemin de secours teste le coût du rendu, essaie le 720p puis peut passer en 540p si nécessaire pour éviter une vidéo saccadée; un message l’indique et la préférence enregistrée ne change pas. Sélectionne aussi **Paramètres → Qualité de l’export vidéo → 720p** si l’appareil chauffe, manque de mémoire ou interrompt l’export.
 
-## Changer soi-même le lien Vercel
+## Domaine public et visibilité Google
 
-Le nom du projet et le domaine sont deux réglages distincts. Pour renommer le projet : Vercel → projet qui sert `elka-jobnet.vercel.app` → **Settings → General → Project Name**, puis **Save**. Pour définir une adresse précise, va dans **Settings → Domains**, ajoute le domaine s’il est disponible, et affecte-le au projet de production. Teste le nouveau domaine avant de retirer l’ancien; Vercel ne garantit pas que l’ancien `*.vercel.app` restera disponible après un renommage.
+Le projet Vercel s’appelle déjà `videos-plus`. L’adresse canonique voulue est `https://videos-plus.vercel.app/`; `https://elka-jobnet.vercel.app/` est conservée comme alias pour ne pas casser les anciens liens. Le domaine doit être affecté à l’environnement Production dans **Settings → Domains**. Les URL canonical, Open Graph et JSON-LD de `index.html`, ainsi que `robots.txt` et `sitemap.xml`, doivent toujours correspondre au domaine principal.
 
-Documentation officielle : [renommer un projet Vercel](https://vercel.com/kb/guide/how-do-i-change-the-name-of-my-vercel-project) et [gérer les domaines](https://vercel.com/docs/domains/working-with-domains).
+Après déploiement, Google doit réexplorer le site et le sitemap : le remplacement de l’adresse affichée dans ses résultats peut prendre du temps et n’est pas instantané. Documentation officielle : [gérer les domaines Vercel](https://vercel.com/docs/domains/working-with-domains).
