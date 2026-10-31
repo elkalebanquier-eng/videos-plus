@@ -288,6 +288,7 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
             <div class="quick-actions home-actions">
                 <div class="action-card" onclick="showScreen('goScreen')"><div class="icon"><img src="./assets/clapperboard-clay.webp" alt=""></div><h3>GO</h3><p>Voir mes vidéos réalisées</p></div>
                 <div class="action-card" onclick="showScreen('templatesScreen')"><div class="icon">📋</div><h3>Modèles</h3><p>Commencer avec un modèle</p></div>
+                <div class="action-card" onclick="showScreen('storiesScreen');slRender()"><div class="icon">📚</div><h3>Mes histoires</h3><p>Programmer, apprendre le rythme, générer</p></div>
                 <div class="action-card" onclick="showScreen('assetsScreen')"><div class="icon">🖼️</div><h3>Assets</h3><p>Bibliothèque de ressources</p></div>
                 <div class="action-card" onclick="showScreen('settingsScreen')"><div class="icon">⚙️</div><h3>Paramètres</h3><p>Configuration</p></div>
             </div>
@@ -324,9 +325,11 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
             <div class="form-group"><label>Musique</label><select id="optMusic"><option value="auto" selected>🧠 Auto (le cerveau choisit)</option><option value="motivation">Motivation</option><option value="business">Business</option><option value="emotional">Émotion</option><option value="suspense">Suspense</option><option value="documentary">Documentaire</option></select></div>
             <div style="display: flex; gap: 12px; margin-bottom: 12px;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="optSubtitles" checked style="width: auto;"><span style="font-size: 14px;">Sous-titres automatiques</span></label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="optFilm" checked style="width: auto;"><span style="font-size: 14px;">🎬 Rendu film (plans, coupes, caméra)</span></label>
             </div>
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 16px;"><input type="checkbox" id="optAutoExport" checked style="width: auto;"><span style="font-size: 14px;">Exporter la vidéo automatiquement (mode Auto)</span></label>
             <button class="btn-primary" id="btnAuto" onclick="autoPilot()" style="width: 100%; justify-content: center; margin-bottom: 12px;">🚀 Mode Auto : tout automatique</button>
+            <button class="btn-primary" id="btnPlay" onclick="dfPlay()" style="width:100%;justify-content:center;margin-bottom:10px">🎭 Faire jouer l’histoire (dialogue)</button>
             <button class="btn-primary" id="btnGenerate" onclick="generateScenes()" style="width: 100%; justify-content: center; background: var(--bg-card); box-shadow: none; border: 1px solid var(--border);">✨ Générer les scènes (je retouche avant)</button>
         </div>
     </div>
@@ -414,6 +417,48 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
         <div style="padding: 20px;">
             <div class="quick-actions" id="templateGrid" style="margin-top: 0; padding: 0;"></div>
         </div>
+    </div>
+
+    <!-- STORIES SCREEN -->
+    <div id="storiesScreen" class="screen">
+        <header class="header"><button class="back-btn" onclick="showScreen('homeScreen')">← Retour</button><h1 style="font-size: 16px;">Mes histoires</h1><div style="width: 60px;"></div></header>
+        <div style="padding:20px;max-width:560px;margin:0 auto;">
+            <div class="editor-section"><h4>🧠 Rythme appris</h4><p id="slProfile" style="font-size:13px;line-height:1.5;color:var(--text-muted);margin:6px 0 10px"></p>
+                <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="slOn" onchange="slToggle()"> Les scènes suivent mon rythme</label></div>
+            <div class="editor-section"><h4>📚 Mes histoires programmées</h4><div id="slList" class="element-list"></div></div>
+            <div class="editor-section"><h4>✍️ Programmer une histoire</h4>
+                <input id="slTitle" type="text" placeholder="Titre (ex : Toto et l'avocat)" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font:inherit;margin-bottom:8px">
+                <textarea id="slText" rows="8" placeholder="Écris l'histoire phrase par phrase : le début, la question, la chute… L'app apprend la longueur des phrases, les pauses, la place des questions et de la chute." style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font:inherit;margin-bottom:8px"></textarea>
+                <label style="font-size:13px;color:var(--text-muted)">Vitesse de parole voulue : <b id="slWpsV">2.4</b> mots / seconde</label>
+                <input id="slWps" type="range" min="1.4" max="3.6" step="0.1" value="2.4" oninput="document.getElementById('slWpsV').textContent=this.value" style="width:100%;margin-bottom:10px">
+                <div class="element-list"><div class="element-chip" onclick="slSave()">💾 Enregistrer et apprendre</div><div class="element-chip" onclick="slClear()">+ Nouvelle</div></div></div>
+            <div class="editor-section"><h4>✨ Générer une autre histoire</h4>
+                <input id="slCast" type="text" placeholder="Nouveaux personnages (ex : Ali, Fatou, le boucher)" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font:inherit;margin-bottom:8px">
+                <input id="slSwap" type="text" placeholder="Remplacements (ex : avocat=docteur, zéro=cinq)" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font:inherit;margin-bottom:8px">
+                <textarea id="slOut" rows="8" placeholder="L'histoire générée apparaît ici, avec le même rythme que les tiennes." style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font:inherit;margin-bottom:8px"></textarea>
+                <div class="element-list"><div class="element-chip" onclick="slGenerate()">✨ Générer</div><div class="element-chip" onclick="dfPlay(document.getElementById('slOut').value)">🎭 Faire jouer</div><div class="element-chip" onclick="slUse()">🎬 En faire une vidéo</div></div>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px" id="slNote"></p></div>
+        </div>
+    </div>
+
+    <!-- DIALOGUE FILM SCREEN -->
+    <div id="playScreen" class="screen">
+        <header class="header"><button class="back-btn" onclick="dfStop();showScreen('createScreen')">← Retour</button><h1 style="font-size:16px;">🎭 L’histoire jouée</h1><button class="back-btn" id="dfSnd" onclick="dfSound()">🔊</button></header>
+        <style>
+        #playScreen.active ~ #mainNav, body:has(#playScreen.active) #mainNav{display:none!important}
+        #dfWrap{display:flex;justify-content:center;padding:8px;height:calc(100vh - 64px);height:calc(100dvh - 64px)}
+        #dfStage{position:relative;height:100%;aspect-ratio:9/16;max-width:100%;overflow:hidden;border-radius:14px;background:#000}
+        #dfSv{width:100%;height:100%;display:block}
+        #dfSub{position:absolute;left:0;right:0;bottom:6%;padding:0 5%;text-align:center;pointer-events:none}
+        #dfWho{display:inline-block;background:#ffd23f;color:#1d2030;font-weight:800;font-size:14px;padding:1px 12px;border-radius:99px;margin-bottom:6px}
+        #dfTxt{background:rgba(10,12,22,.84);color:#fff;border-radius:16px;padding:10px 14px;font-weight:800;font-size:clamp(15px,4.6vw,21px);line-height:1.25;min-height:2.6em;display:flex;align-items:center;justify-content:center}
+        #dfCap{position:absolute;top:4%;left:0;right:0;text-align:center;font-family:Bangers,Impact,sans-serif;letter-spacing:1px;font-size:clamp(20px,6.4vw,32px);color:#ffd23f;text-shadow:2px 3px 0 #000;transition:opacity .4s;padding:0 6%}
+        #dfEnd{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,12,22,.88);color:#fff;text-align:center;padding:8%}
+        #dfEnd h2{font-family:Bangers,Impact,sans-serif;font-weight:400;font-size:40px;margin:0;color:#ffd23f}
+        </style>
+        <div id="dfWrap"><div id="dfStage"><svg id="dfSv" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice"><g id="dfBg"></g><g id="dfCast"></g><g id="dfFx"></g><g id="dfIns" opacity="0"></g></svg>
+            <div id="dfCap"></div><div id="dfSub"><div id="dfWho"></div><div id="dfTxt"></div></div>
+            <div id="dfEnd"><h2>FIN</h2><div class="element-list"><div class="element-chip" onclick="dfPlay(dfLast)">↺ Revoir</div><div class="element-chip" onclick="dfStop();showScreen('createScreen')">✏️ Modifier l’histoire</div></div></div></div></div>
     </div>
 
     <!-- SETTINGS SCREEN -->
@@ -1173,6 +1218,9 @@ const StoryMind = (() => {
 // ===== CERVEAU DU JEU D'ACTEUR : comprend le texte et fait jouer le personnage =====
 // Il lit chaque phrase (mots, ponctuation, rôle de la scène, scène d'avant) et prépare, mot par mot :
 // l'émotion du visage, le geste des mains, le regard, les hochements de tête, les petites icônes (!, ?, cœur…).
+// marche / rencontre : la scène peut imposer la marche, un salut et le regard au personnage dessiné (voir TravelBrain)
+let TRAVEL_FORCE = null;
+let FILM_ACT = null;   // regard / tour du personnage imposé par le plan de film en cours
 const ActingBrain = (() => {
     const EMOS = ['joy', 'sad', 'angry', 'surprise', 'fear', 'think', 'proud', 'love', 'doubt', 'excited', 'disgust', 'shy', 'tired', 'smug', 'calm', 'worried', 'curious', 'hopeful', 'determined', 'jealous', 'relieved', 'confused', 'disappointed', 'nostalgic', 'amused'];   // + sérénité, souci, curiosité, espoir, détermination ; avant : dégoût, gêne, fatigue, malice. Les 4 suivantes : : dégoût, gêne, fatigue, malice
     const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
@@ -2054,7 +2102,16 @@ const ActingBrain = (() => {
             return best;
         } catch (_) { return null; }
     }
-    return { at: safeAt, plan, describe, insight, LISTS, EMOS, rideAt };
+    function atTravel(scene, t, pose) {
+        const a = safeAt(scene, t, pose), F = TRAVEL_FORCE, FA = FILM_ACT;
+        if (FA && a && FA.look && !(F && F.look)) { a.look = { x: FA.look, y: -0.04 }; a.eye = { x: FA.look + 0.04 * Math.sin(t * 3.1), y: -0.04 }; }   // il regarde hors caméra : vers l'objet, vers l'autre personnage
+        if (!F || !a) return a;
+        if (F.walk > 0.02) { a.act = null; a.gesture = null; a.gw = 0; a.gp = 0; a.seat = 0; a.seatKind = null; a.prop = null; a.ambient = 'walking'; }
+        else if (F.wave > 0.02) { a.act = null; a.gesture = 'wave'; a.gw = F.wave; a.gp = F.gp; a.n = 1; a.gdur = F.gdur || 1.8; a.gside = 1; }
+        if (F.look) { a.look = { x: F.look, y: -0.05 }; a.eye = { x: F.look + 0.04 * Math.sin(t * 3.1), y: -0.05 }; }
+        return a;
+    }
+    return { at: atTravel, plan, describe, insight, LISTS, EMOS, rideAt };
 })();
 
 // ===== GARDE-ROBE : plusieurs habits pour chaque personnage, qui changent AU BON MOMENT de l'histoire =====
@@ -4294,11 +4351,64 @@ const FemaleCast = (() => {
         const t = norm(narr), best = {}, bi = { f: 1e9, m: 1e9 };
         for (const r of ROLES) { const m = r.re.exec(t); if (m && m.index < bi[r.sex]) { best[r.sex] = r; bi[r.sex] = m.index; } }
         const cast = ['f', 'm'].filter(x => best[x]).sort((a, b) => bi[a] - bi[b]).map(x => Object.assign({}, best[x], timing(scene, best[x])));
+        try { const P = TravelBrain.plan(scene); if (P && P.kind === 'meet' && cast.length) { cast[0].tIn = P.tG; cast[0].tOut = Math.max(cast[0].tOut, P.tM + 3.5); } } catch (_) {}   // l'ami arrive en marchant juste avant le mot « croise »
         memo.set(scene, { key, cast });
         return cast;
     }
     const forScene = scene => forCast(scene)[0] || null;
     return { forScene, forCast, ROLES };
+})();
+
+// ===== MARCHE ET RENCONTRES : « Toto va au champ et croise son ami » -> Toto traverse l'écran en marchant, son ami arrive de l'autre côté, ils se croisent, se regardent et se saluent, calés sur les mots de la narration =====
+const TravelBrain = (() => {
+    const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+    const norm = s => ' ' + String(s || '').toLowerCase().replace(/œ/g, 'oe').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’'`\-]/g, ' ').replace(/\s+/g, ' ') + ' ';
+    const GO = /(?<!\bca )\b(?:va|vont|alla|allait|allerent|aller|se rend|se rendent|se rendit|se rendait|se dirige|se dirigent|se dirigeait|part|partent|partit|partait|retourne|rentre)\b(?: \w+){0,2}? (?:a|au|aux|vers|dans|chez|sur|jusqu a|jusque)\b/;
+    const ENC = /\b(?:croise|croisent|croisa|croisait|croiser|rencontre|rencontrent|rencontra|rencontrait|rencontrer|retrouve|retrouvent|retrouva|retrouvait|retrouver|tombe sur|tombent sur|tomba sur|aborde|apercoit|aperçoit|voit arriver|vient a sa rencontre|nez a nez)\b/;
+    const memo = new WeakMap();
+    function find(W, re) {
+        const m = re.exec(W.txt); if (!m) return null;
+        let k = 0; for (let i = 0; i < W.off.length; i++) if (W.off[i] <= m.index) k = i;
+        return { wi: k, t: W.c.starts[k] || 0 };
+    }
+    function plan(scene) {
+        const narr = scene && scene.narration; if (!narr) return null;
+        let key = narr + '|' + scene.duration; try { key += '|' + SyncBrain.stamp(narr); } catch (_) {}
+        const hit = memo.get(scene); if (hit && hit.key === key) return hit.P;
+        let P = null;
+        try {
+            const c = LipSync.info(scene), dur = scene.duration || 5; let txt = ' '; const off = [];
+            c.ws.forEach(w => { off.push(txt.length); txt += norm(w).trim() + ' '; });
+            const W = { c, txt, off }, go = find(W, GO), enc = find(W, ENC);
+            let hasG = false;
+            if (enc) { try { if (Settings.get().charGuest !== 'off') { const t = norm(narr); hasG = FemaleCast.ROLES.some(r => r.re.test(t)); } } catch (_) {} }
+            if (enc && hasG) {
+                const tM = clamp(enc.t + 0.35, 1.3, Math.max(1.3, dur - 1.2));
+                let tS = go ? Math.min(go.t - 0.05, tM - 1.8) : tM - 2.2; tS = Math.max(0, tS);
+                if (tM - tS < 1.2) tS = Math.max(0, tM - 1.2);
+                P = { kind: 'meet', tS, tM, tG: Math.max(0, tM - 2.0) };
+            } else if (go) {
+                const tS = Math.max(0, go.t - 0.05); P = { kind: 'walk', tS, tE: Math.min(tS + 3.2, Math.max(tS + 1, dur)) };
+            }
+        } catch (_) { P = null; }
+        memo.set(scene, { key, P });
+        return P;
+    }
+    // état à l'instant t ; positions en unités u (u = taille du personnage) ; marche = 0..1 (cycle de marche actif)
+    function state(scene, time, u) {
+        const P = plan(scene); if (!P) return null;
+        if (P.kind === 'walk') {
+            const e = sm((time - P.tS) / (P.tE - P.tS)), wk = sm((time - P.tS) / 0.3) * (1 - sm((time - P.tE + 0.4) / 0.4));
+            return { kind: 'walk', mainX: 0.9 * u * e, mainWalk: wk, mainWave: { w: 0, p: 0 }, met: false };
+        }
+        const xs = -1.25 * u, xm = -0.75 * u, xg0 = 2.3 * u, xgm = 0.8 * u;
+        const pm = sm((time - P.tS) / (P.tM - P.tS)), pg = sm((time - P.tG) / (P.tM - P.tG));
+        const stop = 1 - sm((time - (P.tM - 0.1)) / 0.35);
+        const wv = (t0) => { const q = (time - t0) / 1.8; return q < 0 || q > 1 ? { w: 0, p: 0 } : { w: sm(q / 0.2) * sm((1 - q) / 0.25), p: q }; };
+        return { kind: 'meet', mainX: xs + (xm - xs) * pm, mainWalk: sm((time - P.tS) / 0.3) * stop, guestX: xg0 + (xgm - xg0) * pg, guestWalk: sm((time - P.tG) / 0.25) * stop,
+                 guestP: sm((time - P.tG) / 0.2), met: time > P.tM - 0.2, mainWave: wv(P.tM + 0.1), guestWave: wv(P.tM + 0.35) };
+    }
+    return { plan, state };
 })();
 
 // ===== PERSONNAGE 3D RÉEL, 100 % HORS LIGNE : mini moteur WebGL intégré (aucune bibliothèque, aucun réseau). Rotation 360°, corps et visage détaillés, mains à doigts articulés. Repli automatique sur le rendu 4D si WebGL manque =====
@@ -4332,7 +4442,7 @@ const Char3D = (() => {
         + 'float h3(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}'
         + 'float unp(vec4 c){return dot(c,vec4(1.,1./255.,1./65025.,1./16581375.));}'
         + 'float shw(float ndl){if(uShadow<.5)return 1.;vec3 p=vL.xyz/vL.w*.5+.5;if(p.x<0.||p.x>1.||p.y<0.||p.y>1.)return 1.;float b=.004+.008*(1.-ndl),s=0.;for(int i=-1;i<=1;i++)for(int j=-1;j<=1;j++){float d=unp(texture2D(uSh,p.xy+vec2(float(i),float(j))/1024.));s+=(p.z-b>d)?0.:1.;}return s/9.;}'
-        + 'void main(){if(uGround>.5){float sh=shw(1.);float f=1.-smoothstep(.5,1.4,length(vW.xz));gl_FragColor=vec4(0.,0.,0.,(1.-sh)*.5*f);return;}'
+        + 'void main(){if(uGround>.5){float sh=shw(1.);float f=1.-smoothstep(.5,1.4,length(vW.xz));gl_FragColor=vec4(0.,0.,0.,(1.-sh)*.22*f);return;}'
         + 'vec3 n=normalize(vN),v=vec3(0.,0.,1.),L1=normalize(uL1),L2=normalize(vec3(.75,.1,.5)),L3=normalize(vec3(.7,.45,-.8));vec3 al=pow(uC,vec3(2.2));vec3 q=vO+uSeed;'
         + 'if(uMt.z>.3){vec3 g=floor(q*150.);n=normalize(n+(vec3(h3(g+1.),h3(g+2.),h3(g+3.))-.5)*.09);al*=1.-.07*step(.92,h3(g));}'
         + 'else if(uMt.y<30.&&uMt.x<.3){float a=q.x*240.,b=q.y*240.;n=normalize(n+vec3(cos(a)*sin(b),sin(a)*cos(b),0.)*.018);al*=.975+.025*sin(a)*sin(b);}'
@@ -4469,7 +4579,7 @@ const Char3D = (() => {
         if (suit) {
             lf(chest, 'chest', wh, 0, 0, 0, 0.985); lf(chest, 'jacket', cl); lf(chest, 'lapelL', lap); lf(chest, 'lapelR', lap);
             B.tie = nd(chest, 0, 0.465, 0.082); el(B.tie, 0.026, 0.022, 0.02, tie, 0, -0.012, 0.014);
-            const bl = nd(B.tie, 0, -0.025, 0.006); bl.r = [-0.1, 0, 0]; el(bl, 0.014, 0.035, 0.009, tie, 0, -0.03, 0.006); el(bl, 0.025, 0.08, 0.01, tie, 0, -0.14, 0.008); el(bl, 0.015, 0.03, 0.009, tie, 0, -0.225, 0.008);
+            const bl = nd(B.tie, 0, -0.02, 0.05); bl.r = [0.2, 0, 0]; el(bl, 0.03, 0.12, 0.008, tie, 0, -0.13, 0.006); el(bl, 0.019, 0.05, 0.008, tie, 0, -0.235, 0.006);
             [0.12, 0.02].forEach(y => el(chest, 0.009, 0.009, 0.005, mat('#10121a', 0.5, 50), 0, y, y > 0.1 ? 0.1235 : 0.1195));
             el(chest, 0.024, 0.013, 0.005, wh, -0.108, 0.29, 0.128);
         } else lf(chest, fem ? 'chestF' : 'chest', cl);
@@ -4477,7 +4587,7 @@ const Char3D = (() => {
         if (suit || tee || wide) lf(chest, 'collar', wh);
         const neck = lf(chest, 'neck', sk); neck.r[0] = 0.08;
         // ----- tête -----
-        const head = nd(chest, 0, 0.535, 0.012); head.gs = 0.95; B.head = head;
+        const head = nd(chest, 0, 0.47, 0.012); head.gs = 1.28; B.head = head;
         lf(head, 'head', sk);
         [-1, 1].forEach(s => { el(head, 0.011, 0.03, 0.02, sk, s * 0.089, 0.118, -0.012); el(head, 0.005, 0.02, 0.012, skd, s * 0.092, 0.118, -0.008); });
         const nb = tb(head, 0.05, 0.011, 0.014, sk, 0, 0.145, 0.097); nb.r[0] = -0.2; (B.noseTip = el(head, 0.016, 0.014, 0.019, sk, 0, 0.098, 0.111)); el(head, 0.011, 0.01, 0.012, sk, -0.017, 0.096, 0.102); el(head, 0.011, 0.01, 0.012, sk, 0.017, 0.096, 0.102); el(head, 0.0045, 0.004, 0.0045, skd, -0.011, 0.0905, 0.109); el(head, 0.0045, 0.004, 0.0045, skd, 0.011, 0.0905, 0.109);
@@ -4485,9 +4595,9 @@ const Char3D = (() => {
         [-1, 1].forEach(s => {
             el(head, 0.03, 0.021, 0.014, skd, s * 0.04, 0.138, 0.076);
             el(head, 0.034, 0.012, 0.02, sk, s * 0.04, 0.164, 0.081);
-            const e = nd(head, s * 0.04, 0.138, 0.078); el(e, 0.021, 0.0175, 0.019, eyeW); el(e, 0.0105, 0.0105, 0.005, iris, 0, 0, 0.0165); el(e, 0.0052, 0.0052, 0.004, bk, 0, 0, 0.0195); el(e, 0.0028, 0.0028, 0.003, wh, 0.004, 0.004, 0.0205); el(e, 0.0015, 0.0015, 0.0015, wh, -0.0045, -0.0045, 0.0203); B.eyes.push(e);
+            const e = nd(head, s * 0.04, 0.138, 0.078); e.s = [1.3, 1.3, 1.1]; el(e, 0.021, 0.0175, 0.019, eyeW); el(e, 0.0105, 0.0105, 0.005, iris, 0, 0, 0.0165); el(e, 0.0052, 0.0052, 0.004, bk, 0, 0, 0.0195); el(e, 0.0028, 0.0028, 0.003, wh, 0.004, 0.004, 0.0205); el(e, 0.0015, 0.0015, 0.0015, wh, -0.0045, -0.0045, 0.0203); B.eyes.push(e);
             const lid = el(head, 0.0245, 0.0095, 0.021, sk, s * 0.04, 0.152, 0.083); B.lids.push(lid); el(lid, 0.0235, 0.0017, 0.013, bk, 0, -0.0095, 0.008); el(lid, 0.0255, 0.0026, 0.0135, bk, 0, -0.0098, 0.0085); const fl = el(lid, 0.009, 0.0022, 0.006, bk, s * 0.0215, -0.0085, 0.014); fl.r[2] = -s * 0.5;
-            const br = el(head, 0.031, 0.0072, 0.009, hr, s * 0.042, 0.172, 0.092); B.brows.push(br);
+            const br = el(head, 0.031, 0.0072, 0.009, hr, s * 0.042, 0.186, 0.092); B.brows.push(br);
             if (c.glasses !== 'none') {
                 const g = nd(head, s * 0.042, 0.14, 0.108), t = nd(g); t.g = 'tor'; t.s = [0.032, 0.026, 0.03]; t.m = mat(c.glasses === 'sun' ? '#0d0d10' : '#c8a64a', 0.7, 60); g.k.push(t); head.k.push(g);
                 if (c.glasses === 'sun' || c.glasses === 'aviator') el(g, 0.031, 0.025, 0.0012, mat(c.glasses === 'sun' ? '#0a0a0e' : '#2a2a30', 0.8, 90), 0, 0, 0);
@@ -4699,7 +4809,7 @@ const Char3D = (() => {
           const pd = 1 + sur * 0.45 + fear * 0.4 + g0('love') * 0.3 - g0('angry') * 0.15; B.eyes.forEach(e0 => { const pu = e0.k[2]; if (pu) { pu.s[0] = pu.s[1] = 0.0052 * pd; } }); }
         B.brows.forEach((b, i) => { const s = i ? 1 : -1; b.r[2] = -s * (browIn - browLow) * 0.45; b.p[1] = 0.172 + (i ? g0('curious') * 0.012 : g0('smug') * 0.006) + browUp * 0.016 - browLow * 0.008 + browIn * 0.006; });
         const blink = (t % 3.7) > 3.6 || ((t % 8.3) > 8.15 && (t % 8.3) < 8.2) ? 1 : 0, droop = clamp(g0('tired') * 0.6 + g0('calm') * 0.2 + g0('smug') * 0.25 + sleep + cry * 0.2, 0, 1), wide = clamp(sur + fear, 0, 1);
-        B.lids.forEach((l, i) => { const wink = gname === 'wink' && i === (act1 > 0 ? 1 : 0) ? sm(gw) : 0, cl2 = Math.max(blink, sleep, wink, droop * 0.6, smile * 0.22 + browLow * 0.15); l.p[1] = 0.15 - cl2 * 0.026 + wide * 0.004; });
+        B.lids.forEach((l, i) => { const wink = gname === 'wink' && i === (act1 > 0 ? 1 : 0) ? sm(gw) : 0, cl2 = Math.max(blink, sleep, wink, droop * 0.6, smile * 0.22 + browLow * 0.15); l.p[1] = 0.162 - cl2 * 0.03 + wide * 0.004; });
         B.eyes.forEach(e => { e.r = [-(eyeL.y + sacc[1]) * 0.3, (eyeL.x + sacc[0]) * 0.5, 0]; });
         B.tears.forEach((tr, i) => { tr.v = cry > 0.2; tr.p[1] = 0.1 - ((t * 0.8 + i * 0.4) % 1) * 0.1; });
         B.sym = a.sym || null;
@@ -4728,7 +4838,7 @@ const Char3D = (() => {
         } catch (_) { }
         if (B.skirt) B.skirt.r = [(B.legs[0].hip.r[0] + B.legs[1].hip.r[0]) * -0.1, 0, 0];
         G.gs = lerp(1, sKind === 'cabriolet' ? 0.6 : 0.78, ride ? sk : 0) * (1 - 0.16 * fallK);
-        let yaw = act === 'turn' ? 2 * Math.PI * sm(q) : 0; yaw += 2 * Math.PI * sm(time / 1.8) + Math.sin(time * 0.5) * 0.3 * sm((time - 1.8) / 1.5);   // tour complet à l'apparition, puis léger balancement
+        let yaw = act === 'turn' ? 2 * Math.PI * sm(q) : 0; if (FILM_ACT) yaw += FILM_ACT.turn + Math.sin(time * 0.5) * 0.08; else yaw += 2 * Math.PI * sm(time / 1.8) + Math.sin(time * 0.5) * 0.3 * sm((time - 1.8) / 1.5);   // tour complet à l'apparition, puis léger balancement
         G.r[1] = yaw + (ride ? -0.95 * sk : 0) + userYaw;
     }
     // ---------- rendu ----------
@@ -4866,7 +4976,7 @@ const OBJECT_RULES = [
 const SCENERY_RULES = [
     { id: 'maquis', score: 3, words: 'maquis maquisard buvette terrasse brochette brochettes poulet braise braiser grillade grillades garba alloco attieke kedjenou biere bar'.split(' ') },
     { id: 'city_night', score: 2, words: 'nuit soir minuit etoile etoiles lune gratte-ciel gratte ciel metropole luxe luxueux luxueuse clubbing boite discotheque lumieres illumine'.split(' ') },
-    { id: 'african_day', score: 2, words: 'afrique africain africaine africains africaines roi reine royaume palais pagne kente griot tradition traditionnel traditionnelle ancetre ancetres matin soleil'.split(' ') },
+    { id: 'african_day', score: 2, words: 'afrique africain africaine africains africaines roi reine royaume palais pagne kente griot tradition traditionnel traditionnelle ancetre ancetres matin'.split(' ') },
     { id: 'mosquee', score: 3, words: 'mosquee mosquees imam muezzin minaret ramadan priere prier salat fajr islam musulman musulmans'.split(' ') },
     { id: 'savane', score: 3, words: 'savane safari lion lions elephant elephants girafe girafes acacia crepuscule'.split(' ') },
     { id: 'village', score: 3, words: 'village villages paysan paysans agriculteur cultivateur hutte huttes baobab recolte rural rurale'.split(' ') },
@@ -4877,7 +4987,7 @@ const SCENERY_RULES = [
     { id: 'hopital', score: 3, words: 'hopital hopitaux clinique medecin docteur docteure infirmiere infirmier malade maladie ambulance pharmacie consultation fievre paludisme soigner soigne'.split(' ') },
     { id: 'maison', score: 3, words: 'maison maisons salon canape famille foyer chambre lit dormir reveil domicile'.split(' ') },
     { id: 'cuisine', score: 3, words: 'cuisine cuisiner cuisiniere marmite casserole repas sauce riz mijoter'.split(' ') },
-    { id: 'foret', score: 3, words: 'foret forets brousse jungle sentier camp chasse chasseur campement'.split(' ') },
+    { id: 'foret', score: 3, words: 'arbre arbres foret forets brousse jungle sentier camp chasse chasseur campement'.split(' ') },
     { id: 'route', score: 3, words: 'route routes voiture taxi bus gare gbaka autoroute embouteillage voyage voyager conducteur chauffeur camion carrefour'.split(' ') },
     { id: 'stade', score: 3, words: 'stade football foot match ballon terrain joueur joueurs arbitre supporter supporters'.split(' ') },
     { id: 'eglise', score: 3, words: 'eglise eglises cathedrale pretre pasteur messe culte bapteme chapelle chretien chretiens'.split(' ') },
@@ -4886,7 +4996,7 @@ const SCENERY_RULES = [
     { id: 'fleuve', score: 3, words: 'fleuve riviere pirogue pecheur pecheurs pecher peche lac'.split(' ') },
     { id: 'studio', score: 3, words: 'studio musique concert scene chanteur chanteuse rappeur rappeuse danseur danseuse spectacle micro tournage clip'.split(' ') },
     { id: 'banque', score: 3, words: 'banque banques argent agence retrait guichet credit transfert epargne caisse'.split(' ') },
-    { id: 'champ', score: 3, words: 'champs agriculteur agriculteurs agricultrice paysan paysans paysanne recolte recolter cultiver cultivateur cultivateurs tracteur tracteurs moisson semer plantation labourer'.split(' ') },
+    { id: 'champ', score: 3, words: 'champ ferme verger champs agriculteur agriculteurs agricultrice paysan paysans paysanne recolte recolter cultiver cultivateur cultivateurs tracteur tracteurs moisson semer plantation labourer'.split(' ') },
     { id: 'garage', score: 3, words: 'garage garages garagiste mecanicien mecaniciens mecanicienne moteur moteurs panne pannes reparer vidange pneu pneus crevaison'.split(' ') },
     { id: 'desert', score: 3, words: 'desert deserts sahara dune dunes chameau chameaux dromadaire dromadaires caravane oasis nomade nomades touareg touaregs sable sahel'.split(' ') },
     { id: 'couture', score: 3, words: 'couture couturier couturiere couturiers tailleur tailleuse tissu tissus pagne pagnes aiguille mannequin broderie'.split(' ') },
@@ -5231,6 +5341,7 @@ class ScenePlanner {
     }
 
     estimateDuration(text, role) {
+        try { const lr = StoryLab.duration(text, role); if (lr != null) return lr; } catch (_) { }
         const wc = text.trim().split(/\s+/).filter(Boolean).length;
         // Débit confortable pour une narration sociale : environ 2 mots/s,
         // avec respiration avant/après chaque scène.
@@ -5885,6 +5996,145 @@ function formatCount(c, p) {
     return c.pre + s + c.post;
 }
 
+
+// ===== RÉALISATEUR : chaque scène est découpée en plans de film (grand plan, plan moyen, gros plan, insert sur l'objet), avec coupes calées sur les mots, poussées de caméra et respiration. Désactivable : project.film = false =====
+const FilmDirector = (() => {
+    const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+    const memo = new WeakMap();
+    // z = zoom ; (tx,ty) = point visé dans la scène ; (sx,sy) = où ce point se place à l'écran ; rot = inclinaison ; dof = flou d'arrière-plan
+    const SH = {
+        wide:   { z: 1.00, tx: .50, ty: .50, sx: .50, sy: .50, rot: 0,     dof: 0 },
+        medium: { z: 1.32, tx: .50, ty: .44, sx: .50, sy: .50, rot: 0,     dof: .45 },
+        thirdL: { z: 1.40, tx: .50, ty: .44, sx: .36, sy: .52, rot: .012,  dof: .6, occ: 1 },
+        thirdR: { z: 1.40, tx: .50, ty: .44, sx: .64, sy: .52, rot: -.012, dof: .6, occ: -1 },
+        close:  { z: 2.00, tx: .50, ty: .30, sx: .50, sy: .43, rot: 0,     dof: 1 },
+        low:    { z: 1.38, tx: .50, ty: .38, sx: .50, sy: .42, rot: -.04,  dof: .7 },
+        insert: { z: 2.00, tx: .74, ty: .34, sx: .50, sy: .44, rot: 0,     dof: 1 }
+    };
+    const on = () => { const p = typeof state !== 'undefined' && state.project; return !!(p && p.film !== false); };
+    function plan(scene, idx, n) {
+        const dur = Math.max(scene.duration || 4, 1), key = scene.id + '|' + dur + '|' + (scene.narration || '').length + '|' + idx + '|' + n;
+        const hit = memo.get(scene); if (hit && hit.key === key) return hit.P;
+        const sd = hashStr(scene.id || ('s' + idx)), side = (sd & 1) ? 'thirdL' : 'thirdR';
+        const els = scene.elements || [], hasObj = els.some(e => e.type === 'object' && e.visible !== false);
+        let meet = false, walk = false; try { const T = TravelBrain.plan(scene); meet = !!(T && T.kind === 'meet'); walk = !!(T && T.kind === 'walk'); } catch (_) {}
+        const neg = scene.mood === 'negative', pos = scene.mood === 'positive';
+        let seq;   // [plan, part de la scène, mouvement : in = pousse, out = recule, hold = tient]
+        if (dur < 3.2) seq = [[idx === 0 ? 'wide' : (neg ? 'close' : 'medium'), 1, idx === 0 ? 'in' : (neg ? 'in' : 'in')]];
+        else if (idx === 0) seq = [['wide', .40, 'in'], ['medium', .32, 'in'], ['close', .28, 'in']];
+        else if (meet) seq = [['wide', .42, 'hold'], [side, .30, 'in'], ['medium', .28, 'in']];
+        else if (walk) seq = [['wide', .45, 'hold'], [side, .55, 'in']];
+        else if (neg) seq = [['medium', .30, 'in'], ['close', .38, 'in'], ['low', .32, 'in']];
+        else if (pos || scene.role === 'cta' || scene.role === 'result') seq = [['close', .30, 'in'], ['medium', .30, 'out'], ['wide', .40, 'out']];
+        else if (hasObj && dur >= 4.5) seq = [['wide', .28, 'in'], ['insert', .22, 'in'], [side, .28, 'in'], ['close', .22, 'in']];
+        else seq = [['wide', .30, 'in'], [side, .40, 'in'], ['close', .30, 'in']];
+        // instants de coupe : on les cale sur le début du mot le plus proche (on coupe sur la parole, comme au montage)
+        let starts = null; try { starts = LipSync.info(scene).starts; } catch (_) {}
+        const shots = []; let acc = 0;
+        seq.forEach(([name, part, mv], i) => {
+            let t0 = acc * dur; acc += part;
+            if (i > 0 && starts && starts.length) { let best = t0, bd = .55; starts.forEach(w => { const d = Math.abs(w - t0); if (d < bd) { bd = d; best = w - .04; } }); t0 = Math.max(shots[i - 1].t0 + .9, best); }
+            shots.push({ name, mv, t0, t1: dur });
+        });
+        shots.forEach((sh, i) => { if (i + 1 < shots.length) sh.t1 = Math.max(sh.t0 + .5, shots[i + 1].t0); });
+        let objSide = 0; if (!meet && !walk) { const o = els.find(e => e.type === 'object' && e.visible !== false); if (o) objSide = o.position.x > .5 ? 1 : -1; }
+        const P = { shots, seed: sd, meet, objSide };
+        memo.set(scene, { key, P }); return P;
+    }
+    // état de la caméra à l'instant t
+    function cam(scene, t, idx, n) {
+        const P = plan(scene, idx, n); let sh = P.shots[0];
+        for (const q of P.shots) if (t >= q.t0) sh = q;
+        const B = SH[sh.name], p = clamp((t - sh.t0) / Math.max(.3, sh.t1 - sh.t0), 0, 1), age = t - sh.t0;
+        const push = sh.mv === 'in' ? .09 : 0, pull = sh.mv === 'out' ? .13 : 0;
+        const e = p * p * (3 - 2 * p) * .6 + p * .4;   // mouvement continu, presque linéaire : poussée lente de caméra
+        let z = B.z * (1 + push * e + pull * (1 - e)) * (1 + .035 * (1 - sm(age / .32)));   // petit « coup de caméra » qui se pose juste après chaque coupe
+        let tx = B.tx, ty = B.ty, sx = B.sx, sy = B.sy;
+        if (sh.name === 'insert') { const o = (scene.elements || []).find(el => el.type === 'object' && el.visible !== false); if (o) { tx = o.position.x; ty = o.position.y; } }
+        if (sh.name === 'wide' && sh.mv === 'hold') sx += (p - .5) * .03;   // travelling très lent
+        const neg = scene.mood === 'negative';
+        const shake = neg && sh.name !== 'wide' ? 1 : 0;
+        return { name: sh.name, z, tx, ty, sx, sy, rot: B.rot * (neg ? 1.6 : 1) + (sh.name === 'wide' ? 0 : Math.sin(t * .6 + P.seed % 5) * .004), dof: B.dof, occ: B.occ || 0, age, shake };
+    }
+    // jeu d'acteur : où regarde le personnage dans ce plan (0 = la caméra)
+    function act(scene, t, idx, n) {
+        const c = cam(scene, t, idx, n), P = plan(scene, idx, n); let look = 0;
+        if (c.name === 'thirdL') look = .62; else if (c.name === 'thirdR') look = -.62;
+        else if (P.meet) look = .55;
+        else if (P.objSide && (c.name === 'wide' || c.name === 'medium')) look = .42 * P.objSide;
+        look *= sm(c.age / .5);   // le regard se pose juste après la coupe
+        return { look, turn: look * 0.8 };
+    }
+    return { on, plan, cam, act, SH };
+})();
+
+
+// ===== MÉTÉO : la pluie tombe quand le mot « pluie » est dit, l'orage éclaire, le soleil revient quand l'histoire le dit ; l'ambiance continue d'une scène à l'autre =====
+const FilmWeather = (() => {
+    const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+    const norm = s => ' ' + String(s || '').toLowerCase().replace(/œ/g, 'oe').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’'`\-]/g, ' ').replace(/\s+/g, ' ') + ' ';
+    const EV = [   // le dernier mot-clé de la phrase l'emporte
+        ['sun',   /\b(?:soleil revient|le soleil|beau temps|eclaircie|ciel se degage|arc en ciel|ensoleille|cesse de pleuvoir|arrete de pleuvoir|apres la pluie|la pluie s arrete)\b/g],
+        ['dawn',  /\b(?:lever du soleil|aube|au petit matin|le jour se leve)\b/g],
+        ['night', /\b(?:nuit|minuit|la lune|etoiles|nuit tombe|crepuscule)\b/g],
+        ['fog',   /\b(?:brouillard|brume|brumeux)\b/g],
+        ['rain',  /\b(?:pluie|pleut|pleuvoir|pleuvait|averse|trempe|mouille|deluge)\b/g],
+        ['storm', /\b(?:orage|orages|tonnerre|eclair|eclairs|tempete|foudre)\b/g]
+    ];
+    const memo = new WeakMap();
+    function get(list, idx) {
+        if (idx < 0) return null;
+        const sc = list[idx], key = (sc.narration || '') + '|' + idx, hit = memo.get(sc);
+        if (hit && hit.key === key) return hit.W;
+        const prev = get(list, idx - 1); let W = prev ? { kind: prev.kind, t0: 0 } : null;
+        try {
+            const c = LipSync.info(sc); let txt = ' '; const off = [];
+            c.ws.forEach(w => { off.push(txt.length); txt += norm(w).trim() + ' '; });
+            let best = null;
+            EV.forEach(([kind, re]) => { let m; re.lastIndex = 0; while ((m = re.exec(txt))) { let k = 0; for (let i = 0; i < off.length; i++) if (off[i] <= m.index) k = i; if (!best || m.index >= best.pos) best = { kind, pos: m.index, t: c.starts[k] || 0 }; if (m[0].length === 0) re.lastIndex++; } });
+            if (best && !(best.kind === 'sun' && prev && !/rain|storm/.test(prev.kind) && best.pos < 0)) W = { kind: best.kind, t0: Math.max(0, best.t - .1) };
+        } catch (_) {}
+        memo.set(sc, { key, W }); return W;
+    }
+    function draw(ctx, W, H, k, t, w, seed) {
+        if (!w) return;
+        const inten = sm((t - w.t0) / 1.2), kind = w.kind;
+        if (inten <= 0.01) return;
+        ctx.save();
+        if (kind === 'rain' || kind === 'storm') {
+            ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = 'rgba(128,128,128,' + (0.5 * inten) + ')'; ctx.fillRect(0, 0, W, H);   // ciel couvert
+            ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(18,32,70,' + (0.30 * inten) + ')'; ctx.fillRect(0, 0, W, H);
+            for (let layer = 0; layer < 2; layer++) {   // gouttes : fond fin et lent, premier plan long et rapide
+                const n = layer ? 70 : 120, sp = (layer ? 1500 : 900) * k, len = (layer ? 34 : 18) * k, sl = 0.2;
+                ctx.strokeStyle = layer ? 'rgba(215,230,255,0.42)' : 'rgba(205,222,255,0.26)'; ctx.lineWidth = (layer ? 1.6 : 1) * k; ctx.globalAlpha = inten; ctx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const x0 = ((i * 97.31 + layer * 41 + (seed % 89)) % 1000) / 1000 * (W + 80 * k) - 40 * k, y = ((i * 53.77 + t * sp + layer * 300) % (H + len)) - len, x = x0 - y * sl;
+                    ctx.moveTo(x, y); ctx.lineTo(x - len * sl, y + len);
+                }
+                ctx.stroke();
+            }
+            ctx.globalAlpha = inten; ctx.strokeStyle = 'rgba(220,235,255,0.35)'; ctx.lineWidth = 1.2 * k;   // éclaboussures au sol
+            for (let i = 0; i < 9; i++) { const ph = (t * 1.6 + i * 0.37) % 1, x = (((i * 211 + seed) % 100) / 100) * W, y = H * (0.74 + ((i * 37) % 22) / 100); ctx.globalAlpha = inten * (1 - ph) * 0.8; ctx.beginPath(); ctx.ellipse(x, y, (4 + ph * 18) * k, (1.2 + ph * 5) * k, 0, 0, Math.PI * 2); ctx.stroke(); }
+            if (kind === 'storm') {   // éclairs : deux flashs par cycle, secs puis qui s'éteignent
+                const ph = (t * 0.45 + (seed % 7) * 0.13) % 1, f = Math.max(0, 1 - Math.abs(ph - 0.06) / 0.035) + 0.6 * Math.max(0, 1 - Math.abs(ph - 0.14) / 0.03);
+                if (f > 0) { ctx.globalAlpha = Math.min(0.55, f * 0.5) * inten; ctx.fillStyle = '#e8f0ff'; ctx.fillRect(0, 0, W, H); }
+            }
+        } else if (kind === 'fog') {
+            ctx.globalAlpha = inten;
+            for (let i = 0; i < 4; i++) { const x = W * (((t * 0.012 + i * 0.3) % 1.4) - 0.2), y = H * (0.45 + i * 0.12), g = ctx.createRadialGradient(x, y, 0, x, y, W * 0.7); g.addColorStop(0, 'rgba(235,240,245,0.30)'); g.addColorStop(1, 'rgba(235,240,245,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+        } else if (kind === 'night') {
+            ctx.fillStyle = 'rgba(8,14,52,' + (0.46 * inten) + ')'; ctx.globalCompositeOperation = 'multiply'; ctx.fillRect(0, 0, W, H);
+        } else if (kind === 'dawn') {
+            ctx.globalCompositeOperation = 'screen'; const g = ctx.createRadialGradient(W * 0.28, H * 0.5, 0, W * 0.28, H * 0.5, H * 0.75); g.addColorStop(0, 'rgba(255,170,80,' + (0.42 * inten) + ')'); g.addColorStop(1, 'rgba(255,120,60,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        } else if (kind === 'sun') {
+            ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = 'rgba(255,205,120,' + (0.10 * inten) + ')'; ctx.fillRect(0, 0, W, H);
+            for (let i = 0; i < 4; i++) { ctx.save(); ctx.translate(W * (0.15 + i * 0.07), -H * 0.05); ctx.rotate(-0.42); ctx.globalAlpha = inten * (0.10 + 0.05 * Math.sin(t * 0.9 + i)); ctx.fillStyle = '#fff3cf'; ctx.fillRect(0, 0, W * (0.05 + 0.02 * i), H * 1.3); ctx.restore(); }
+        }
+        ctx.restore();
+    }
+    return { get, draw };
+})();
+
 // ===== CANVAS RENDERER =====
 class CanvasRenderer {
     constructor(width, height) {
@@ -5912,9 +6162,10 @@ class CanvasRenderer {
         const prev = (!_inner && idx > 0) ? list[idx - 1] : null;
         const tr = scene.transition || { type: 'fade', duration: 0.4 };
         const sameLead = !!(prev && prev.cast && scene.cast && prev.cast.lead && prev.cast.lead === scene.cast.lead);
-        const trDur = prev ? (sameLead ? 0.12 : clamp(tr.duration || 0.4, 0.2, 0.9)) : 0;
+        const filmCut = !!prev && FilmDirector.on();   // film : on coupe franchement (ou fondu court), jamais de volets d'explainer
+        const trDur = prev ? (filmCut ? (scene.role === 'cta' || scene.mood === 'positive' && scene.role === 'result' ? 0.35 : 0.1) : (sameLead ? 0.12 : clamp(tr.duration || 0.4, 0.2, 0.9))) : 0;
         if (prev && t < trDur) {
-            this.renderTransition(prev, scene, idx, list.length, t, trDur, sameLead ? 'cut' : (tr.type || 'fade'));
+            this.renderTransition(prev, scene, idx, list.length, t, trDur, filmCut ? ((trDur > 0.2) ? 'fade' : 'cut') : (sameLead ? 'cut' : (tr.type || 'fade')));
         } else {
             this.drawSceneContent(scene, t, idx, list.length);
             if (idx === 0 && t < 0.35) {
@@ -6002,15 +6253,20 @@ class CanvasRenderer {
         const bgLite = typeof BuiltinCharacter !== 'undefined' && BuiltinCharacter.isLite && BuiltinCharacter.isLite();
         const bgS = proBg ? 1.05 + (camS - 1) * 0.6 : 1 + (camS - 1) * 0.45;
         const panX = proBg ? (idx % 2 ? 1 : -1) * W * 0.03 * (prog - 0.5) : 0;   // le fond glisse plus lentement que le personnage : profondeur
+        const F = FilmDirector.on() ? FilmDirector.cam(scene, t, idx, n) : null;   // plan de film en cours (null = ancien rendu)
         ctx.save();
-        ctx.translate(W / 2 + panX, H / 2); ctx.scale(bgS, bgS); ctx.translate(-W / 2, -H / 2);
+        if (F) {   // le décor suit la caméra à 70 % : le personnage se détache (profondeur), le fond ne montre jamais ses bords
+            const bz = 1 + (F.z - 1) * 0.7, S = bgS * bz * (1 + Math.abs(F.rot) * 1.4), cvx = W * (S - 1) / 2 - 2, cvy = H * (S - 1) / 2 - 2;
+            const dx = clamp((F.sx - F.tx) * W * bz * 0.7 + panX, -cvx, cvx), dy = clamp((F.sy - F.ty) * H * bz * 0.7, -cvy, cvy);
+            ctx.translate(W / 2 + dx, H / 2 + dy); ctx.rotate(F.rot); ctx.scale(S, S); ctx.translate(-W / 2, -H / 2);
+        } else { ctx.translate(W / 2 + panX, H / 2); ctx.scale(bgS, bgS); ctx.translate(-W / 2, -H / 2); }
         const bgBlur = proBg && !bgLite && 'filter' in ctx;   // fond légèrement flou : le personnage ressort (profondeur de champ)
         if (bgBlur) {   // le décor est dessiné net dans un calque, puis flouté UNE fois : même rendu, ~40 fois plus rapide (export de plusieurs heures -> quelques minutes)
             const off = this._bgOff || (this._bgOff = this.aux()), oc = off.getContext('2d'), real = this.ctx;
             oc.setTransform(1, 0, 0, 1, 0, 0); oc.globalAlpha = 1; oc.globalCompositeOperation = 'source-over'; oc.filter = 'none'; oc.clearRect(0, 0, W, H);
             this.ctx = oc;
             try { this.drawBackground(scene, t, idx, style, seed); } finally { this.ctx = real; }
-            ctx.filter = 'blur(' + (1.3 * k).toFixed(2) + 'px)'; ctx.drawImage(off, 0, 0); ctx.filter = 'none';
+            ctx.filter = 'blur(' + ((1.3 + (F ? F.dof * 3.4 : 0)) * k).toFixed(2) + 'px)'; ctx.drawImage(off, 0, 0); ctx.filter = 'none';
         } else this.drawBackground(scene, t, idx, style, seed);
         if ('filter' in ctx) ctx.filter = 'none';
         ctx.restore();
@@ -6024,12 +6280,15 @@ class CanvasRenderer {
             cx += Math.sin(t * 70) * 5 * k * dmp;
             cy += Math.cos(t * 63) * 4 * k * dmp;
         }
+        if (F && F.shake) { const dm = 0.5 + 0.5 * Math.sin(t * 1.7); cx += Math.sin(t * 23) * 2.2 * k * dm; cy += Math.cos(t * 19) * 1.8 * k * dm; }   // caméra à l'épaule dans les moments tendus
         ctx.save();
-        ctx.translate(W / 2 + cx, H / 2 + cy); ctx.scale(camS, camS); ctx.translate(-W / 2, -H / 2);
+        if (F) { ctx.translate(F.sx * W + cx, F.sy * H + cy); ctx.rotate(F.rot); const zz = F.z * (1 + (camS - 1) * 0.5); ctx.scale(zz, zz); ctx.translate(-F.tx * W, -F.ty * H); }
+        else { ctx.translate(W / 2 + cx, H / 2 + cy); ctx.scale(camS, camS); ctx.translate(-W / 2, -H / 2); }
         if (scene.location) this.drawLocationPath(scene, t);
         const sorted = [...scene.elements].sort((a, b) => a.zIndex - b.zIndex);
         for (const element of sorted) {
             if (!element.visible) continue;
+            if (F && element.type === 'text' && !(element.fontSize >= 100)) continue;   // plus de mots-clés « explicatifs » collés sur l'image : l'histoire se joue
             this.renderElement(element, t, scene);
         }
         ctx.restore();
@@ -6037,6 +6296,7 @@ class CanvasRenderer {
         this.drawExplainerOverlay(scene, t, idx);
         this.drawEffects(scene, t, idx, seed);
         this.drawCinema(scene, t, seed);
+        if (F) this.drawFilmLook(scene, t, F);
         if (typeof state !== 'undefined' && state.project && state.project.subtitles && scene.narration) {
             this.renderSubtitles(scene.narration, t, scene.duration);
         }
@@ -6127,6 +6387,26 @@ class CanvasRenderer {
         ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
         ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.5; ctx.drawImage(this.bloomC, 0, 0, W, H); ctx.restore();
     }
+    // ===== Look film : couleur selon l'émotion, ombre de premier plan (plan « par-dessus l'épaule »), vignette serrée sur les gros plans, bandes 2.39 en format large =====
+    drawFilmLook(scene, t, F) {
+        const ctx = this.ctx, W = this.width, H = this.height;
+        ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+        try { const L = state.project.scenes, i = L.indexOf(scene); if (i >= 0) FilmWeather.draw(ctx, W, H, this.k, t, FilmWeather.get(L, i), hashStr(scene.id || ('s' + i))); } catch (_) {}
+        const tint = scene.mood === 'negative' ? 'rgba(40,70,150,0.30)' : scene.mood === 'positive' ? 'rgba(255,170,70,0.26)' : 'rgba(255,205,150,0.10)';
+        ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = tint; ctx.fillRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'source-over';
+        if (F.occ) {   // masse sombre floue sur le bord : on devine l'autre personne hors champ
+            const g = ctx.createLinearGradient(F.occ > 0 ? W : 0, 0, F.occ > 0 ? W * 0.72 : W * 0.28, 0);
+            g.addColorStop(0, 'rgba(6,4,14,0.62)'); g.addColorStop(1, 'rgba(6,4,14,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        }
+        if (F.dof > 0.4) {
+            const v = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.28, W / 2, H / 2, Math.hypot(W, H) * 0.55);
+            v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,' + (0.18 + 0.2 * F.dof) + ')'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+        }
+        if (W / H > 1.5) { const b = Math.round(H * 0.07); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, b); ctx.fillRect(0, H - b, W, b); }
+        ctx.restore();
+    }
+
     drawCinema(scene, t, seed) {
         if (!this.cinemaOn()) return;
         const ctx = this.ctx, W = this.width, H = this.height, lite = typeof BuiltinCharacter !== 'undefined' && BuiltinCharacter.isLite && BuiltinCharacter.isLite();
@@ -7152,7 +7432,8 @@ class CanvasRenderer {
         // Badge éditorial : ne jamais afficher les marqueurs internes « étape » du moteur.
         const rawBeat = String(scene.socialBeat || '').trim();
         const beat = /^(?:étape|etape)\s*\d+/i.test(rawBeat) ? 'MOMENT CLÉ' : rawBeat.toUpperCase() === 'HOOK' ? 'ACCROCHE' : rawBeat.toUpperCase() === 'CTA' ? 'À VOUS DE JOUER' : (rawBeat || 'MOMENT CLÉ');
-        if (!this.exportClean) {   // pastille « MOMENT CLÉ » : aperçu seulement, jamais dans la vidéo téléchargée
+        const filmOn = FilmDirector.on();
+        if (!this.exportClean && !filmOn) {   // pastille « MOMENT CLÉ » : aperçu seulement, jamais dans la vidéo téléchargée
         ctx.save(); ctx.globalAlpha=ease; ctx.fillStyle='rgba(255,255,255,.94)'; ctx.strokeStyle=accent; ctx.lineWidth=2*k;
         const bw=Math.min(W*.72,360*k), bh=36*k, bx=(W-bw)/2, by=22*k;
         ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,14*k); ctx.fill(); ctx.stroke();
@@ -7183,7 +7464,7 @@ class CanvasRenderer {
         // mot-clé en bas, distinct des sous-titres
         const key = String(scene.keyText || '').trim();
         const alreadyShown = key && (scene.elements || []).some(e => e.type === 'text' && e.visible !== false && String(e.content || '').trim() === key);
-        const label = (alreadyShown || this.exportClean) ? '' : key.slice(0,22); if(label){ctx.save();const w=Math.min(W*.86,520*k),h=62*k;const x=(W-w)/2,y=H*.70;ctx.globalAlpha=clamp((p-.08)*4,0,1);ctx.fillStyle='#fff';ctx.strokeStyle=accent;ctx.lineWidth=4*k;ctx.beginPath();ctx.roundRect(x,y,w,h,14*k);ctx.fill();ctx.stroke();ctx.fillStyle='#111936';ctx.font='900 '+(24*k)+'px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,W/2,y+h/2);ctx.restore();}
+        const label = (alreadyShown || this.exportClean || filmOn) ? '' : key.slice(0,22); if(label){ctx.save();const w=Math.min(W*.86,520*k),h=62*k;const x=(W-w)/2,y=H*.70;ctx.globalAlpha=clamp((p-.08)*4,0,1);ctx.fillStyle='#fff';ctx.strokeStyle=accent;ctx.lineWidth=4*k;ctx.beginPath();ctx.roundRect(x,y,w,h,14*k);ctx.fill();ctx.stroke();ctx.fillStyle='#111936';ctx.font='900 '+(24*k)+'px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,W/2,y+h/2);ctx.restore();}
         // Aucun curseur de progression interne dans la vidéo : le montage reste propre.
     }
 
@@ -7276,25 +7557,48 @@ class CanvasRenderer {
 
     // ---------- Personnage : bibliothèque Rive (un seul personnage) ----------
     renderCharacter(element, w, h, time, scene) {
+        let FA = null;
+        try { if (FilmDirector.on()) { const L = state.project.scenes, i = L.indexOf(scene); if (i >= 0) FA = FilmDirector.act(scene, time, i, L.length); } } catch (_) {}
+        FILM_ACT = FA;
+        try { this.renderCharacter0(element, w, h, time, scene); } finally { FILM_ACT = null; }
+    }
+    renderCharacter0(element, w, h, time, scene) {
         const pose = element.pose || 'standing';
         let cast = [];
         try { cast = FemaleCast.forCast(scene); } catch (_) {}
         const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+        const ctx = this.ctx, u = Math.min(h * 0.94 / 10.2, (w || h) / 3.6);
+        let tv = null; try { tv = TravelBrain.state(scene, time, u); } catch (_) {}
+        const meet = !!(tv && tv.kind === 'meet' && cast.length);
+        if (tv && tv.kind === 'meet' && !meet) tv = null;
         // présence de chaque invité : il entre quand son mot est dit (0 -> 1), puis sort après la dernière mention
-        const ps = cast.map(g => sm((time - g.tIn) / 0.35) * (1 - sm((time - g.tOut) / 0.3))), n = ps.reduce((a, b) => a + b, 0);
-        if (n <= 0.001) { Character.draw(this.ctx, w, h, time, scene, pose); return; }
-        const ctx = this.ctx, u = Math.min(h * 0.94 / 10.2, (w || h) / 3.6), q = Math.min(Math.max(0, n - 1), 1), k = 1 - 0.22 * q;
-        const mainX = n <= 1 ? -1.1 * u * n : -1.1 * u - 0.9 * u * (n - 1);   // le personnage se décale en douceur pour faire place
+        const ps = cast.map((g, i) => meet ? (i === 0 ? tv.guestP * (1 - sm((time - g.tOut) / 0.3)) : 0) : sm((time - g.tIn) / 0.35) * (1 - sm((time - g.tOut) / 0.3))), n = ps.reduce((a, b) => a + b, 0);
+        // personnage principal : marche avec balancement et petit rebond, salue et regarde son ami à la rencontre
+        const drawMain = (x) => {
+            ctx.save();
+            const wk = tv ? tv.mainWalk : 0, bob = wk > 0.01 ? -Math.abs(Math.sin(time * 3.9)) * 0.1 * u * wk : 0;
+            ctx.translate(x, bob); if (wk > 0.01) ctx.transform(1, 0, -0.045 * wk, 1, 0, 0);
+            TRAVEL_FORCE = tv ? { walk: wk, wave: tv.mainWave.w, gp: tv.mainWave.p, gdur: 1.8, look: tv.met ? 0.7 : 0 } : null;
+            try { Character.draw(ctx, w, h, time, scene, pose); } finally { TRAVEL_FORCE = null; ctx.restore(); }
+        };
+        if (!tv && n <= 0.001) { Character.draw(ctx, w, h, time, scene, pose); return; }
+        if (tv && !meet && n <= 0.001) { drawMain(tv.mainX); return; }
+        const q = meet ? 0 : Math.min(Math.max(0, n - 1), 1), k = meet ? 0.88 : 1 - 0.22 * q;
+        const mainX = tv ? tv.mainX : (n <= 1 ? -1.1 * u * n : -1.1 * u - 0.9 * u * (n - 1));   // le personnage se décale en douceur pour faire place
         ctx.save(); ctx.scale(k, k);
-        ctx.save(); ctx.translate(mainX, 0); Character.draw(ctx, w, h, time, scene, pose); ctx.restore();
+        drawMain(mainX);
         let before = 0;
         cast.forEach((g, i) => {
             const pr = ps[i]; if (pr <= 0.001) return;
-            const tall = g.scale > 1 ? 0.25 * u : 0, x = (1.3 * u + tall) * (1 - q) + (0.1 * u + 2.0 * u * before + tall) * q + (1 - pr) * u;
+            const tall = g.scale > 1 ? 0.25 * u : 0, gt = meet && i === 0;
+            const x = gt ? tv.guestX : (1.3 * u + tall) * (1 - q) + (0.1 * u + 2.0 * u * before + tall) * q + (1 - pr) * u;
             before += pr;
-            ctx.save(); ctx.globalAlpha *= pr; ctx.translate(x, 0);
+            const gwk = gt ? tv.guestWalk : 0, bob = gwk > 0.01 ? -Math.abs(Math.sin(time * 3.9 + 1.1)) * 0.1 * u * gwk : 0;
+            ctx.save(); ctx.globalAlpha *= pr; ctx.translate(x, bob);
             const sc = g.scale * (0.85 + 0.15 * pr); ctx.scale(-sc, sc);   // tourné vers le personnage ; petit pop à l'arrivée
+            TRAVEL_FORCE = gt ? { walk: gwk, wave: tv.guestWave.w, gp: tv.guestWave.p, gdur: 1.8 } : null;
             try { BuiltinCharacter.drawGuest(ctx, w, h, time, scene, pose, g.look, i, g.id); } catch (e) { console.warn('Invité', e); }
+            finally { TRAVEL_FORCE = null; }
             ctx.restore();
         });
         ctx.restore();
@@ -7817,6 +8121,246 @@ function loadAssetsLibrary() {
     `).join('');
 }
 
+// ===== ATELIER D'HISTOIRES : apprend le rythme de TES histoires, cale les scènes dessus, et en génère d'autres =====
+const StoryLab = (() => {
+    const KEY = 'vs_stories', clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+    const EMO = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F\u200D]/gu;
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || seed(); } catch (e) { return seed(); } };
+    const save = a => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) { } };
+    function seed() { return [{ id: 's0', title: 'Toto et l’avocat (exemple)', wps: 2.6, text: "La maîtresse demande : Toto, pourquoi tu n’as jamais les mêmes réponses que ton père quand je l’appelle ? Toto répond : Parce que maman m’a dit de ne jamais suivre les traces de papa ! La maîtresse, énervée : Toto ! Demain, tu viens avec ton père ! Le lendemain, Toto arrive avec un vieux monsieur. La maîtresse demande : C’est ton père ? Toto répond : Non madame, c’est mon avocat ! Ton avocat ?! Oui ! Papa a dit que si je ramène encore zéro, il va me tuer… Alors je préfère régler ça légalement ! La maîtresse appelle le père. Le père répond : Allô ? Toto attrape le téléphone : Papa, calme-toi ! Mon avocat dit que tu risques 20 ans de prison ! Le père raccroche immédiatement !" }]; }
+    const clean = t => String(t || '').replace(EMO, '').replace(/\r/g, '');
+    const split = t => (clean(t).match(/[^.!?…\n]+(?:[.!?…]+["»”)]*|\n|$)/g) || []).map(x => x.replace(/\s+/g, ' ').trim()).filter(x => x.length > 1);
+    const wc = x => x.split(/\s+/).filter(Boolean).length;
+    const pause = x => /…|\.\.\./.test(x) ? 0.9 : /\?/.test(x) ? 0.6 : /!/.test(x) ? 0.5 : 0.4;
+    function kinds(arr) { const n = arr.length; return arr.map((x, i) => i === 0 ? 'setup' : /\?["»”]*$/.test(x) ? 'question' : i === n - 1 ? 'punch' : (/!["»”]*$/.test(x) && wc(x) <= 7) ? 'reaction' : /\b(mais|pourtant|alors|sauf|finalement|non)\b/i.test(x) ? 'twist' : 'build'); }
+    function profile() {
+        const st = load(), beats = [], by = {}; let wpsS = 0;
+        st.forEach(h => { const a = split(h.text), k = kinds(a); wpsS += +h.wps || 2.4; a.forEach((x, i) => { const b = { text: x, kind: k[i], words: wc(x), pause: pause(x), from: h.id, i, n: a.length }; beats.push(b); (by[b.kind] = by[b.kind] || []).push(b); }); });
+        const n = st.length, tot = beats.length || 1, avg = beats.reduce((s, b) => s + b.words, 0) / tot;
+        const kavg = {}; for (const k in by) kavg[k] = by[k].reduce((s, b) => s + b.words, 0) / by[k].length;
+        return { n, tot, avg, wps: n ? wpsS / n : 2.4, kavg, by, beats, st, pauseAvg: beats.reduce((s, b) => s + b.pause, 0) / tot };
+    }
+    const on = () => { try { return !!JSON.parse(localStorage.getItem('vs_settings') || '{}').storyRhythm; } catch (e) { return false; } };
+    // durée d'une scène : débit appris + pause selon la ponctuation, + temps de « chute » après une question ou un éclat
+    function duration(text, role) {
+        if (!on()) return null; const p = profile(); if (!p.n) return null;
+        const w = wc(text), q = /\?["»”]*$/.test(text), ex = /!["»”]*$/.test(text) && w <= 7;
+        let sec = w / p.wps + pause(text) * (p.pauseAvg > 0.55 ? 1.25 : 1) + 0.3 + (q ? 0.35 : 0) + (ex ? 0.3 : 0);
+        if (role === 'hook' || role === 'cta') sec = Math.max(sec, 2.6);
+        return clamp(Math.round(sec * 2) / 2, 2, 10);
+    }
+    const NAMES = ['Ali', 'Fatou', 'Moussa', 'Awa', 'Yao', 'Aïcha', 'Koffi', 'Mariam'];
+    const STOP = /^(Papa|Maman|Allô|Oui|Non|Alors|Parce|Demain|Mon|Ton|Le|La|Les|Un|Une|Mais|Puis|Quand|Dans|Il|Elle|Ils|Elles|Je|Tu|Nous|Vous|Ce|Cette|Si|Et|Ou|Où|Pourquoi|Comment|Que|Qui|Madame|Monsieur|Alors|Avec|Pour|Sans|Sur|Sous|Une|Des|Du|De|Au|Aux|En|Ça|Cela|C|J|L|D|N|S|T|M|Mon|Ma|Mes)$/;
+    function props(p) { const c = {}; p.beats.forEach(b => (b.text.match(/[A-ZÀ-ÖØ-Þ][a-zà-ÿ]{2,}/g) || []).forEach(w => { if (!STOP.test(w)) c[w] = (c[w] || 0) + 1; })); return Object.keys(c).filter(w => c[w] >= 2).sort((x, y) => c[y] - c[x]); }
+    const rnd = a => a[Math.floor(Math.random() * a.length)];
+    function swapAll(t, map) { Object.keys(map).forEach(k => { t = t.replace(new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), m => /^[A-ZÀ-Þ]/.test(m) ? map[k][0].toUpperCase() + map[k].slice(1) : map[k]); }); return t; }
+    let lastId = null;
+    function offline(p, cast, swaps) {   // hors ligne : on garde une histoire cohérente de bout en bout, mais avec d'autres personnages et tes remplacements
+        const pool = p.st.filter(h => h.id !== lastId), sk = rnd(pool.length ? pool : p.st); lastId = sk.id;
+        const pp = { beats: split(sk.text).map(t => ({ text: t })) }, names = props(pp).length ? props(pp) : props(p), map = {}; let ci = 0;
+        names.slice(0, 3).forEach(n => { map[n] = cast[ci] || NAMES[(ci * 3 + Math.floor(Math.random() * 3)) % NAMES.length]; ci++; });
+        Object.assign(map, swaps); return swapAll(clean(sk.text), map);
+    }
+    async function online(p, cast, swaps, cfg) {
+        const ex = p.st.slice(0, 4).map((h, i) => 'HISTOIRE ' + (i + 1) + ' :\n' + clean(h.text)).join('\n\n');
+        const prompt = 'Tu écris des histoires courtes pour des vidéos animées verticales, en français. Voici des histoires écrites par l\u2019auteur :\n\n' + ex + '\n\nRythme à reproduire : environ ' + p.wps.toFixed(1) + ' mots par seconde, phrases de ' + Math.round(p.avg) + ' mots en moyenne, une mise en place, des questions, une montée, une chute drôle ou forte à la toute fin. Écris UNE NOUVELLE histoire DIFFÉRENTE (autre situation, autre chute) avec exactement le même rythme et la même construction.' + (cast.length ? ' Personnages à utiliser : ' + cast.join(', ') + '.' : '') + (Object.keys(swaps).length ? ' Contraintes : ' + Object.entries(swaps).map(e => e[0] + ' => ' + e[1]).join(', ') + '.' : '') + ' Réponds uniquement avec le texte de l\u2019histoire, sans titre ni emoji.';
+        const model = (cfg.model || 'gemini-3.6-flash').trim(), ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 30000);
+        try { const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.key }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.95 } }), signal: ctrl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); const d = await r.json(); return clean((d.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('')).trim(); } finally { clearTimeout(tm); }
+    }
+    return { load, save, profile, duration, on, offline, online, split, kinds };
+})();
+let slCur = null;
+function slRender() {
+    const p = StoryLab.profile(), s = Settings.get();
+    document.getElementById('slOn').checked = !!s.storyRhythm;
+    document.getElementById('slProfile').innerHTML = p.n ? ('Appris de <b>' + p.n + '</b> histoire' + (p.n > 1 ? 's' : '') + ' · <b>' + p.tot + '</b> phrases<br>Débit : <b>' + p.wps.toFixed(1) + '</b> mots/s · phrase moyenne : <b>' + Math.round(p.avg) + '</b> mots<br>Questions : ' + (p.by.question || []).length + ' · Éclats : ' + (p.by.reaction || []).length + ' · Retournements : ' + (p.by.twist || []).length + '<br>Plus tu en ajoutes, plus il suit ton style.') : 'Aucune histoire encore : programme-en une ci-dessous.';
+    document.getElementById('slList').innerHTML = p.st.map(h => '<div class="element-chip" onclick="slEdit(\'' + h.id + '\')">' + esc(h.title) + ' <span onclick="event.stopPropagation();slDel(\'' + h.id + '\')" style="opacity:.6;margin-left:6px">✕</span></div>').join('');
+    const g = Settings.get(), online = g.ai === 'gemini' && g.key;
+    document.getElementById('slNote').textContent = online ? 'Mode en ligne (Gemini) : vraies histoires nouvelles, au même rythme.' : 'Mode hors ligne : je reprends une de tes histoires en changeant les personnages et tes remplacements (ex : avocat=docteur), sans casser la chute. Pour des situations vraiment nouvelles, active Gemini dans Paramètres.';
+}
+function slToggle() { Settings.save({ storyRhythm: document.getElementById('slOn').checked }); showToast(document.getElementById('slOn').checked ? 'Les scènes suivront ton rythme' : 'Rythme standard', 'success'); }
+function slEdit(id) { const h = StoryLab.load().find(x => x.id === id); if (!h) return; slCur = id; document.getElementById('slTitle').value = h.title; document.getElementById('slText').value = h.text; document.getElementById('slWps').value = h.wps || 2.4; document.getElementById('slWpsV').textContent = h.wps || 2.4; }
+function slClear() { slCur = null; ['slTitle', 'slText'].forEach(i => document.getElementById(i).value = ''); }
+function slDel(id) { StoryLab.save(StoryLab.load().filter(h => h.id !== id)); slRender(); }
+function slSave() {
+    const text = document.getElementById('slText').value.trim(); if (text.length < 20) { showToast('Écris au moins quelques phrases', 'error'); return; }
+    const a = StoryLab.load().filter(h => h.id !== 's0' || slCur === 's0' || true), rec = { id: slCur || 's' + Date.now(), title: document.getElementById('slTitle').value.trim() || 'Histoire ' + (a.length + 1), text, wps: +document.getElementById('slWps').value };
+    const i = a.findIndex(h => h.id === rec.id); if (i >= 0) a[i] = rec; else a.push(rec);
+    StoryLab.save(a); Settings.save({ storyRhythm: true }); slClear(); slRender(); showToast('Histoire apprise ✓ le rythme est activé', 'success');
+}
+async function slGenerate() {
+    const p = StoryLab.profile(); if (!p.n) { showToast('Programme d’abord une histoire', 'error'); return; }
+    const cast = document.getElementById('slCast').value.split(',').map(x => x.trim()).filter(Boolean), swaps = {};
+    document.getElementById('slSwap').value.split(',').forEach(x => { const m = x.split('='); if (m.length === 2 && m[0].trim() && m[1].trim()) swaps[m[0].trim()] = m[1].trim(); });
+    const cfg = Settings.get(); let out = '';
+    try { if (cfg.ai === 'gemini' && cfg.key) { showLoading('✨ J’écris une nouvelle histoire…'); out = await StoryLab.online(p, cast, swaps, cfg); hideLoading(); } } catch (e) { hideLoading(); showToast('En ligne indisponible : mode hors ligne', 'error'); }
+    if (!out) out = StoryLab.offline(p, cast, swaps);
+    document.getElementById('slOut').value = out;
+}
+function slUse() {
+    const t = document.getElementById('slOut').value.trim(); if (!t) { showToast('Génère d’abord une histoire', 'error'); return; }
+    document.getElementById('scriptInput').value = t; const idea = document.getElementById('ideaInput'); if (idea) idea.value = '';
+    updateScriptStats(); showScreen('createScreen'); showToast('Histoire prête : lance 🚀 (rythme appliqué)', 'success');
+}
+
+// ===== FILM DE DIALOGUE : lit l'histoire, repère qui parle à qui, et chaque personnage répond à son tour =====
+const DF = (() => {
+    const NS = 'http://www.w3.org/2000/svg', $ = id => document.getElementById(id), clamp = (x, a, b) => Math.max(a, Math.min(b, x)), lerp = (a, b, k) => a + (b - a) * k;
+    const EMO = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F\u200D]/gu;
+    const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p && p.appendChild(e); return e; };
+    const hash = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+    const FEM = /(ma[iî]tresse|m[èe]re|maman|femme|fille|s[œo]eur|madame|mamie|grand-m[èe]re|tante|vendeuse|voisine|copine|infirmi[eè]re|professeure|reine)/i, OLD = /(vieux|vieille|monsieur|avocat|papi|grand-p[èe]re|docteur|m[ée]decin|juge|patron|policier|directeur|notaire)/i, KID = /(enfant|[ée]l[èe]ve|petit|petite|fils|b[ée]b[ée]|gamin|gar[çc]on|fillette|copain)/i;
+    const SKIN = ['#f6c9a0', '#c68642', '#8d5524', '#e0ac69', '#6b4226'], HAIR = ['#2a1d16', '#4a2a1c', '#e0561f', '#1b1410', '#8a5a2b'], CLOTH = ['#ffcf33', '#2e8b6f', '#d9534f', '#4f7cff', '#8e5ac8', '#ff8a3d', '#1fa2a2'];
+    const TAG = /^([^:]{2,60}?)\s*:\s*(.+)$/s, BADTAG = /^(r[ée]sultat|attention|exemple|note|astuce|question|conclusion|important|r[ée]ponse|astuce|moralit[ée])\b/i;
+    const NAMEP = /^\s*((?:le|la|l['’]|les|un|une|mon|ma|ton|ta|son|sa)\s*)?([\p{L}][\p{L}-]*)/iu;
+    const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
+    function who(tag) { const m = NAMEP.exec(tag); if (!m) return null; const art = (m[1] || '').trim(), w = m[2], key = w.toLowerCase(); if (/^(le|la|les|un|une|mon|ma|ton|ta|son|sa|il|elle)$/i.test(w)) return null; return { key, disp: cap1((art ? art + (/['’]$/.test(art) ? '' : ' ') : '') + w) }; }
+    function mkDef(key, disp, ctx, extra) {
+        const all = (disp + ' ' + (extra || '')).toLowerCase(), h = hash(key), cap = /^[A-ZÀ-Þ]/.test(disp) && !/\s/.test(disp);
+        let type = FEM.test(all) ? 'f' : OLD.test(all) ? 'o' : KID.test(all) ? 'k' : (cap && ctx.school) ? 'k' : (cap && /a$/.test(key) ? 'f' : 'd');
+        const d = { key, disp, type, skin: SKIN[h % SKIN.length], hair: type === 'o' ? '#d5d8de' : HAIR[(h >> 3) % HAIR.length], cloth: type === 'o' ? '#2b2f4a' : CLOTH[(h >> 5) % CLOTH.length], s: type === 'k' ? .74 : 1, pitch: { k: 1.8, f: 1.35, o: .6, d: .85 }[type] };
+        if (type === 'f') d.hair = '#4a2a1c'; if (type === 'k' && d.hair === '#2a1d16') d.hair = '#e0561f';
+        return d;
+    }
+    const hintOf = t => /[ée]nerv|col[èe]re|furieu|f[âa]ch/i.test(t) ? 'angry' : /surpris|choqu|stup|[ée]tonn|effray|peur/i.test(t) ? 'shock' : /triste|pleur|d[ée][çc]u/i.test(t) ? 'sad' : /content|heureu|\brit\b|sourit|joyeu/i.test(t) ? 'joy' : /fier/i.test(t) ? 'proud' : /moqu|malin/i.test(t) ? 'smug' : null;
+    const PRON = /(?<![\p{L}])(?:je|tu|vous|nous|moi|toi|mon|ma|mes|ton|ta|tes|votre|notre|c['’]est)(?![\p{L}])|(?<![\p{L}])[jtc]['’]/iu, ISQ = /\?+[!"»”]*$/;
+    const isSpeech = s => PRON.test(s) || ISQ.test(s) || (s.split(/\s+/).length <= 3 && /[!?]["»”]*$/.test(s)) || /^(oui|non|all[ôo]|bonjour|merci|alors|eh|ah|oh|h[ée]|super|bravo|bien s[ûu]r|voil[àa])(?![\p{L}])/iu.test(s);
+    function parse(text) {
+        const t = String(text || '').replace(EMO, '').replace(/\r/g, '').split(/\n\s*(?:question|commente|qui est le plus)\b/i)[0].replace(/:\s*\n+\s*[—–-]?\s*/g, ': ').replace(/\n\s*[—–-]\s*/g, '\n');
+        const S = (t.match(/[^.!?…\n]+(?:[.!?…]+["»”)]*)|[^.!?…\n]+$/g) || []).map(x => x.trim().replace(/^[—–-]\s*/, '')).filter((x, i) => x.length > 1 && (i > 0 || /[a-zà-ÿ]/.test(x)));
+        const ctx = { school: /[ée]cole|classe|ma[iî]tresse|ma[iî]tre\b|[ée]l[èe]ve/i.test(t) }, chars = {}, steps = [], hist = [];
+        const valid = tg => { const w = tg.trim().split(/\s+/); return w.length <= 6 && !/[?!.\d]/.test(tg) && /^[A-ZÀ-Þa-zà-ÿ]/.test(tg) && !BADTAG.test(tg.trim()) && who(tg); };
+        S.forEach(x => { const m = TAG.exec(x); if (m && valid(m[1])) { const w = who(m[1]); if (!chars[w.key]) chars[w.key] = mkDef(w.key, w.disp, ctx); } });
+        const proper = () => Object.keys(chars).filter(k => /^[A-ZÀ-Þ][^\s]*$/.test(chars[k].disp));
+        let present = [], phone = false, inset = null, tone = 0, last = null, prevEmo = null;
+        const addP = k => { if (!present.includes(k)) present.push(k); }, line = (x, w) => x;
+        S.forEach(x => {
+            const m = TAG.exec(x), ok = m && valid(m[1]);
+            if (ok || isSpeech(x)) {
+                let spk, txt, hint = null, fresh = true;
+                if (ok) { const w = who(m[1]); spk = w.key; txt = m[2].trim(); hint = hintOf(m[1]); }
+                else {
+                    txt = x;
+                    if (last && last.live && !last.q && !ISQ.test(x)) { last.step.text += ' ' + x; last.step.emo = last.step.emo === 'calm' && /!/.test(x) ? 'joy' : last.step.emo; last.q = ISQ.test(x); fresh = false; }
+                    else { const cur = hist[hist.length - 1], cand = [...hist].reverse().find(k => k !== cur) || Object.keys(chars).find(k => k !== cur); spk = cand || cur; }
+                }
+                if (!fresh) return;
+                if (!spk) return;
+                if (!chars[spk]) chars[spk] = mkDef(spk, cap1(spk), ctx);
+                if (phone && !present.includes(spk)) inset = spk; else addP(spk);
+                proper().forEach(k => { if (k !== spk && new RegExp('\\b' + k + '\\b', 'i').test(txt) && !(phone && inset === k)) addP(k); });
+                let emo = hint;
+                if (!emo) emo = /\?!|!\?/.test(txt) ? 'shock' : ISQ.test(txt) ? 'ask' : /!["»”]*$/.test(txt) ? (/(demain|arr[êe]te|sors|tais|ça suffit|viens|dehors)/i.test(txt) ? 'angry' : (prevEmo && ['ask', 'angry', 'shock'].includes(prevEmo.e) && prevEmo.who !== spk ? 'smug' : 'joy')) : 'calm';
+                const st = { kind: 'say', who: spk, text: txt, emo, present: [...present], inset: phone ? inset : null, tone };
+                steps.push(st); hist.push(spk); prevEmo = { e: emo, who: spk }; last = { step: st, q: ISQ.test(txt), live: true };
+            } else {
+                last && (last.live = false);
+                const w = who(x), st = { kind: 'narr', text: x, emo: 'calm', who: '' };
+                if (w && chars[w.key]) addP(w.key);
+                const av = /\bavec\s+(?:un|une)\s+((?:[\p{L}-]+\s?){1,3}?)(?=[.,;!]|$)/iu.exec(x);
+                if (av) { const nm = av[1].trim(), k = nm.toLowerCase(); if (!chars[k]) { chars[k] = mkDef(k, cap1(nm), ctx, nm); chars[k].silent = true; } addP(k); }
+                const ap = /appelle\s+(?:le|la|l['’]|son|sa)\s*([\p{L}-]+)/iu.exec(x);
+                if (/\b(appelle|t[ée]l[ée]phone|d[ée]croche|coup de fil|au bout du fil)\b/i.test(x)) { phone = true; if (ap) { const k = ap[1].toLowerCase(); const ex = Object.keys(chars).find(c => c.indexOf(k) >= 0); if (ex) inset = ex; } }
+                if (/raccroch/i.test(x)) st.hang = true;
+                if (/\b(lendemain|plus tard|le soir|ce matin|la nuit|une semaine)\b/i.test(x)) tone++;
+                st.present = [...present]; st.inset = phone ? inset : null; st.tone = tone; st.cap = x.length < 70 ? x : null;
+                steps.push(st); prevEmo = null;
+                if (st.hang) { phone = false; }
+            }
+        });
+        return { steps, chars, said: steps.filter(z => z.kind === 'say').length };
+    }
+    // ---------- dessin ----------
+    function mk(d, parent) {
+        const A = { d, x: -140, tx: -140, face: 1, fv: 1, vis: 0 };
+        A.g = el('g', {}, parent); const sc = A.sc = el('g', {}, A.g);
+        el('ellipse', { cx: 0, cy: 2, rx: 34, ry: 7, fill: '#000', opacity: .2 }, sc);
+        const body = el('g', {}, sc);
+        [-1, 1].forEach(s => { el('rect', { x: s * 9 - 6, y: -64, width: 12, height: 60, rx: 5, fill: d.type === 'f' ? d.skin : '#2a2d3c' }, body); el('ellipse', { cx: s * 11, cy: -3, rx: 11, ry: 5, fill: '#1a1a1a' }, body); });
+        if (d.type === 'f') el('path', { d: 'M-28 -62 L-20 -128 L20 -128 L28 -62Z', fill: d.cloth }, body); else el('rect', { x: -26, y: -130, width: 52, height: 74, rx: 16, fill: d.cloth }, body);
+        if (d.type === 'o' || d.type === 'd') { el('path', { d: 'M-9 -130 L0 -100 L9 -130Z', fill: '#fff' }, body); el('path', { d: 'M-4 -118 L4 -118 L6 -84 L0 -78 L-6 -84Z', fill: d.type === 'o' ? '#d62839' : '#ffd23f' }, body); }
+        A.arm = [-1, 1].map(s => { const a = el('g', { transform: `translate(${s * 27},-120)` }, sc); el('line', { x1: 0, y1: 0, x2: 0, y2: 48, stroke: d.type === 'f' ? d.skin : d.cloth, 'stroke-width': 12, 'stroke-linecap': 'round' }, a); el('circle', { cx: 0, cy: 52, r: 7, fill: d.skin }, a); const ph = el('text', { x: -8, y: 46, 'font-size': 20, opacity: 0 }, a); ph.textContent = '📱'; a.ph = ph; if (d.type === 'o' && s === 1) el('rect', { x: -11, y: 56, width: 22, height: 16, rx: 3, fill: '#5a3a1a' }, a); return a; });
+        const h = A.h = el('g', {}, sc);
+        if (d.type === 'f') el('circle', { cx: 0, cy: -30, r: 13, fill: d.hair }, h);
+        if (d.type === 'k') for (let i = -2; i <= 2; i++) el('path', { d: `M${i * 9 - 6} -22 L${i * 9} -52 L${i * 9 + 6} -22Z`, fill: d.hair }, h);
+        el('circle', { r: 30, fill: d.skin }, h);
+        if (d.type === 'f' || d.type === 'k' || d.type === 'd') el('path', { d: 'M-30 -4 A30 30 0 0 1 30 -4 Q0 -20 -30 -4Z', fill: d.hair }, h);
+        if (d.type === 'o') { [-1, 1].forEach(s => el('path', { d: `M${s * 30} -4 Q${s * 34} 12 ${s * 24} 14 L${s * 26} -10Z`, fill: d.hair }, h)); el('path', { d: 'M-28 -12 Q-20 -34 0 -33 Q20 -34 28 -12 Q10 -26 0 -26 Q-10 -26 -28 -12Z', fill: d.hair }, h); }
+        A.tint = el('circle', { r: 30, fill: '#ff2a2a', opacity: 0 }, h);
+        A.eyes = [-1, 1].map(s => { const e = el('g', { transform: `translate(${s * 11},-3)` }, h); el('ellipse', { rx: 7, ry: 7.5, fill: '#fff' }, e); e.p = el('circle', { r: 3.2, fill: '#222' }, e); e.lid = el('rect', { x: -8, y: -9, width: 16, height: 0, fill: d.skin }, e); e.s = s; return e; });
+        if (d.type === 'o') [-1, 1].forEach(s => el('circle', { cx: s * 11, cy: -3, r: 10, fill: 'none', stroke: '#444', 'stroke-width': 2 }, h));
+        A.brow = [-1, 1].map(s => el('line', { x1: s * 4, y1: -15, x2: s * 18, y2: -15, stroke: '#3a2418', 'stroke-width': 3, 'stroke-linecap': 'round' }, h));
+        el('ellipse', { cx: 0, cy: 7, rx: 3, ry: 2.4, fill: d.skin, stroke: '#0003' }, h);
+        A.mouth = el('path', { fill: '#6d1f2c', stroke: '#6d1f2c', 'stroke-width': 2, 'stroke-linejoin': 'round' }, h);
+        return A;
+    }
+    const TONES = [['#8fd3e6', '#5fb3cc', '#c98b4a'], ['#ffd9a0', '#ffb877', '#c98b4a'], ['#6f78c9', '#3d3f8f', '#9a6a3a'], ['#9ad9b0', '#5ab58a', '#c98b4a']];
+    function bg(t) { const g = $('dfBg'), c = TONES[t % TONES.length]; g.innerHTML = ''; const df = el('defs', {}, g), lg = el('linearGradient', { id: 'dfw', x1: 0, y1: 0, x2: 0, y2: 1 }, df); el('stop', { offset: 0, 'stop-color': c[0] }, lg); el('stop', { offset: 1, 'stop-color': c[1] }, lg);
+        el('rect', { width: 360, height: 640, fill: 'url(#dfw)' }, g); el('rect', { y: 470, width: 360, height: 170, fill: c[2] }, g);
+        for (let i = 0; i < 9; i++) el('rect', { x: i * 45 - 6, y: 470, width: 3, height: 170, fill: '#0002' }, g);
+        el('rect', { x: 30, y: 95, width: 300, height: 170, rx: 8, fill: '#8a5a2b' }, g); el('rect', { x: 38, y: 103, width: 284, height: 154, rx: 5, fill: '#1f4d3f' }, g);
+        const tt = el('text', { x: 180, y: 160, 'text-anchor': 'middle', 'font-family': 'Bangers,Impact', fill: '#fff', opacity: .8, 'font-size': 34 }, g); tt.textContent = 'ÉCOLE'; el('rect', { x: 20, y: 462, width: 320, height: 18, rx: 6, fill: '#6e4421' }, g); }
+    // ---------- lecture ----------
+    let P = null, step = -1, t0 = 0, T = 0, run = false, sound = true, A = {}, IA = {}, raf = 0, cur = null, advance = null;
+    const SLOTS = { 1: [180], 2: [105, 255], 3: [68, 190, 298], 4: [48, 138, 228, 314], 5: [40, 108, 180, 252, 320] };
+    const EMOJ = { shock: '😳', angry: '💢', joy: '😂', sad: '😢' };
+    function speak(d, text, cb) {
+        let done = false; const fin = () => { if (!done) { done = true; cb(); } };
+        if (!sound || !window.speechSynthesis) return null;
+        try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'fr-FR'; const v = speechSynthesis.getVoices().filter(x => /^fr/i.test(x.lang)); if (v.length) u.voice = v[hash(d ? d.key : 'n') % v.length]; u.pitch = clamp(d ? d.pitch : 1, .1, 2); u.rate = 1.05; u.onend = fin; u.onerror = fin; speechSynthesis.speak(u); return fin; } catch (e) { return null; }
+    }
+    function enter(i) {
+        step = i; const s = P.steps[i]; if (!s) { end(); return; }
+        cur = s; t0 = T; s.typed = 0; bg(s.tone);
+        const pres = s.present.filter(k => !(s.inset === k)), slots = SLOTS[clamp(pres.length, 1, 5)];
+        Object.keys(A).forEach(k => { if (!pres.includes(k)) { A[k].vis = 0; A[k].tx = A[k].x < 180 ? -150 : 510; } });
+        pres.forEach((k, j) => { if (!A[k]) A[k] = mk(P.chars[k], $('dfCast')); const a = A[k]; if (!a.vis) { a.x = j < pres.length / 2 ? -110 : 470; } a.vis = 1; a.tx = slots[j]; });
+        $('dfCap').style.opacity = s.cap ? 1 : 0; $('dfCap').textContent = s.cap || '';
+        $('dfWho').textContent = s.who ? P.chars[s.who].disp : ''; $('dfWho').style.display = s.who ? '' : 'none'; $('dfTxt').textContent = '';
+        const fx = $('dfFx'); fx.innerHTML = ''; const em = s.kind === 'say' ? EMOJ[s.emo] : (s.hang ? '📵' : ''); if (em) { const f = el('text', { x: s.who && A[s.who] ? A[s.who].tx : 180, y: 230, 'font-size': 44, 'text-anchor': 'middle' }, fx); f.textContent = em; fx.f = f; } else fx.f = null;
+        const ins = $('dfIns'); ins.innerHTML = '';
+        if (s.inset) { const k = s.inset; const g = el('g', { transform: 'translate(214,40)' }, ins); el('rect', { width: 132, height: 150, rx: 14, fill: '#f6b26b', stroke: '#fff', 'stroke-width': 4 }, g); el('rect', { y: 108, width: 132, height: 42, rx: 12, fill: '#8e5a2b' }, g); const lb = el('text', { x: 66, y: -6, 'text-anchor': 'middle', 'font-family': 'Bangers,Impact', 'font-size': 16, fill: '#ffd23f' }, g); lb.textContent = 'AU TÉLÉPHONE'; const c = el('g', { transform: 'translate(66,128) scale(.62)' }, g); IA = { k, a: mk(P.chars[k], c) }; IA.a.x = IA.a.tx = 0; IA.a.vis = 1; IA.a.arm[1].setAttribute('transform', 'translate(27,-120) rotate(150)'); IA.a.arm[1].ph.setAttribute('opacity', 1); ins.setAttribute('opacity', 1); } else { IA = {}; ins.setAttribute('opacity', 0); }
+        const words = s.text.split(/\s+/).length; s.d = Math.max(1.8, words / (s.kind === 'say' ? 2.5 : 3) + .7);
+        let fin = null; const go = () => { if (cur !== s || !run) return; const wait = Math.max(350, (s.d * 0.85 - (T - t0)) * 1000 + 350); setTimeout(() => { if (cur === s && run) enter(step + 1); }, wait); };
+        fin = speak(s.kind === 'say' ? P.chars[s.who] : null, s.text, go); s.viaVoice = !!fin; s.timeout = s.d * (fin ? 2.2 : 1);
+    }
+    function end() { run = false; cur = null; speechSynthesis && speechSynthesis.cancel(); $('dfEnd').style.display = 'flex'; $('dfSub').style.display = 'none'; }
+    const MOUTH = (k, o) => `M-9 14 Q0 ${14 + k} 9 14 Q0 ${14 + k + o} -9 14Z`, REACT = { angry: 'shock', shock: 'shock', smug: 'ask', ask: 'calm', joy: 'joy', sad: 'sad', calm: 'calm', proud: 'calm' };
+    function anim(a, key, ins) {
+        const d = a.d, s = cur, spk = s && s.kind === 'say' && s.who === key && !ins ? true : (ins && s && s.kind === 'say' && s.who === key);
+        let emo = s ? (s.kind === 'say' ? (s.who === key ? s.emo : (d.silent ? 'proud' : REACT[s.emo] || 'calm')) : (ins && s.hang ? 'shock' : 'calm')) : 'calm';
+        const ph = T * 2 + key.length * 1.7, sp = spk && run && !(s.viaVoice === false && false);
+        const sh = emo === 'shock' ? Math.abs(Math.sin(T * 18)) * 3 : 0, hop = (emo === 'angry' ? Math.abs(Math.sin(T * 9)) * 4 : 0) + (sp ? Math.abs(Math.sin(T * 7)) * 2 : 0);
+        a.x = lerp(a.x, a.tx, .12); const spA = s && s.kind === 'say' && A[s.who], tgt = spA ? (spA === a ? (Object.keys(A).filter(k => A[k] !== a && A[k].vis).map(k => A[k])[0] || { x: 180 }) : spA) : { x: 180 };
+        if (!ins) a.face = tgt.x >= a.x ? 1 : -1; a.fv = lerp(a.fv, a.face, .25);
+        a.g.setAttribute('transform', `translate(${a.x + sh},${ins ? 0 : 468 - hop})`); a.g.style.display = (!a.vis && (a.x < -120 || a.x > 480)) ? 'none' : '';
+        a.sc.setAttribute('transform', `scale(${d.s * (Math.abs(a.fv) < .08 ? .08 : a.fv)},${d.s * (1 + Math.sin(ph) * .01)})`);
+        a.h.setAttribute('transform', `translate(${(emo === 'smug' ? 4 : 0) + Math.sin(ph * .7) * 1.5},${-158 + Math.sin(ph) * 1.5}) rotate(${emo === 'smug' ? -5 : emo === 'ask' ? 4 : (sp ? Math.sin(T * 6) * 3 : 0)})`);
+        const open = sp ? Math.abs(Math.sin(T * 13 + key.length)) * 9 + 2 : (emo === 'shock' ? 10 : 0), k = ({ calm: 5, ask: 3, smug: 9, angry: -6, shock: 0, proud: 7, joy: 11, sad: -5 })[emo];
+        a.mouth.setAttribute('d', MOUTH(k, open)); a.tint.setAttribute('opacity', emo === 'angry' ? .28 + Math.sin(T * 8) * .08 : 0);
+        a.eyes.forEach(e => { e.setAttribute('transform', `translate(${e.s * 11},-3) scale(${emo === 'shock' ? 1.35 : 1})`); const lk = emo === 'smug' ? 7 : emo === 'angry' ? 3 : emo === 'sad' ? 4 : 0, bl = Math.sin(T * 1.3 + ph) > .985 ? 16 : 0; e.lid.setAttribute('height', Math.max(lk, bl)); e.p.setAttribute('cx', (tgt.x > a.x ? 2.5 : -2.5) * (a.face) * (spk ? 0 : 1)); });
+        a.brow.forEach((b, i) => { const sg = i ? 1 : -1; if (emo === 'angry') { b.setAttribute('x1', sg * 3); b.setAttribute('x2', sg * 17); b.setAttribute('y1', sg < 0 ? -19 : -12); b.setAttribute('y2', sg < 0 ? -12 : -19); } else { b.setAttribute('x1', sg * 4); b.setAttribute('x2', sg * 18); const up = emo === 'shock' ? -21 : emo === 'sad' ? -13 : -15; b.setAttribute('y1', up); b.setAttribute('y2', emo === 'sad' ? -17 : up); } });
+        if (!ins) { const g = sp ? Math.sin(T * 5) * 22 : 0, ac = false; a.arm.forEach((m, i) => { const sg = i ? 1 : -1; let r = sg * (8 + Math.sin(ph + i) * 2); if (emo === 'angry') r = sg * -35; if (emo === 'shock') r = sg * (-150 + Math.sin(T * 14) * 5); if (emo === 'smug' && i) r = -120; if (sp && emo !== 'angry' && emo !== 'shock') r = i ? -(70 + g) : r; if (d.type === 'o' && i === 0) r = 8; m.setAttribute('transform', `translate(${sg * 27},-120) rotate(${-r})`); m.ph.setAttribute('opacity', 0); }); }
+    }
+    function frame(ts) {
+        T = ts / 1000;
+        if (cur) { const e = T - t0; if (run) { cur.typed = clamp(Math.floor(e / (cur.d * .85) * cur.text.length), 0, cur.text.length); $('dfTxt').textContent = cur.text.slice(0, cur.typed); if (cur.kind === 'narr' && !cur.d) cur.d = 2; if (e > cur.timeout) enter(step + 1); }
+            const f = $('dfFx').f; if (f) { const k = clamp(e * 3, 0, 1); f.setAttribute('transform', `translate(0,${-Math.sin(e * 3) * 6})`); f.setAttribute('opacity', k); } }
+        for (const k in A) anim(A[k], k, false); if (IA.a) anim(IA.a, IA.k, true);
+        raf = requestAnimationFrame(frame);
+    }
+    function play(text) {
+        const parsed = parse(text); if (parsed.said < 2) { showToast('Je ne trouve pas de dialogue. Écris par exemple : Toto répond : Bonjour !', 'error'); return false; }
+        stop(); P = parsed; A = {}; IA = {}; $('dfCast').innerHTML = ''; $('dfEnd').style.display = 'none'; $('dfSub').style.display = ''; showScreen('playScreen'); run = true; if (!raf) raf = requestAnimationFrame(frame); T = performance.now() / 1000; enter(0); return true;
+    }
+    function stop() { run = false; cur = null; try { speechSynthesis.cancel(); } catch (e) { } }
+    return { play, stop, parse, toggleSound() { sound = !sound; if (!sound) { try { speechSynthesis.cancel(); } catch (e) { } } return sound; } };
+})();
+let dfLast = '';
+function dfPlay(text) { const t = (typeof text === 'string' && text.trim()) ? text : document.getElementById('scriptInput').value; dfLast = t; if (!t.trim()) { showToast('Écris ou colle d’abord l’histoire', 'error'); return; } DF.play(t); }
+function dfStop() { DF.stop(); }
+function dfSound() { document.getElementById('dfSnd').textContent = DF.toggleSound() ? '🔊' : '🔇'; }
+
 // ===== MODÈLES (templates) : scripts à compléter, adaptés au public =====
 const TEMPLATES = [
     { id: 'anime-pilot', icon: '🌸', name: 'Pilote anime — émotions', desc: 'Une courte histoire qui passe de la peur à l’espoir puis à la fierté', style: 'cinematic', music: 'emotional', fields: [],
@@ -8249,6 +8793,7 @@ function readOptions() {
         format: document.getElementById('optFormat').value,
         music: document.getElementById('optMusic').value,
         subtitles: document.getElementById('optSubtitles').checked,
+        film: !document.getElementById('optFilm') || document.getElementById('optFilm').checked,
     };
 }
 
