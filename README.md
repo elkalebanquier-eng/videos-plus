@@ -1,6 +1,6 @@
 # Vidéos Plus — VideoStory 3.3.4
 
-VideoStory 3.3.4 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Son interface adopte désormais un style pastel tactile, inspiré du claymorphism, avec une mascotte 3D et des raccourcis adaptés au mobile. Le site de production est [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/).
+VideoStory 3.3.4 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Son interface adopte désormais un style pastel tactile, inspiré du claymorphism, avec une mascotte 3D et des raccourcis adaptés au mobile. Le site de production est [videos-plus.vercel.app](https://videos-plus.vercel.app/). L’ancienne adresse [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/) reste active comme alias.
 
 Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
