@@ -1012,6 +1012,7 @@ const StoryMind = (() => {
             const negHit = idx.some(i => typeof LEX !== 'undefined' && LEX.neg.some(st => st.length >= 4 && F[i].startsWith(st) && !negAtWord(i)));
             const dots = /(\.\.\.|…)$/.test(ws[idx[idx.length - 1]] || '');
             if (IRONY_MARK.test(txt) && (negHit || dots)) ironySent.add(+s);
+            else if (((txt.match(/\b(?:bravo|super|genial|parfait|formidable|excellent|magnifique|merci|chouette)\b/g) || []).length >= 2 || ((txt.match(/\b(?:bravo|super|genial|parfait|formidable|excellent|magnifique|chouette)\b/g) || []).length >= 1 && (dots || /\b(?:encore|une fois de plus)\b/.test(txt)))) && (negHit || /\b(?:encore|retard|panne|bug|lundi|pluvieux|pluie|embouteillage|queue|ferme|annule|perdu|casse|rate|plante|galere|bouchon)\b/.test(txt))) ironySent.add(+s);
             else if (/\b(?:super|genial|parfait|magnifique)\b/.test(txt) && /\b(?:encore|une fois de plus|comme d habitude)\b/.test(txt) && negHit) ironySent.add(+s);
         });
         const ironic = i => ironySent.has((words[clauseOf[i]] || words[0]).sent);
@@ -1026,6 +1027,7 @@ const StoryMind = (() => {
         const okGesture = (i, name) => {
             if (BODY.includes(name)) return okBody(i, name);
             if (negAtWord(i) && !NEG_KEEP.has(name)) return false;
+            if (ironic(i) && ['clap', 'thumbs', 'smile', 'heart', 'wink', 'present', 'up', 'wide'].includes(name)) return false;   // sarcasme : on n'applaudit pas pour de vrai
             const d = idiomAt(i); if (d && (d.kind === name || (d.kind === 'fall' && name === 'down'))) return false;
             return true;
         };
@@ -1210,31 +1212,31 @@ const ActingBrain = (() => {
         return p => ex.has(p) || pre.some(q => p.startsWith(q));
     };
     const EMO = {
-        joy: compile('heureu content joie ravi super genial magnifi merveill felicit reussi succes victoire gagn sourir rire fete celebr enchant parfait excellent formidable chance bonheur plaisir sympa cool =top gratuit offert cadeau bravo savour delici beau belle hamdoulilah alhamdoulilah youpi hourra radieu epanou comble adorable prosper triomph =yes'),
-        sad: compile('trist pleur larme malheur perdu perdre perdit echec echou seul solitude mort deces regret helas douleur souffr abandon rupture faillite ruin misere pauvre galere chagrin depress manque difficile deuil orphelin sans-abri yako desole navre pitie peine gemi malade chomage licenci expuls humili rejet decede'),
-        angry: compile('colere enerv furieu rage injust scandal arnaqu voleur =vol menteur mensonge trahi trahison hais haine insupportable =marre agress corrompu escroc exploit revolt denonc inacceptable honteu abus fache irrite exasper outrag indigne frustr insult injure corruption arnaque'),
-        surprise: compile('incroyable stupefi =choc soudain brusquement etonn surpris inimaginable =impossible =waouh =wow enorme extraordinaire inattendu miracle revelation decouv apparu stupeur =quoi sensationnel hallucin wallah =djo =eh =oh =ah =hein sidere ebahi subitement soudainement'),
-        fear: compile('peur effray terrifi danger menace risque crainte angoiss panique inquiet cauchemar horrible redout piege alerte urgence terreur tremb dangereu fragile vulnerab frisson menacant sinistre kidnap attaque agresseur incendie accident noyer effrayant =aide-moi'),
-        think: compile('pourquoi comment question reflech pens imagin idee hypothes mystere enigme comprend savoir cherch analys curieu apprend etudi strategie plan calcul decision choisir option alternative solution reflexion medit evalu compar logique raisonn conclu theorie probleme resoudre'),
-        proud: compile('fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom persever tenace resil surmont overcome accompli exploit honneur dignite diplome promu medaille record'),
-        love: compile('aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute aide aider entraide solidaire partag offr cherie chere affection soutien remerci gratitude tendre embrass calin'),
+        joy: compile('heureu =content =contente =contents =contentes joie ravi =super =superbe genial magnifi merveill felicit reussi succes victoire gagn sourir rire fete celebr enchant parfait excellent formidable chance bonheur plaisir sympa cool =top gratuit offert cadeau bravo savour delici =beau =belle =beaux =belles hamdoulilah alhamdoulilah youpi hourra radieu epanou comble adorable prosper triomph =yes'),
+        sad: compile('chagrin deprim desespoir sanglot detresse melanc accabl abattu desole cafard morose effondr ecroul naufrag desastr ruin liquidat trist pleur larme malheur perdu perdre perdit echec echou seul solitude mort deces regret helas douleur souffr abandon rupture faillite ruin misere pauvre galere chagrin depress manque difficile deuil orphelin sans-abri yako desole navre pitie peine gemi malade chomage licenci expuls humili rejet decede'),
+        angry: compile('furieu rage enrag fulmin exasper indign irrit hurl =cri =cris =crie insult vener =marre =colere agac excede revolt outr hargn colere enerv furieu rage injust scandal arnaqu voleur =vol menteur mensonge trahi trahison hais haine insupportable =marre agress corrompu escroc exploit revolt denonc inacceptable honteu abus fache irrite exasper outrag indigne frustr insult injure corruption arnaque'),
+        surprise: compile('stupefait ebahi sidere =waouh =wow inattendu =oh choque etonn incroyable stupefi =choc soudain brusquement etonn surpris inimaginable =impossible =waouh =wow enorme extraordinaire inattendu miracle revelation decouv apparu stupeur =quoi sensationnel hallucin wallah =djo =eh =oh =ah =hein sidere ebahi subitement soudainement'),
+        fear: compile('terrifi panique effray tremb angoiss epouvant cauchemar frisson horrifi =aaah peur effray terrifi danger menace risque crainte angoiss panique inquiet cauchemar horrible redout piege alerte urgence terreur tremb dangereu fragile vulnerab frisson menacant sinistre kidnap attaque agresseur incendie accident noyer effrayant =aide-moi'),
+        think: compile('reflechi medit analys cogit concentr songe pourquoi comment question reflech pens imagin idee hypothes mystere enigme comprend savoir cherch analys curieu apprend etudi strategie plan calcul decision choisir option alternative solution reflexion medit evalu compar logique raisonn conclu theorie probleme resoudre'),
+        proud: compile('fier orgueil accompl exploit honneur medaille champion fier fierte champion leader meilleur =premier expert maitre puissan force courage determin ambiti millionnaire riche richesse patron victorieu independan libre autonom persever tenace resil surmont overcome accompli exploit honneur dignite diplome promu medaille record'),
+        love: compile('adore tendress affection amoureux =coeur calin bisou epris aime amour coeur passion adore famille =mere maman papa enfant =ami amitie bebe tendresse =merci reconnaiss bienveill epouse mari frere soeur communaute aide aider entraide solidaire partag offr cherie chere affection soutien remerci gratitude tendre embrass calin'),
         doubt: compile('peut-etre probablement douteu doute hesit incertain suspect bizarre croire pretendu soi-disant mefi faux mythe rumeur prudence supposer sembl apparemment incertitude =hmm =euh =bof eventuel'),
-        disgust: compile('degout ecoeur beurk berk =pouah puant pourri infect immonde moisi crasse nauseab vomi repugn degueu =sale =crade =ouak degoutant ordure dechet insalubre'),
-        shy: compile('timid =gene =genee =genes =genees honte rougi rougis embarras intimid maladroit confus =pardon hesitant reserve discret embarrasse rougir pudeur'),
-        tired: compile('fatigu epuis sommeil baill ennui ennuy somnol =creve =crevee =lasse =las lassitude assoupi =zzz exte bailler sieste repos monoton interminable'),
-        smug: compile('malicieu coquin taquin sournois ruse =hehe =hihi =hihihi malin =tricheur evidemment =facile roule astucieu manipul'),
-        calm: compile('calme serein serenite paisible tranquill detent apais zen doucement paix relax respir sagesse patience'),
-        worried: compile('souci preoccup anxieu stress tracas nerveu apprehens soucieu'),
-        curious: compile('curieu curiosite intrigu fascin explor interess mysterieu =tiens =tient'),
-        hopeful: compile('espoir esper =inchallah optimis confiance confiant promesse avenir lendemain bientot'),
-        determined: compile('decid resolu objectif volonte motiv defi obstin engage combatt =jy-arriv'),
-        jealous: compile('jalou jalousi envieu convoit =jalouse =jaloux'),
-        relieved: compile('soulag =ouf delivr =sauve =sauvee =respire'),
-        confused: compile('perplex deboussol desorient embrouill ahuri incomprehens =perdu =perdue hagard'),
-        disappointed: compile('=decu =decue =decus =decues decoit decevant deception desappoint desillusion =dommage'),
-        nostalgic: compile('nostalg souvenir autrefois jadis enfance regrett =naguere'),
-        amused: compile('amus drole rigol =mdr =lol =haha =hahaha =ptdr blague plaisant humour comique hilarant marrant cocasse'),
-        excited: compile('=vite maintenant =allons ensemble =pret lancez commencez abonne rejoin nouveau nouvelle revolution explos =boom decoll =go incroyable decouvrez imm\u00e9diat gratuitement bonus enthousias impatient =allez =hourra'),
+        disgust: compile('degout beurk ecoeur repugn nauseab infect puant ignoble immonde =berk degout ecoeur beurk berk =pouah puant pourri infect immonde moisi crasse nauseab vomi repugn degueu =sale =crade =ouak degoutant ordure dechet insalubre'),
+        shy: compile('timide embarras rougi intimid =pudeur timid =gene =genee =genes =genees honte rougi rougis embarras intimid maladroit confus =pardon hesitant reserve discret embarrasse rougir pudeur'),
+        tired: compile('epuis fatigu somnol bailler baill creve crev exhaust lassitude =zzz fatigu epuis sommeil baill ennui ennuy somnol =creve =crevee =lasse =las lassitude assoupi =zzz exte bailler sieste repos monoton interminable'),
+        smug: compile('arrogan fanfaron vantard presomptu suffisan sournois malicieu coquin taquin sournois ruse =hehe =hihi =hihihi malin =tricheur evidemment =facile roule astucieu manipul'),
+        calm: compile('serein apais tranquill =zen paisible detendu calme serein serenite paisible tranquill detent apais zen doucement paix relax respir sagesse patience'),
+        worried: compile('inquiet anxieu stress nerveu tracas soucie appreh souci preoccup anxieu stress tracas nerveu apprehens soucieu'),
+        curious: compile('curieu intrigu mysterieu etrange bizarre =secret curieu curiosite intrigu fascin explor interess mysterieu =tiens =tient'),
+        hopeful: compile('espoir esper optimis confiant esperance espoir esper =inchallah optimis confiance confiant promesse avenir lendemain bientot'),
+        determined: compile('determin persever acharn ambiti volonte tenac =allez decid resolu objectif volonte motiv defi obstin engage combatt =jy-arriv'),
+        jealous: compile('jalou envieu =envieux rival convoit jalou jalousi envieu convoit =jalouse =jaloux'),
+        relieved: compile('soulag =ouf soulag =ouf delivr =sauve =sauvee =respire'),
+        confused: compile('confus embrouill incompr =hein ahuri desorient perplex deboussol desorient embrouill ahuri incomprehens =perdu =perdue hagard'),
+        disappointed: compile('desillusion frustr =zut =mince =retard =retards =panne =pannes =bug =annule =annulee =rate =ratee =decu =decue =decus =decues decoit decevant deception desappoint desillusion =dommage'),
+        nostalgic: compile('jadis nostalg souvenir autrefois jadis enfance regrett =naguere'),
+        amused: compile('taquin rigolo farce =hihi amus drole rigol =mdr =lol =haha =hahaha =ptdr blague plaisant humour comique hilarant marrant cocasse'),
+        excited: compile('enthousias impatient frenesie euphori =yeah =youhou =wouah =vite maintenant =allons ensemble =pret lancez commencez abonne rejoin nouveau nouvelle revolution explos =boom decoll =go incroyable decouvrez imm\u00e9diat gratuitement bonus enthousias impatient =allez =hourra'),
     };
     const SPIKE_SYM = { surprise: 'excl', fear: 'sweat', angry: 'vein', love: 'heart', think: 'ques', doubt: 'ques', worried: 'sweat', curious: 'ques', relieved: 'sweat', confused: 'ques' };
     const EMOTION_HOLD_SECONDS = 2.35;
@@ -1353,7 +1355,9 @@ const ActingBrain = (() => {
         { re: /c.est la fin|le dernier|pour finir|en conclusion/, gesture: 'present' },
         { re: /sans (?:argent|travail|ami|famille|abri)|plus rien|rien du tout/, emo: 'sad' },
         { re: /pour la premiere fois|jamais vu|record du monde/, emo: 'surprise', gesture: 'wide' },
-        { re: /mon (?:reve|but|objectif)|je veux|je vais/, emo: 'proud', gesture: 'hips' },
+        { re: /mon (?:reve|but|objectif)|je veux(?! (?:dormir|rentrer|partir|pleurer|mourir|disparaitre|abandonner|arreter|manger|boire|me reposer|me coucher|fuir))|je vais(?! (?:mal|pleurer|mourir|craquer|tomber|dormir))/, emo: 'proud', gesture: 'hips' },
+        { re: /\b(?:deja ferme\w*|trop tard|plus de (?:stock|place|temps|budget)|ne repond plus)\b/, emo: 'disappointed', gesture: 'down' },
+        { re: /\b(?:s.effondr\w*|tout s.ecroul\w*|tout est perdu|a tout perdu|ont tout perdu)\b/, emo: 'sad', gesture: 'headhands' },
         { re: /\b(?:plante\w*|sem(?:e|er|ons|ez|ent|ais|ait)\b|enterre\w*)\b/, emo: 'think', gesture: 'plant' },
         { re: /\b(?:l?arros\w*|puise\w*)\b/, emo: 'love', gesture: 'water' },
         { re: /\b(?:pousse|germe|eclot\w*|apparai\w*)\b/, emo: 'surprise', gesture: 'up' },
@@ -4314,6 +4318,7 @@ const Char3D = (() => {
     function grid(nu, nv, f) { const vs = [], ix = []; for (let i = 0; i <= nv; i++) for (let j = 0; j <= nu; j++) vs.push.apply(vs, f(i / nv, j / nu)); for (let i = 0; i < nv; i++) for (let j = 0; j < nu; j++) { const a = i * (nu + 1) + j, b = a + nu + 1; ix.push(a, b, a + 1, b, b + 1, a + 1); } return mk(vs, ix); }
     function geom(name) {
         if (geo[name]) return geo[name];
+        if (name.indexOf('lf:') === 0) return geo[name] = loftGeom(name.slice(3));
         if (name === 'sph') return geo[name] = grid(30, 22, (v, u) => { const th = v * Math.PI, ph = u * Math.PI * 2, x = Math.sin(th) * Math.cos(ph), y = Math.cos(th), z = Math.sin(th) * Math.sin(ph); return [x, y, z, x, y, z]; });
         if (name === 'box') { const vs = [], ix = []; for (let ax = 0; ax < 3; ax++) [1, -1].forEach(sg => { const n = [0, 0, 0]; n[ax] = sg; const u = [0, 0, 0], v = [0, 0, 0]; u[(ax + 1) % 3] = 1; v[(ax + 2) % 3] = 1; const b0 = vs.length / 6; [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([a, b]) => vs.push(n[0] + a * u[0] + b * v[0], n[1] + a * u[1] + b * v[1], n[2] + a * u[2] + b * v[2], n[0], n[1], n[2])); ix.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3); }); return geo[name] = mk(vs, ix); }
         if (name === 'tor') return geo[name] = grid(30, 12, (v, u) => { const a = u * Math.PI * 2, b = v * Math.PI * 2, R = 1 + 0.07 * Math.cos(b); return [R * Math.cos(a), R * Math.sin(a), 0.07 * Math.sin(b), Math.cos(b) * Math.cos(a), Math.cos(b) * Math.sin(a), Math.sin(b)]; });
@@ -4330,18 +4335,19 @@ const Char3D = (() => {
         + 'void main(){if(uGround>.5){float sh=shw(1.);float f=1.-smoothstep(.5,1.4,length(vW.xz));gl_FragColor=vec4(0.,0.,0.,(1.-sh)*.5*f);return;}'
         + 'vec3 n=normalize(vN),v=vec3(0.,0.,1.),L1=normalize(uL1),L2=normalize(vec3(.75,.1,.5)),L3=normalize(vec3(.7,.45,-.8));vec3 al=pow(uC,vec3(2.2));vec3 q=vO+uSeed;'
         + 'if(uMt.z>.3){vec3 g=floor(q*150.);n=normalize(n+(vec3(h3(g+1.),h3(g+2.),h3(g+3.))-.5)*.09);al*=1.-.07*step(.92,h3(g));}'
-        + 'else if(uMt.y<30.&&uMt.x<.3){float a=q.x*240.,b=q.y*240.;n=normalize(n+vec3(cos(a)*sin(b),sin(a)*cos(b),0.)*.045);al*=.95+.05*sin(a)*sin(b);}'
+        + 'else if(uMt.y<30.&&uMt.x<.3){float a=q.x*240.,b=q.y*240.;n=normalize(n+vec3(cos(a)*sin(b),sin(a)*cos(b),0.)*.018);al*=.975+.025*sin(a)*sin(b);}'
+        + 'else if(uMt.y>32.5&&uMt.y<33.5){float a=q.x*210.+sin(q.y*38.)*2.4;float s1=sin(a),s2=sin(a*2.7+q.z*60.);n=normalize(n+vec3(s1*.22,s2*.1,s1*.12));al*=.8+.2*(.5+.5*s1*s2);}'
         + 'float d=dot(n,L1),w=uMt.z;float sh=shw(clamp(d,0.,1.));float dif=clamp((d+w)/(1.+w),0.,1.)*mix(.25,1.,sh);'
         + 'vec3 amb=mix(vec3(.16,.14,.2),vec3(.42,.45,.56),n.y*.5+.5);float ao=mix(.55,1.,smoothstep(0.,.35,vW.y));'
-        + 'vec3 sss=vec3(1.,.3,.15)*w*pow(1.-clamp(abs(d)*1.5,0.,1.),2.)*.3;'
+        + 'vec3 sss=vec3(1.,.32,.16)*w*(pow(1.-clamp(abs(d)*1.5,0.,1.),2.)*.42+.05*clamp(d+.3,0.,1.));'
         + 'vec3 c=al*(amb*ao*.9+vec3(1.,.92,.82)*dif*1.65+vec3(.5,.62,1.)*max(dot(n,L2),0.)*.35*(.5+.5*sh))+al*sss*sh;'
-        + 'float rim=pow(1.-max(dot(n,v),0.),3.)*clamp(dot(n,L3)+.55,0.,1.);c+=uRim*rim*.9;'
+        + 'float rim=pow(1.-max(dot(n,v),0.),3.)*clamp(dot(n,L3)+.55,0.,1.);c+=uRim*rim*.9;c+=vec3(1.,.9,.8)*w*pow(1.-max(dot(n,v),0.),4.)*.08*sh;'
         + 'vec3 h=normalize(L1+v);c+=vec3(1.,.96,.9)*pow(max(dot(n,h),0.),uMt.y)*uMt.x*step(.0,d)*sh*1.4;'
         + 'c=c*(2.51*c+.03)/(c*(2.43*c+.59)+.14);gl_FragColor=vec4(pow(clamp(c,0.,1.),vec3(1./2.2)),1.);}';
     const VSD = 'attribute vec3 aP;uniform mat4 uLVP,uM;void main(){gl_Position=uLVP*uM*vec4(aP,1.);}';
     const FSD = PREC + 'void main(){vec4 e=fract(gl_FragCoord.z*vec4(1.,255.,65025.,16581375.));e-=e.yzww*vec4(1./255.,1./255.,1./255.,0.);gl_FragColor=e;}';
     const LD = (() => { const v = [-0.45, 0.8, 0.55], l = Math.hypot(v[0], v[1], v[2]); return v.map(x => x / l); })();
-    let progD = null, UD = {}, fbo = null, shTex = null, shadowOn = true, ema = 0, frames = 0, t0f = 0, seedC = 0, LVP = null;
+    let ssQ = 1.5, progD = null, UD = {}, fbo = null, shTex = null, shadowOn = true, ema = 0, frames = 0, t0f = 0, seedC = 0, LVP = null;
     function lookLight() {
         const tg = [0, 0.9, 0], eye = [tg[0] + LD[0] * 6, tg[1] + LD[1] * 6, tg[2] + LD[2] * 6], z = LD.slice(); let x = [z[2], 0, -z[0]]; const lx = Math.hypot(x[0], x[1], x[2]); x = x.map(v => v / lx);
         const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]], dt = (p, q) => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
@@ -4370,7 +4376,7 @@ const Char3D = (() => {
     const el = (par, rx, ry, rz, m, x, y, z) => { const n = nd(par, x, y, z); n.s = [rx, ry, rz]; n.g = 'sph'; n.m = m; return n; };
     const tb = (par, len, r0, r1, m, x, y, z) => { const n = nd(par, x, y, z); n.s = [r0, len, r0]; n.g = 'tube:' + (r1 / r0).toFixed(2); n.m = m; return n; };
     function hand(par, s, sk) {
-        const h = nd(par, 0, -0.252, 0), nl = mat('#d9b9a4', 0.5, 50); el(h, 0.034, 0.047, 0.017, sk, 0, -0.045, 0); h.f = [];
+        const h = nd(par, 0, -0.252, 0), nl = mat('#d9b9a4', 0.5, 50); el(h, 0.034, 0.047, 0.017, sk, 0, -0.045, 0); el(h, 0.03, 0.04, 0.012, sk, 0, -0.05, -0.011); el(h, 0.02, 0.03, 0.016, sk, -s * 0.021, -0.058, 0.01); h.f = [];
         const L = [[0.034, 0.021, 0.018], [0.039, 0.024, 0.019], [0.036, 0.022, 0.018], [0.028, 0.018, 0.016]], rr = [0.0105, 0.0105, 0.01, 0.0092];
         for (let i = 0; i < 4; i++) {
             const j0 = nd(h, s * (-0.026 + i * 0.0173), -0.088, 0), r = rr[i]; el(j0, r, r, r, sk); tb(j0, L[i][0], r, r * 0.92, sk);
@@ -4380,54 +4386,151 @@ const Char3D = (() => {
         const t0 = nd(h, -s * 0.03, -0.045, 0.012); el(t0, 0.0125, 0.0125, 0.0125, sk); tb(t0, 0.032, 0.0125, 0.0115, sk); const t1 = nd(t0, 0, -0.032, 0); el(t1, 0.0115, 0.0115, 0.0115, sk); tb(t1, 0.026, 0.0115, 0.0098, sk); el(t1, 0.0098, 0.0098, 0.0098, sk, 0, -0.026, 0); h.t = [t0, t1];
         return h;
     }
+    // ---------- surfaces lisses (lofts) : torse, membres, tête, cheveux, veston ----------
+    const cr = (p0, p1, p2, p3, t) => 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
+    function prof(rows) {   // rows : [y, a, b, c] -> interpolation lisse (Catmull-Rom) de a, b, c en fonction de y
+        const n = rows.length, up = rows[n - 1][0] > rows[0][0];
+        return y => {
+            let i = 0; for (i = 0; i < n - 1; i++) { if (up ? y <= rows[i + 1][0] : y >= rows[i + 1][0]) break; } i = Math.min(i, n - 2);
+            const a0 = rows[i][0], b0 = rows[i + 1][0], t = clamp((y - a0) / (b0 - a0), 0, 1), r0 = rows[Math.max(i - 1, 0)], r1 = rows[i], r2 = rows[i + 1], r3 = rows[Math.min(i + 2, n - 1)];
+            return [1, 2, 3].map(k => cr(r0[k], r1[k], r2[k], r3[k], t));
+        };
+    }
+    const spw = (c, e) => Math.sign(c) * Math.pow(Math.abs(c), 2 / e);
+    function sect(P, y, a, e) { const q = P(y), c = Math.cos(a), s = Math.sin(a); return [q[0] * spw(c, e), y, (q[1] + q[2]) / 2 + (q[1] - q[2]) / 2 * spw(s, e)]; }   // coupe en super-ellipse : x = demi-largeur, z = devant / derrière
+    function gridN(nu, nv, pos, open) {
+        const P = []; for (let i = 0; i <= nv; i++) { P[i] = []; for (let j = 0; j <= nu; j++) P[i][j] = pos(i / nv, j / nu); }
+        const vs = [], ix = [];
+        for (let i = 0; i <= nv; i++) {
+            let cx = 0, cy = 0, cz = 0; for (let j = 0; j < nu; j++) { cx += P[i][j][0]; cy += P[i][j][1]; cz += P[i][j][2]; } cx /= nu; cy /= nu; cz /= nu;
+            for (let j = 0; j <= nu; j++) {
+                const jm = open ? Math.max(j - 1, 0) : (j - 1 + nu) % nu, jp = open ? Math.min(j + 1, nu) : (j + 1) % nu, im = Math.max(i - 1, 0), ip = Math.min(i + 1, nv), p = P[i][j];
+                const du = [0, 1, 2].map(k => P[i][jp][k] - P[i][jm][k]), dv = [0, 1, 2].map(k => P[ip][j][k] - P[im][j][k]);
+                let n = [du[1] * dv[2] - du[2] * dv[1], du[2] * dv[0] - du[0] * dv[2], du[0] * dv[1] - du[1] * dv[0]], l = Math.hypot(n[0], n[1], n[2]);
+                if (l < 1e-10) n = [0, i === nv ? 1 : -1, 0]; else { n = n.map(v => v / l); if (n[0] * (p[0] - cx) + n[2] * (p[2] - cz) + n[1] * (p[1] - cy) * 0.2 < 0) n = n.map(v => -v); }
+                vs.push(p[0], p[1], p[2], n[0], n[1], n[2]);
+            }
+        }
+        for (let i = 0; i < nv; i++) for (let j = 0; j < nu; j++) { const a = i * (nu + 1) + j, b = a + nu + 1; ix.push(a, b, a + 1, b, b + 1, a + 1); }
+        return mk(vs, ix);
+    }
+    const ROWS = {   // [y, demi-largeur, devant, derrière] dans le repère de l'os
+        chest: [[-0.13, 0.150, 0.092, -0.088], [-0.04, 0.152, 0.096, -0.092], [0.06, 0.160, 0.103, -0.098], [0.16, 0.172, 0.113, -0.104], [0.27, 0.184, 0.124, -0.106], [0.36, 0.178, 0.106, -0.097], [0.42, 0.158, 0.084, -0.084], [0.47, 0.108, 0.064, -0.066], [0.51, 0.066, 0.056, -0.054], [0.54, 0.052, 0.05, -0.046]],
+        chestF: [[-0.13, 0.128, 0.086, -0.082], [-0.04, 0.130, 0.09, -0.086], [0.06, 0.144, 0.098, -0.092], [0.16, 0.158, 0.118, -0.100], [0.27, 0.170, 0.134, -0.102], [0.36, 0.166, 0.108, -0.094], [0.42, 0.148, 0.082, -0.082], [0.47, 0.100, 0.062, -0.064], [0.51, 0.062, 0.054, -0.052], [0.54, 0.05, 0.048, -0.044]],
+        jacket: [[-0.25, 0.180, 0.118, -0.110], [-0.14, 0.174, 0.114, -0.106], [-0.02, 0.170, 0.113, -0.108], [0.1, 0.176, 0.121, -0.114], [0.2, 0.188, 0.130, -0.116], [0.29, 0.196, 0.136, -0.118], [0.36, 0.2, 0.118, -0.108], [0.42, 0.19, 0.094, -0.094], [0.465, 0.13, 0.076, -0.076], [0.51, 0.074, 0.064, -0.06]],
+        pelvis: [[-0.20, 0.150, 0.096, -0.090], [-0.12, 0.168, 0.106, -0.098], [-0.03, 0.165, 0.104, -0.096], [0.05, 0.152, 0.098, -0.090], [0.11, 0.146, 0.092, -0.086]],
+        belt: [[0.085, 0.156, 0.101, -0.094], [0.04, 0.158, 0.102, -0.095]],
+        neck: [[0.3, 0.07, 0.07, -0.065], [0.44, 0.054, 0.054, -0.05], [0.5, 0.047, 0.047, -0.043], [0.57, 0.045, 0.05, -0.036], [0.62, 0.047, 0.056, -0.03]],
+        collar: [[0.47, 0.076, 0.076, -0.07], [0.52, 0.064, 0.066, -0.06], [0.565, 0.06, 0.064, -0.056]],
+        thigh: [[0.04, 0.082, 0.088, -0.090], [-0.08, 0.085, 0.090, -0.090], [-0.2, 0.074, 0.078, -0.078], [-0.32, 0.06, 0.064, -0.06], [-0.40, 0.052, 0.056, -0.052], [-0.45, 0.05, 0.054, -0.05]],
+        shin: [[0.02, 0.05, 0.054, -0.05], [-0.07, 0.05, 0.05, -0.068], [-0.15, 0.046, 0.044, -0.062], [-0.26, 0.038, 0.038, -0.046], [-0.35, 0.032, 0.034, -0.036], [-0.42, 0.03, 0.034, -0.032]],
+        uarm: [[0.02, 0.06, 0.058, -0.056], [-0.06, 0.058, 0.056, -0.056], [-0.14, 0.053, 0.054, -0.05], [-0.22, 0.044, 0.044, -0.044], [-0.28, 0.04, 0.042, -0.04]],
+        sleeveS: [[0.02, 0.064, 0.062, -0.06], [-0.06, 0.062, 0.06, -0.06], [-0.12, 0.058, 0.058, -0.056]],
+        farm: [[0.02, 0.04, 0.042, -0.04], [-0.05, 0.044, 0.046, -0.042], [-0.13, 0.04, 0.04, -0.038], [-0.2, 0.032, 0.032, -0.03], [-0.255, 0.028, 0.03, -0.028]],
+        head: [[-0.004, 0.022, 0.05, -0.012], [0.012, 0.042, 0.092, -0.03], [0.04, 0.062, 0.098, -0.07], [0.07, 0.076, 0.099, -0.092], [0.11, 0.086, 0.1, -0.102], [0.14, 0.09, 0.094, -0.108], [0.165, 0.092, 0.102, -0.11], [0.2, 0.09, 0.097, -0.112], [0.23, 0.08, 0.08, -0.105], [0.255, 0.058, 0.052, -0.082], [0.273, 0.025, 0.02, -0.04], [0.28, 0.004, 0.004, -0.006]]
+    };
+    const EXP = { chest: 2.5, chestF: 2.4, jacket: 2.5, pelvis: 2.4, belt: 2.4, neck: 2.2, collar: 2.2, thigh: 2.2, shin: 2.2, uarm: 2.2, sleeveS: 2.2, farm: 2.2, head: 2.4 };
+    const JWEDGE = prof([[-0.25, 0.012, 0, 0], [0.0, 0.015, 0, 0], [0.12, 0.03, 0, 0], [0.2, 0.24, 0, 0], [0.3, 0.46, 0, 0], [0.4, 0.55, 0, 0], [0.46, 0.5, 0, 0], [0.52, 0.36, 0, 0]]);
+    function hairGeom(style) {   // casquette de cheveux posée sur le crâne : ligne d'implantation naturelle, épaisseur variable, mèches en relief
+        const HP = prof(ROWS.head), TOP = 0.279, wrap = style === 'wrap';
+        return gridN(44, 16, (v, u) => {
+            const a = u * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+            const yE = wrap ? 0.15 + 0.04 * sm(s / 0.8) : (s > 0 ? lerp(0.176, 0.222, sm(s / 0.85)) : lerp(0.176, 0.08, sm(-s / 0.6)));
+            const y = lerp(yE, TOP, v), P0 = sect(HP, y, a, 2.4);
+            let th = wrap ? 0.02 + 0.006 * sm((y - 0.17) / 0.1) : 0.004 + 0.012 * sm((y - 0.15) / 0.12);
+            if (!wrap && s > 0.3) th += 0.011 * sm((s - 0.3) / 0.5) * sm((y - 0.2) / 0.04);
+            th *= 0.45 + 0.55 * sm((y - yE) / 0.03);
+            return [P0[0] + c * th, P0[1] + th * 0.7 * sm((y - 0.2) / 0.08), P0[2] + s * th];
+        });
+    }
+    function loftGeom(name) {
+        if (name === 'hair:short' || name === 'hair:wrap') return hairGeom(name.split(':')[1]);
+        if (name === 'jacket') {   // veston ouvert en V sur le devant
+            const P = prof(ROWS.jacket);
+            return gridN(44, 22, (v, u) => { const y = -0.25 + 0.77 * v, w = JWEDGE(y)[0], a = Math.PI / 2 + w + u * (Math.PI * 2 - 2 * w); return sect(P, y, a, EXP.jacket); }, true);
+        }
+        if (name === 'lapelL' || name === 'lapelR') {   // revers : bande qui suit le bord du V
+            const P = prof(ROWS.jacket), sg = name === 'lapelL' ? 1 : -1;
+            return gridN(6, 18, (v, u) => { const y = 0.5 - 0.33 * v, w = JWEDGE(y)[0], wl = 0.05 + 0.5 * Math.pow(1 - v, 0.65), a = Math.PI / 2 + sg * (w + u * wl), p = sect(P, y, a, EXP.jacket); return [p[0] + Math.cos(a) * 0.005, p[1], p[2] + Math.sin(a) * 0.005]; }, true);
+        }
+        const rows = ROWS[name], P = prof(rows), y0 = rows[0][0], y1 = rows[rows.length - 1][0], e = EXP[name] || 2.3;
+        return gridN(36, Math.max(10, Math.round(Math.abs(y1 - y0) * 40)), (v, u) => sect(P, lerp(y0, y1, v), u * Math.PI * 2, e));
+    }
+    const lf = (par, name, m, x, y, z, sx) => { const n = nd(par, x, y, z); n.g = 'lf:' + name; n.s = [sx || 1, 1, sx || 1]; n.m = m; return n; };
     function build(c) {
-        const skc = rgb(c.skin), sk = mat(skc, 0.2, 18, 0.55), skd = mat(shade(skc, 0.7), 0.1, 10, 0.5), lipc = mat(mix(shade(skc, 0.75), [0.6, 0.2, 0.22], 0.45), 0.35, 30, 0.3), hr = mat(c.hairColor, 0.3, 22), clc = rgb(c.color), cl = mat(clc, 0.12, 14), pn = mat(shade(clc, 0.66), 0.1, 12), wh = mat('#f6f6f4', 0.25, 30), bk = mat('#15111a', 0.45, 40), eyeW = mat('#f2efe9', 0.5, 60), iris = mat('#2b1a10', 0.6, 60), tie = mat('#a8212b', 0.35, 25);
-        const long = c.outfit === 'dress' || c.outfit === 'boubou', suit = c.outfit === 'suit', bare = c.outfit === 'dress';
-        G = nd(null, 0, 0, 0); B = { G };
-        const body = nd(G, 0, 0.93, 0); B.body = body; el(body, 0.175, 0.115, 0.115, long ? cl : pn, 0, 0, 0); el(body, 0.085, 0.1, 0.09, long ? cl : pn, -0.085, -0.04, -0.03); el(body, 0.085, 0.1, 0.09, long ? cl : pn, 0.085, -0.04, -0.03); el(body, 0.135, 0.09, 0.09, cl, 0, 0.09, 0);
-        const chest = nd(body, 0, 0.1, 0); B.chest = chest; el(chest, 0.165, 0.24, 0.105, cl, 0, 0.18, 0); el(chest, 0.085, 0.07, 0.06, cl, -0.075, 0.3, 0.055); el(chest, 0.085, 0.07, 0.06, cl, 0.075, 0.3, 0.055); el(chest, 0.185, 0.05, 0.085, cl, 0, 0.44, -0.01); el(chest, 0.13, 0.1, 0.09, cl, 0, 0.06, 0);
-        if (suit) { el(chest, 0.045, 0.14, 0.02, wh, 0, 0.34, 0.115); B.tie = nd(chest, 0, 0.43, 0.118); el(B.tie, 0.022, 0.13, 0.016, tie, 0, -0.13, 0.01); el(B.tie, 0.03, 0.03, 0.022, tie, 0, -0.005, 0.012); [-1, 1].forEach(s => { const lp = el(chest, 0.02, 0.15, 0.012, shade(clc, 0.8) && mat(shade(clc, 0.82), 0.1, 14), s * 0.058, 0.33, 0.118); lp.r[2] = s * 0.22; }); }
-        else if (!bare) tb(chest, 0.05, 0.064, 0.064, wh, 0, 0.53, 0.0);
-        if (suit) { [[0.14, 0.1035], [0.06, 0.091]].forEach(([y, z]) => el(chest, 0.009, 0.009, 0.006, mat('#10121a', 0.5, 50), 0, y, z)); [-1, 1].forEach(s => { const c2 = bx(chest, 0.03, 0.012, 0.004, wh, s * 0.04, 0.52, 0.075); c2.r[2] = -s * 0.6; }); }
-        if (!long) { const bl = tb(body, 0.035, 0.162, 0.162, mat('#1a1214', 0.4, 40), 0, 0.06, 0); bl.s[2] = 0.108; el(body, 0.018, 0.014, 0.006, mat('#d4a62a', 0.8, 70), 0, 0.045, 0.109); }
-        const neck = tb(chest, 0.12, 0.05, 0.048, sk, 0, 0.55, 0); neck.r[0] = 0.1; if (suit) tb(chest, 0.04, 0.062, 0.066, wh, 0, 0.5, 0);
-        const head = nd(chest, 0, 0.56, 0.015); head.gs = 1.2; B.head = head;
-        el(head, 0.098, 0.12, 0.108, sk, 0, 0.13, 0); el(head, 0.09, 0.062, 0.082, sk, 0, 0.2, 0.03); el(head, 0.08, 0.074, 0.088, sk, 0, 0.045, 0.014); el(head, 0.042, 0.034, 0.04, sk, 0, 0.012, 0.07);
-        [-1, 1].forEach(s => { el(head, 0.032, 0.026, 0.03, sk, s * 0.066, 0.1, 0.07); el(head, 0.014, 0.032, 0.022, sk, s * 0.1, 0.125, -0.005); el(head, 0.008, 0.022, 0.012, skd, s * 0.102, 0.125, 0.0); });
-        const nb = tb(head, 0.05, 0.011, 0.014, sk, 0, 0.145, 0.103); nb.r[0] = -0.2; el(head, 0.016, 0.014, 0.019, sk, 0, 0.098, 0.118); el(head, 0.011, 0.01, 0.012, sk, -0.017, 0.096, 0.109); el(head, 0.011, 0.01, 0.012, sk, 0.017, 0.096, 0.109); el(head, 0.0045, 0.004, 0.0045, skd, -0.011, 0.0905, 0.1165); el(head, 0.0045, 0.004, 0.0045, skd, 0.011, 0.0905, 0.1165);
+        const skc = rgb(c.skin), sk = mat(skc, 0.2, 18, 0.55), skd = mat(shade(skc, 0.8), 0.1, 10, 0.5), lipc = mat(mix(shade(skc, 0.75), [0.55, 0.22, 0.22], 0.28), 0.35, 30, 0.3), hr = mat(c.hairColor, 0.3, 22), hairC = mat(c.hairColor, 0.2, 33), clc = rgb(c.color), cl = mat(clc, 0.12, 14), pn = mat(shade(clc, 0.66), 0.1, 12), lap = mat(shade(clc, 0.88), 0.2, 22), wh = mat('#f6f6f4', 0.25, 30), bk = mat('#15111a', 0.45, 40), eyeW = mat('#f2efe9', 0.5, 60), iris = mat('#3a2314', 0.6, 60), tie = mat('#a8212b', 0.35, 25), shoe = mat('#1a1418', 0.45, 45), sole = mat('#e6e0d4', 0.4, 30);
+        const long = c.outfit === 'dress' || c.outfit === 'boubou', suit = c.outfit === 'suit', bare = c.outfit === 'dress', tee = c.outfit === 'tee', wide = c.outfit === 'boubou', fem = c.outfit === 'dress' || c.hair === 'long';
+        G = nd(null, 0, 0, 0); B = { G }; B.skMat = sk; B.skBase = skc;
+        // ----- bassin et jambes -----
+        const body = nd(G, 0, 0.93, 0); B.body = body; lf(body, 'pelvis', long ? cl : pn);
+        if (!long && !suit) { lf(body, 'belt', mat('#1a1214', 0.4, 40)); el(body, 0.016, 0.013, 0.006, mat('#d4a62a', 0.8, 70), 0, 0.062, 0.104); }
+        // ----- torse -----
+        const chest = nd(body, 0, 0.1, 0); B.chest = chest;
+        if (suit) {
+            lf(chest, 'chest', wh, 0, 0, 0, 0.985); lf(chest, 'jacket', cl); lf(chest, 'lapelL', lap); lf(chest, 'lapelR', lap);
+            B.tie = nd(chest, 0, 0.465, 0.082); el(B.tie, 0.026, 0.022, 0.02, tie, 0, -0.012, 0.014);
+            const bl = nd(B.tie, 0, -0.025, 0.006); bl.r = [-0.1, 0, 0]; el(bl, 0.014, 0.035, 0.009, tie, 0, -0.03, 0.006); el(bl, 0.025, 0.08, 0.01, tie, 0, -0.14, 0.008); el(bl, 0.015, 0.03, 0.009, tie, 0, -0.225, 0.008);
+            [0.12, 0.02].forEach(y => el(chest, 0.009, 0.009, 0.005, mat('#10121a', 0.5, 50), 0, y, y > 0.1 ? 0.1235 : 0.1195));
+            el(chest, 0.024, 0.013, 0.005, wh, -0.108, 0.29, 0.128);
+        } else lf(chest, fem ? 'chestF' : 'chest', cl);
+        if (bare) { el(chest, 0.165, 0.1, 0.098, sk, 0, 0.44, 0.0); el(chest, 0.06, 0.05, 0.05, sk, 0, 0.5, 0.0); }
+        if (suit || tee || wide) lf(chest, 'collar', wh);
+        const neck = lf(chest, 'neck', sk); neck.r[0] = 0.08;
+        // ----- tête -----
+        const head = nd(chest, 0, 0.535, 0.012); head.gs = 0.95; B.head = head;
+        lf(head, 'head', sk);
+        [-1, 1].forEach(s => { el(head, 0.011, 0.03, 0.02, sk, s * 0.089, 0.118, -0.012); el(head, 0.005, 0.02, 0.012, skd, s * 0.092, 0.118, -0.008); });
+        const nb = tb(head, 0.05, 0.011, 0.014, sk, 0, 0.145, 0.097); nb.r[0] = -0.2; (B.noseTip = el(head, 0.016, 0.014, 0.019, sk, 0, 0.098, 0.111)); el(head, 0.011, 0.01, 0.012, sk, -0.017, 0.096, 0.102); el(head, 0.011, 0.01, 0.012, sk, 0.017, 0.096, 0.102); el(head, 0.0045, 0.004, 0.0045, skd, -0.011, 0.0905, 0.109); el(head, 0.0045, 0.004, 0.0045, skd, 0.011, 0.0905, 0.109);
         B.eyes = []; B.lids = []; B.brows = [];
         [-1, 1].forEach(s => {
-            el(head, 0.03, 0.022, 0.018, skd, s * 0.04, 0.138, 0.085);
-            const e = nd(head, s * 0.04, 0.138, 0.09); el(e, 0.021, 0.0175, 0.019, eyeW); el(e, 0.0105, 0.0105, 0.005, iris, 0, 0, 0.0165); el(e, 0.0052, 0.0052, 0.004, bk, 0, 0, 0.0195); el(e, 0.0028, 0.0028, 0.003, wh, 0.004, 0.004, 0.0205); B.eyes.push(e);
-            const lid = el(head, 0.0245, 0.011, 0.021, sk, s * 0.04, 0.15, 0.092); B.lids.push(lid); el(lid, 0.0235, 0.0017, 0.013, bk, 0, -0.0095, 0.008);
-            const br = el(head, 0.03, 0.0065, 0.009, hr, s * 0.042, 0.172, 0.1); B.brows.push(br);
-            if (c.glasses !== 'none') { const g = nd(head, s * 0.042, 0.14, 0.114), t = nd(g); t.g = 'tor'; t.s = [0.032, 0.026, 0.03]; t.m = mat(c.glasses === 'sun' ? '#0d0d10' : '#c8a64a', 0.7, 60); g.k.push(t); head.k.push(g); const tm = tb(head, 0.1, 0.0025, 0.0025, t.m, s * 0.074, 0.14, 0.11); tm.r[0] = -1.57; }
+            el(head, 0.03, 0.021, 0.014, skd, s * 0.04, 0.138, 0.076);
+            el(head, 0.034, 0.012, 0.02, sk, s * 0.04, 0.164, 0.081);
+            const e = nd(head, s * 0.04, 0.138, 0.078); el(e, 0.021, 0.0175, 0.019, eyeW); el(e, 0.0105, 0.0105, 0.005, iris, 0, 0, 0.0165); el(e, 0.0052, 0.0052, 0.004, bk, 0, 0, 0.0195); el(e, 0.0028, 0.0028, 0.003, wh, 0.004, 0.004, 0.0205); el(e, 0.0015, 0.0015, 0.0015, wh, -0.0045, -0.0045, 0.0203); B.eyes.push(e);
+            const lid = el(head, 0.0245, 0.0095, 0.021, sk, s * 0.04, 0.152, 0.083); B.lids.push(lid); el(lid, 0.0235, 0.0017, 0.013, bk, 0, -0.0095, 0.008); el(lid, 0.0255, 0.0026, 0.0135, bk, 0, -0.0098, 0.0085); const fl = el(lid, 0.009, 0.0022, 0.006, bk, s * 0.0215, -0.0085, 0.014); fl.r[2] = -s * 0.5;
+            const br = el(head, 0.031, 0.0072, 0.009, hr, s * 0.042, 0.172, 0.092); B.brows.push(br);
+            if (c.glasses !== 'none') {
+                const g = nd(head, s * 0.042, 0.14, 0.108), t = nd(g); t.g = 'tor'; t.s = [0.032, 0.026, 0.03]; t.m = mat(c.glasses === 'sun' ? '#0d0d10' : '#c8a64a', 0.7, 60); g.k.push(t); head.k.push(g);
+                if (c.glasses === 'sun' || c.glasses === 'aviator') el(g, 0.031, 0.025, 0.0012, mat(c.glasses === 'sun' ? '#0a0a0e' : '#2a2a30', 0.8, 90), 0, 0, 0);
+                const tm = tb(head, 0.19, 0.0025, 0.0025, t.m, s * 0.092, 0.14, 0.1); tm.r[0] = 1.57;
+            }
         });
-        if (c.glasses !== 'none') { const b = tb(head, 0.02, 0.0025, 0.0025, mat('#c8a64a', 0.7, 60), 0, 0.15, 0.116); b.r[2] = 1.57; b.p[0] = 0.01; }
-        const mouth = nd(head, 0, 0.056, 0.105); B.mouth = mouth; el(mouth, 0.022, 0.004, 0.01, bk, 0, 0, -0.004);
-        B.upper = el(mouth, 0.026, 0.0085, 0.012, lipc, 0, 0.008, 0); B.lower = nd(mouth, 0, -0.008, 0); el(B.lower, 0.024, 0.009, 0.012, lipc, 0, 0, 0); B.tongue = el(mouth, 0.016, 0.005, 0.012, mat('#a8454d', 0.3, 20), 0, -0.006, -0.002); B.teeth = el(mouth, 0.019, 0.004, 0.006, wh, 0, 0.004, 0.003); B.cor = [-1, 1].map(s => el(mouth, 0.007, 0.007, 0.008, lipc, s * 0.027, 0, 0)); B.tears = [-1, 1].map(s => el(head, 0.006, 0.012, 0.006, mat('#8fd0ff', 0.8, 80), s * 0.05, 0.1, 0.098));
-        const hairC = mat(c.hairColor, 0.3, 22);
-        if (c.hair === 'afro') { const nP = 46; for (let i = 0; i < nP; i++) { const y = 1 - (i / (nP - 1)) * 1.25, r = Math.sqrt(Math.max(0, 1 - y * y)), th = i * 2.399963; el(head, 0.052, 0.052, 0.052, hairC, Math.cos(th) * r * 0.14, 0.2 + y * 0.125, Math.sin(th) * r * 0.135 - 0.012); } el(head, 0.14, 0.11, 0.135, hairC, 0, 0.2, -0.015); }
-        else if (c.hair === 'wrap') { el(head, 0.115, 0.1, 0.122, cl, 0, 0.2, -0.008); el(head, 0.105, 0.075, 0.11, mat(shade(clc, 1.2), 0.15, 14), 0, 0.26, -0.01); el(head, 0.12, 0.03, 0.12, mat(shade(clc, 0.8), 0.1, 12), 0, 0.17, 0.005); }
-        else if (c.hair !== 'bald') { el(head, 0.106, 0.094, 0.118, hairC, 0, 0.19, -0.014); el(head, 0.102, 0.1, 0.1, hairC, 0, 0.13, -0.034); el(head, 0.098, 0.028, 0.044, hairC, 0, 0.228, 0.06); [-1, 1].forEach(s => el(head, 0.012, 0.045, 0.02, hairC, s * 0.098, 0.16, 0.03)); for (let i = 0; i < 20; i++) { const th = i * 2.399963, y = 0.35 + (i % 5) * 0.12, rr = Math.sqrt(1 - y * y); el(head, 0.02, 0.012, 0.03, hairC, Math.cos(th) * rr * 0.1, 0.19 + y * 0.09, Math.sin(th) * rr * 0.112 - 0.014); } if (c.hair === 'long') { el(head, 0.118, 0.23, 0.075, hairC, 0, 0.02, -0.08); [-1, 1].forEach(s => el(head, 0.02, 0.15, 0.04, hairC, s * 0.105, 0.04, 0.0)); } }
+        if (c.glasses !== 'none') { const b = tb(head, 0.02, 0.0025, 0.0025, mat('#c8a64a', 0.7, 60), 0, 0.15, 0.11); b.r[2] = 1.57; b.p[0] = 0.01; }
+        const mouth = nd(head, 0, 0.056, 0.098); B.mouth = mouth; el(mouth, 0.022, 0.004, 0.01, bk, 0, 0, -0.004);
+        B.upper = el(mouth, 0.026, 0.0085, 0.012, lipc, 0, 0.008, 0); B.lower = nd(mouth, 0, -0.008, 0); el(B.lower, 0.024, 0.009, 0.012, lipc, 0, 0, 0); B.tongue = el(mouth, 0.016, 0.005, 0.012, mat('#a8454d', 0.3, 20), 0, -0.006, -0.002); B.teeth = el(mouth, 0.019, 0.004, 0.006, wh, 0, 0.004, 0.003); B.cor = [-1, 1].map(s => el(mouth, 0.007, 0.007, 0.008, lipc, s * 0.027, 0, 0)); B.tears = [-1, 1].map(s => el(head, 0.006, 0.012, 0.006, mat('#8fd0ff', 0.8, 80), s * 0.05, 0.1, 0.088));
+        B.cheeks = [-1, 1].map(s => { const n0 = el(head, 0.03, 0.024, 0.016, sk, s * 0.062, 0.085, 0.058); n0.v = false; return n0; });
+        B.blush = [-1, 1].map(s => { const n0 = el(head, 0.026, 0.018, 0.012, mat(mix(skc, [0.85, 0.25, 0.3], 0.35), 0.2, 18, 0.55), s * 0.064, 0.082, 0.064); n0.v = false; return n0; });
+        // ----- cheveux -----
+        if (c.hair === 'afro') { const hc = mat(c.hairColor, 0.38, 34), nP = 46; for (let i = 0; i < nP; i++) { const y = 1 - (i / (nP - 1)) * 1.25, r = Math.sqrt(Math.max(0, 1 - y * y)), th = i * 2.399963; el(head, 0.052, 0.052, 0.052, hc, Math.cos(th) * r * 0.14, 0.2 + y * 0.125, Math.sin(th) * r * 0.135 - 0.012); } el(head, 0.14, 0.11, 0.135, hc, 0, 0.2, -0.015); }
+        else if (c.hair === 'wrap') {
+            lf(head, 'hair:wrap', cl); const bd = nd(head, 0, 0.2, -0.006); bd.g = 'tor'; bd.r = [Math.PI / 2, 0, 0]; bd.s = [0.114, 0.114, 0.114]; bd.m = mat(shade(clc, 0.8), 0.1, 12); head.k.push(bd);
+            el(head, 0.078, 0.055, 0.09, mat(shade(clc, 1.2), 0.15, 14), 0, 0.29, -0.03);
+        }
+        else if (c.hair !== 'bald') { lf(head, 'hair:short', hairC); if (c.hair === 'long') { el(head, 0.1, 0.2, 0.075, hairC, 0, 0.07, -0.075); [-1, 1].forEach(s => el(head, 0.022, 0.14, 0.05, hairC, s * 0.092, 0.06, -0.03)); } }
+        // ----- bras -----
         B.arms = [];
         [-1, 1].forEach(s => {
-            const sh = nd(chest, s * 0.205, 0.42, 0), sleeve = (long && bare) ? sk : cl, wide = c.outfit === 'boubou';
-            el(sh, 0.066, 0.066, 0.066, sleeve, 0, 0, 0); tb(sh, 0.27, wide ? 0.07 : 0.056, wide ? 0.085 : 0.045, sleeve);
-            const e = nd(sh, 0, -0.27, 0); el(e, wide ? 0.085 : 0.042, wide ? 0.085 : 0.042, wide ? 0.085 : 0.042, sleeve); tb(e, 0.25, wide ? 0.085 : 0.045, wide ? 0.09 : 0.034, (long && bare) ? sk : cl);
-            if (suit) { const cf = tb(e, 0.03, 0.036, 0.036, wh, 0, -0.225, 0); }
+            const sh = nd(chest, s * 0.205, 0.42, 0), bareA = bare || tee, am = bareA ? sk : cl, k1 = suit ? 1.14 : 1;
+            if (wide) { el(sh, 0.066, 0.066, 0.066, cl, 0, 0, 0); tb(sh, 0.27, 0.07, 0.085, cl); }
+            else { el(sh, 0.054 * k1, 0.048 * k1, 0.056 * k1, bare ? sk : cl, 0, 0, 0); lf(sh, 'uarm', am, 0, 0, 0, k1); if (tee) lf(sh, 'sleeveS', cl); }
+            const e = nd(sh, 0, -0.27, 0);
+            if (wide) { el(e, 0.085, 0.085, 0.085, cl); tb(e, 0.25, 0.085, 0.09, cl); }
+            else { el(e, 0.042 * k1, 0.042 * k1, 0.042 * k1, am); lf(e, 'farm', am, 0, 0, 0, suit ? 1.12 : 1); }
+            if (suit) tb(e, 0.03, 0.036, 0.036, wh, 0, -0.225, 0); else if (!bareA && !wide) tb(e, 0.026, 0.039, 0.039, mat(shade(clc, 0.78), 0.1, 14), 0, -0.222, 0);
             const hd = hand(e, s, sk); B.arms.push({ s, sh, el: e, hand: hd });
         });
+        // ----- jambes -----
         B.legs = [];
         [-1, 1].forEach(s => {
-            const hip = nd(body, s * 0.09, -0.05, 0), lm = long ? cl : pn; tb(hip, 0.44, 0.092, 0.064, lm); el(hip, 0.06, 0.06, 0.06, lm, 0, -0.44, 0);
-            const kn = nd(hip, 0, -0.44, 0); tb(kn, 0.42, 0.062, 0.038, long ? sk : pn); el(kn, 0.055, 0.1, 0.06, long ? sk : pn, 0, -0.12, -0.012);
-            const an = nd(kn, 0, -0.42, 0); el(an, 0.05, 0.03, 0.12, mat('#1a1418', 0.4, 40), 0, -0.012, 0.04); el(an, 0.045, 0.032, 0.05, mat('#1a1418', 0.4, 40), 0, 0.008, -0.01); el(an, 0.052, 0.008, 0.124, mat('#e6e0d4', 0.4, 30), 0, -0.036, 0.04);
+            const hip = nd(body, s * 0.09, -0.05, 0), lm = long ? cl : pn; lf(hip, 'thigh', lm, 0, 0, 0, long ? 1 : 1.07); el(hip, 0.056, 0.056, 0.056, lm, 0, -0.45, 0);
+            const kn = nd(hip, 0, -0.45, 0); lf(kn, 'shin', long ? sk : pn, 0, 0, 0, long ? 1 : 1.08);
+            if (!long) tb(kn, 0.035, 0.04, 0.042, mat(shade(clc, 0.5), 0.1, 12), 0, -0.385, 0);
+            const an = nd(kn, 0, -0.42, 0); el(an, 0.042, 0.034, 0.09, shoe, 0, -0.002, 0.036); el(an, 0.04, 0.026, 0.05, shoe, 0, -0.012, 0.09); el(an, 0.036, 0.04, 0.045, shoe, 0, 0.006, -0.018); el(an, 0.046, 0.008, 0.128, sole, 0, -0.036, 0.04);
             B.legs.push({ s, hip, kn, an });
         });
         if (long) { const sk2 = tb(body, 0.74, 0.2, 0.3, cl, 0, 0.0, 0); sk2.s[2] = 0.2 * 1.1; B.skirt = sk2; }
         buildExtras(wh, bk, cl);
     }
+
     const bx = (g, x, y, z, mt, px, py, pz) => { const n = nd(g, px, py, pz); n.g = 'box'; n.s = [x, y, z]; n.m = mt; return n; };
     function wheel(par, x, y, z, r, fat, tm, sm_) {
         const h = nd(par, x, y, z); h.r[1] = Math.PI / 2; const sp = nd(h), t = nd(sp); t.g = 'tor'; t.s = [r, r, r * fat]; t.m = tm; el(sp, 0.03, 0.03, 0.03, sm_);
@@ -4463,22 +4566,27 @@ const Char3D = (() => {
             el(g, 0.1, 0.12, 0.2, me, 0, 0.45, 0); el(g, 0.15, 0.1, 0.24, paint, 0, 0.82, 0.14); el(g, 0.14, 0.05, 0.3, blk, 0, 0.72, -0.2);
             const fr = tb(g, 0.8, 0.03, 0.03, me, 0, 0.6, 0.35); fr.r[0] = Math.PI / 2; const fk = tb(g, 0.6, 0.022, 0.022, me, 0, 0.92, 0.42); fk.r[0] = -0.12;
             const hb = tb(g, 0.62, 0.014, 0.014, blk, -0.31, 0.95, 0.38); hb.r[2] = Math.PI / 2; el(g, 0.06, 0.06, 0.05, mat('#ffe9a8', 0.8, 80), 0, 0.88, 0.5);
+            el(g, 0.034, 0.034, 0.3, me, 0.13, 0.36, -0.2); el(g, 0.036, 0.036, 0.03, blk, 0.13, 0.36, -0.49); el(g, 0.05, 0.03, 0.2, paint, 0, 0.71, 0.55); el(g, 0.05, 0.03, 0.22, paint, 0, 0.68, -0.55); el(g, 0.04, 0.025, 0.03, mat('#ff3030', 0.8, 80), 0, 0.76, -0.47);
+            [-1, 1].forEach(sd => { tb(g, 0.12, 0.006, 0.006, blk, sd * 0.3, 1.07, 0.36); el(g, 0.035, 0.025, 0.008, me, sd * 0.3, 1.08, 0.36); });
         });
         V('bicycle', g => {
             B.wh.bicycle = [wheel(g, 0, 0.34, 0.5, 0.34, 0.5, tire, me), wheel(g, 0, 0.34, -0.5, 0.34, 0.5, tire, me)];
             const t1 = tb(g, 0.62, 0.014, 0.014, paint, 0, 0.72, 0.38); t1.r[0] = Math.PI / 2; const t2 = tb(g, 0.59, 0.014, 0.014, paint, 0, 0.72, 0.38); t2.r[0] = 0.82; const t3 = tb(g, 0.46, 0.014, 0.014, paint, 0, 0.76, -0.16); t3.r[0] = -0.24; const t4 = tb(g, 0.46, 0.012, 0.012, paint, 0, 0.3, -0.05); t4.r[0] = 1.5;
             const fk = tb(g, 0.55, 0.014, 0.014, paint, 0, 0.9, 0.4); fk.r[0] = -0.15; const hb = tb(g, 0.5, 0.012, 0.012, blk, -0.25, 0.96, 0.4); hb.r[2] = Math.PI / 2; el(g, 0.06, 0.02, 0.12, blk, 0, 0.78, -0.17);
+            el(g, 0.004, 0.01, 0.23, blk, 0.05, 0.32, -0.275); { const cr = nd(g, 0.05, 0.3, -0.05); cr.r[1] = Math.PI / 2; const ct = nd(cr); ct.g = 'tor'; ct.s = [0.07, 0.07, 0.07]; ct.m = me; }
+            el(g, 0.035, 0.012, 0.18, paint, 0, 0.705, 0.5); el(g, 0.035, 0.012, 0.18, paint, 0, 0.705, -0.5); el(g, 0.022, 0.014, 0.022, me, 0, 0.985, 0.4); bx(g, 0.06, 0.006, 0.14, blk, 0, 0.76, -0.42);
             B.crank = nd(g, 0, 0.3, -0.05); [0, Math.PI].forEach((a, i) => { const w = nd(B.crank); w.r[0] = a; tb(w, 0.17, 0.01, 0.01, me, (i ? -1 : 1) * 0.08, 0, 0); bx(w, 0.04, 0.012, 0.06, blk, (i ? -1 : 1) * 0.11, -0.17, 0); });
         });
         V('escooter', g => {
             B.wh.escooter = [wheel(g, 0, 0.1, 0.44, 0.1, 1.6, tire, me), wheel(g, 0, 0.1, -0.44, 0.1, 1.6, tire, me)]; bx(g, 0.09, 0.02, 0.4, paint, 0, 0.1, 0);
-            tb(g, 0.9, 0.015, 0.015, me, 0, 1.0, 0.42); const hb = tb(g, 0.4, 0.012, 0.012, blk, -0.2, 1.0, 0.42); hb.r[2] = Math.PI / 2;
+            tb(g, 0.9, 0.015, 0.015, me, 0, 1.0, 0.42); const hb = tb(g, 0.4, 0.012, 0.012, blk, -0.2, 1.0, 0.42); hb.r[2] = Math.PI / 2; el(g, 0.03, 0.03, 0.02, mat('#ffe9a8', 0.8, 80), 0, 0.95, 0.46); bx(g, 0.085, 0.004, 0.38, blk, 0, 0.122, 0);
         });
         V('cabriolet', g => {
             B.wh.cabriolet = [-1, 1].map(a => [1, -1].map(b => wheel(g, a * 0.44, 0.24, b * 0.55, 0.24, 2, tire, me))).reduce((x, y) => x.concat(y), []);
             el(g, 0.42, 0.2, 0.86, car, 0, 0.34, 0); el(g, 0.38, 0.12, 0.4, car, 0, 0.46, 0.45); el(g, 0.38, 0.12, 0.25, car, 0, 0.46, -0.6); el(g, 0.34, 0.08, 0.12, blk, 0, 0.56, 0.22);
             el(g, 0.3, 0.06, 0.28, blk, 0, 0.48, -0.1); el(g, 0.3, 0.2, 0.05, blk, 0, 0.66, -0.32);
             const wsh = bx(g, 0.36, 0.09, 0.008, mat('#bfe6ff', 0.9, 90), 0, 0.68, 0.34); wsh.r[0] = -0.7;
+            [-1, 1].forEach(sd => { el(g, 0.06, 0.05, 0.04, mat('#ffe9a8', 0.8, 80), sd * 0.25, 0.46, 0.84); el(g, 0.05, 0.04, 0.03, mat('#ff3030', 0.8, 80), sd * 0.25, 0.46, -0.84); });
             const sw = nd(g, 0, 0.74, 0.22); sw.r[0] = -1.0; const tt = nd(sw); tt.g = 'tor'; tt.s = [0.12, 0.12, 0.12]; tt.m = blk;
         });
     }
@@ -4515,7 +4623,7 @@ const Char3D = (() => {
     }
     function pose(a, time) {
         const g0 = k => (a.e && a.e[k]) || 0, act = a.act || (ACTS.includes(a.gesture) ? a.gesture : null), aw = clamp(a.gw || 0, 0, 1), q = clamp(a.gp || 0, 0, 1), ms = Number.isFinite(a.motionScale) ? clamp(a.motionScale, 0.2, 1) : 1, t = time * ms;
-        const br = Math.sin(t * 1.8) * 0.01; B.chest.s = [1 + br, 1 + br * 0.5, 1 + br]; B.chest.r = [0, 0, 0]; B.body.r = [0, 0, 0]; B.body.p = [0, 0.93, 0]; B.head.r = [0, 0, 0]; G.r = [0, 0, 0]; G.p = [0, 0, 0]; G.gs = 1;
+        const br = Math.sin(t * 1.8) * 0.01; B.chest.gs = 1 + br * 1.4; B.chest.r = [0, 0, 0]; B.body.r = [0, 0, 0]; B.body.p = [0, 0.93, 0]; B.head.r = [0, 0, 0]; G.r = [0, 0, 0]; G.p = [0, 0, 0]; G.gs = 1;
         const rst = lastT < 0 || time < lastT || time - lastT > 0.25, dt = rst ? 0.033 : time - lastT; lastT = time;
         const run = act === 'run', walkA = act === 'walk' || run ? aw : (a.ambient === 'walking' && !act ? 0.7 : 0), ph = t * (run ? 9 : 5.5), sw = walkA * (run ? 0.9 : 0.55);
         const jump = act === 'jump' ? Math.sin(Math.PI * q) * aw : 0, dance = act === 'dance' ? aw : 0, crouch = act === 'crouch' ? aw : 0, laugh = act === 'laugh' ? aw : 0, cry = act === 'cry' ? aw : 0, sleep = act === 'sleep' ? aw : 0, kick = act === 'kick' ? aw : 0, stretch = act === 'stretch' ? aw : 0, bow = act === 'bow' ? aw : 0, kneel1 = act === 'kneel' ? aw : 0;
@@ -4549,7 +4657,7 @@ const Char3D = (() => {
         if (!gname && !act && !propK && a.ambient === 'pointing') { gp = GP.viewer; gw = 0.6; }
         if (act === 'cry') { gi = GI.facepalm; gw = cry; } if (act === 'pray') { gi = GI.pray; gw = prayK * (1 - prayDown); }
         B.arms.forEach(m => {
-            const p = ph + (m.s > 0 ? 0 : Math.PI), bt = (m.s === act1 ? a.beat || 0 : 0), idle = [Math.sin(p) * sw * 0.7 - bt * 0.35, m.s * (0.1 + br * 2 + bt * 0.2), -0.15 - sw * 0.4 - bt * 0.45, 0];
+            const p = ph + (m.s > 0 ? 0 : Math.PI), bt = (m.s === act1 ? a.beat || 0 : 0), idle = [Math.sin(p) * sw * 0.7 - bt * 0.35 - 0.06, m.s * (0.08 + br * 2 + bt * 0.2), -0.27 - sw * 0.4 - bt * 0.45, 0];
             let T4 = idle.slice(), roll = m.s * -1.5707, cu = [0.15, 0.25, 0.3, 0.38, 0.45], spread = 0.03, ikT = null, ikSp = 'c', ikw = 0, pref = [-0.7, m.s * 0.2, -0.8, 0];
             const blend = (arr, k) => { T4 = T4.map((v, i) => lerp(v, arr[i], k)); };
             if (dance) { const dm = Math.floor(t / 2) % 3, ph2 = t * 6 + (m.s > 0 ? 0 : Math.PI); blend(dm === 0 ? [0, m.s * (2.2 + Math.sin(ph2) * 0.4), -0.2, 0] : dm === 1 ? [-1.3 + Math.sin(ph2) * 0.5, m.s * 0.3, -1.2, 0] : [0, m.s * (1.4 + Math.sin(t * 5) * 0.3), 0, 0], dance); }
@@ -4585,19 +4693,46 @@ const Char3D = (() => {
         const open = clamp((a.__open || 0) + laugh * (0.5 + 0.3 * Math.sin(t * 14)) + stretch * 0.7 * Math.sin(Math.PI * q) + sur * 0.35 + cry * 0.2 + fear * 0.2, 0, 1);
         B.lower.p[1] = -0.008 - open * 0.03; B.mouth.s = [1 + smile * 0.35 - frown * 0.1 - sur * 0.35, 1, 1]; B.mouth.p[1] = 0.056 + smile * 0.004; B.tongue.v = open > 0.25; B.teeth.v = open > 0.12; B.tongue.p[1] = -0.006 - open * 0.015;
         B.cor.forEach(c0 => { c0.p[1] = smile * 0.009 - frown * 0.008 - open * 0.012; });
-        B.brows.forEach((b, i) => { const s = i ? 1 : -1; b.r[2] = -s * (browIn - browLow) * 0.45; b.p[1] = 0.172 + browUp * 0.016 - browLow * 0.008 + browIn * 0.006; });
+        { const ck = clamp(smile * 0.9 + laugh * 0.3, 0, 1), bk2 = clamp(g0('shy') + g0('love') * 0.5 + g0('embarrassed'), 0, 1);
+          B.cheeks.forEach(c0 => { c0.v = ck > 0.05; c0.p[1] = 0.085 + ck * 0.012; c0.s = [0.03, 0.024 + ck * 0.008, 0.016 + ck * 0.012]; });
+          B.blush.forEach(c0 => { c0.v = bk2 > 0.1; c0.s = [0.026, 0.018, 0.004 + 0.01 * bk2]; });
+          const pd = 1 + sur * 0.45 + fear * 0.4 + g0('love') * 0.3 - g0('angry') * 0.15; B.eyes.forEach(e0 => { const pu = e0.k[2]; if (pu) { pu.s[0] = pu.s[1] = 0.0052 * pd; } }); }
+        B.brows.forEach((b, i) => { const s = i ? 1 : -1; b.r[2] = -s * (browIn - browLow) * 0.45; b.p[1] = 0.172 + (i ? g0('curious') * 0.012 : g0('smug') * 0.006) + browUp * 0.016 - browLow * 0.008 + browIn * 0.006; });
         const blink = (t % 3.7) > 3.6 || ((t % 8.3) > 8.15 && (t % 8.3) < 8.2) ? 1 : 0, droop = clamp(g0('tired') * 0.6 + g0('calm') * 0.2 + g0('smug') * 0.25 + sleep + cry * 0.2, 0, 1), wide = clamp(sur + fear, 0, 1);
-        B.lids.forEach((l, i) => { const wink = gname === 'wink' && i === (act1 > 0 ? 1 : 0) ? sm(gw) : 0, cl2 = Math.max(blink, sleep, wink, droop * 0.6); l.p[1] = 0.15 - cl2 * 0.026 + wide * 0.004; });
+        B.lids.forEach((l, i) => { const wink = gname === 'wink' && i === (act1 > 0 ? 1 : 0) ? sm(gw) : 0, cl2 = Math.max(blink, sleep, wink, droop * 0.6, smile * 0.22 + browLow * 0.15); l.p[1] = 0.15 - cl2 * 0.026 + wide * 0.004; });
         B.eyes.forEach(e => { e.r = [-(eyeL.y + sacc[1]) * 0.3, (eyeL.x + sacc[0]) * 0.5, 0]; });
         B.tears.forEach((tr, i) => { tr.v = cry > 0.2; tr.p[1] = 0.1 - ((t * 0.8 + i * 0.4) % 1) * 0.1; });
         B.sym = a.sym || null;
+        // ----- émotions riches : teint, posture, asymétries, plissements, regards, icônes -----
+        try {
+            const E = g0, ang = E('angry'), fe = E('fear'), dis = E('disgust'), wor = E('worried'), tir = E('tired'), sd = E('sad'), pr = E('proud'), dou = E('doubt'), smg = E('smug'), cur = E('curious'), cnf = E('confused'), jea = E('jealous'), shy = E('shy'), thk = E('think'), det = E('determined'), exc = E('excited'), hop = E('hopeful'), nos = E('nostalgic'), dsp = E('disappointed'), rel = E('relieved'), jy = E('joy'), lv = E('love'), pk = 1 - (act ? aw : 0);
+            // teint : rouge de colère, pâleur de peur, vert de dégoût (modéré)
+            const kr = clamp(ang * 0.4 + jea * 0.12 + shy * 0.14, 0, 0.45), kp = clamp(fe * 0.35 + wor * 0.12 + tir * 0.1 + sd * 0.05, 0, 0.4), kg = clamp(dis * 0.16, 0, 0.2);
+            B.skMat.c = mix(mix(mix(B.skBase, [0.78, 0.22, 0.16], kr), mix(B.skBase, [0.72, 0.7, 0.66], 0.5), kp), [0.45, 0.55, 0.25], kg);
+            // posture
+            B.chest.r[0] += pk * (-0.05 * pr + 0.12 * sd + 0.09 * tir + 0.05 * dsp - 0.09 * fe + 0.05 * ang + 0.04 * jea + 0.03 * shy - 0.03 * det - 0.03 * exc);
+            B.arms.forEach(m => { m.sh.p[1] += pk * (0.03 * fe + 0.018 * wor + 0.015 * shy - 0.012 * sd - 0.01 * tir + 0.012 * pr + 0.02 * ang); });
+            B.body.p[0] += Math.sin(t * 41) * 0.0035 * fe + Math.sin(t * 33) * 0.0022 * ang;   // tremblement
+            B.head.r[0] += pk * (0.05 * ang - 0.06 * thk - 0.03 * pr + 0.04 * dsp + 0.05 * nos - 0.04 * hop);
+            B.head.r[2] += 0.07 * cur + 0.05 * cnf * Math.sin(t * 1.3) + 0.04 * smg;
+            // visage : sourcils asymétriques, paupières plissées, nez, bouche
+            B.brows.forEach((b, i) => { b.p[1] += (i ? 1 : -0.4) * (0.012 * dou + 0.014 * smg + 0.01 * cnf + 0.01 * cur); });
+            B.lids.forEach(l => { l.p[1] -= 0.004 * ang + 0.003 * dis + 0.003 * smg + 0.003 * tir + 0.002 * pr; });
+            B.eyes.forEach((e0, i) => { e0.r[0] += 0.22 * shy + 0.12 * sd - 0.25 * thk - 0.15 * nos - 0.1 * hop; e0.r[1] += 0.35 * jea + 0.2 * dou * (i ? 1 : 1); });
+            if (B.noseTip) { B.noseTip.p[1] = 0.098 + 0.006 * dis; B.noseTip.s[0] = 0.016 * (1 + 0.25 * dis + 0.2 * ang); }
+            if (B.cor) { B.cor[1].p[1] += 0.008 * smg + 0.005 * dou + 0.004 * rel; B.cor[0].p[1] -= 0.003 * smg; }
+            B.mouth.r[2] = 0.12 * smg + 0.06 * dou - 0.05 * cnf;
+            if (ang > 0.4) { B.mouth.s[0] *= 1 - 0.14 * ang; B.lower.p[1] -= 0.006 * ang; B.teeth.v = B.teeth.v || ang > 0.55; }
+            // icônes durables (en plus de celles du cerveau)
+            if (!B.sym) { if (sleep > 0.3 || tir > 0.85) B.sym = 'zzz'; else if (ang > 0.7) B.sym = 'vein'; else if (fe > 0.55 || wor > 0.7) B.sym = 'sweat'; else if (exc > 0.75 || pr > 0.8 || jy > 0.9) B.sym = 'spark'; else if (lv > 0.8) B.sym = 'heart'; }
+        } catch (_) { }
         if (B.skirt) B.skirt.r = [(B.legs[0].hip.r[0] + B.legs[1].hip.r[0]) * -0.1, 0, 0];
         G.gs = lerp(1, sKind === 'cabriolet' ? 0.6 : 0.78, ride ? sk : 0) * (1 - 0.16 * fallK);
         let yaw = act === 'turn' ? 2 * Math.PI * sm(q) : 0; yaw += 2 * Math.PI * sm(time / 1.8) + Math.sin(time * 0.5) * 0.3 * sm((time - 1.8) / 1.5);   // tour complet à l'apparition, puis léger balancement
         G.r[1] = yaw + (ride ? -0.95 * sk : 0) + userYaw;
     }
     // ---------- rendu ----------
-    const RX = p => [1, 0, 0, 0, 0, Math.cos(p), Math.sin(p), 0, 0, -Math.sin(p), Math.cos(p), 0, 0, 0, 0, 1], VP = mul(ORTHO(-0.883, 0.883, -0.222, 1.995, -10, 10), RX(0.16));
+    const RX = p => [1, 0, 0, 0, 0, Math.cos(p), Math.sin(p), 0, 0, -Math.sin(p), Math.cos(p), 0, 0, 0, 0, 1], VP = mul([1.1325, 0, 0, 0, 0, 0.9021, 0, 0, 0, 0.7997 / 10, -0.1, -1 / 10, 0, -0.7997, 0, 1], RX(0.16));
     function drawNode(n, P, pass) {
         if (n.v === false) return;
         let W = mul(P, loc(n)); if (n.gs) for (let i = 0; i < 12; i++) if (i % 4 < 3) W[i] *= n.gs;
@@ -4619,11 +4754,12 @@ const Char3D = (() => {
     function draw(ctx, w, h, time, scene, pose_) {
         if (fail || !use()) return false;
         try {
-            const sc = Math.min(1, 1100 / (h * 1.08)), pw = Math.round(h * 0.86 * sc), ph = Math.round(h * 1.08 * sc);
+            const sc = Math.min(1, 1100 / (h * 1.08)) * ssQ, pw = Math.round(h * 0.86 * sc), ph = Math.round(h * 1.08 * sc);
             if (!gl) initGL(pw, ph); bind();
             if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
-            const c = Settings.get(), k = [c.charSkin, c.charHairColor, c.charColor, c.charOutfit, c.charHair, c.charGlasses].join('|');
-            if (k !== key || !G) { key = k; build({ skin: c.charSkin || '#6b4226', hairColor: c.charHairColor || '#1b1410', color: c.charColor || '#1f3a5f', outfit: c.charOutfit || 'suit', hair: c.charHair || 'short', glasses: ['round', 'square', 'aviator', 'sun'].includes(c.charGlasses) ? c.charGlasses : 'none' }); }
+            const c = Settings.get(); let wo = null; try { wo = Wardrobe.forMain(scene, { fem: c.charOutfit === 'dress' || c.charHair === 'long' }, time); } catch (e) { }   // tenue de l'histoire (deuil, prière, sport…)
+            const oc = (wo && wo.outfit) || c.charOutfit || 'suit', col = (wo && wo.color) || c.charColor || '#1f3a5f', k = [c.charSkin, c.charHairColor, col, oc, c.charHair, c.charGlasses].join('|');
+            if (k !== key || !G) { key = k; build({ skin: c.charSkin || '#6b4226', hairColor: c.charHairColor || '#1b1410', color: col, outfit: oc, hair: c.charHair || 'short', glasses: ['round', 'square', 'aviator', 'sun'].includes(c.charGlasses) ? c.charGlasses : 'none' }); }
             let a = {}; try { a = ActingBrain.at(scene, time, pose_) || {}; a.__open = LipSync.open(scene, time, pose_); } catch (e) { }
             pose(a, time);
             t0f = performance.now(); seedC = 0;
@@ -4636,12 +4772,17 @@ const Char3D = (() => {
                 gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); gl.drawElements(gl.TRIANGLES, g0.n, gl.UNSIGNED_SHORT, 0); gl.depthMask(true); gl.disable(gl.BLEND); gl.uniform1f(U.uGround, 0);
             }
             drawNode(G, I4(), 0);
+            try { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; } catch (_) {}
             ctx.drawImage(cv, -0.43 * h, -0.972 * h, 0.86 * h, 1.08 * h);
-            ema = ema * 0.9 + (performance.now() - t0f) * 0.1; frames++; if (ema > 70 && frames > 20) shadowOn = false;   // petit téléphone : ombres coupées automatiquement
+            ema = ema * 0.9 + (performance.now() - t0f) * 0.1; frames++; if (ema > 42 && frames > 15 && ssQ > 1) ssQ = 1; if (ema > 70 && frames > 20) shadowOn = false;   // petit téléphone : ombres coupées automatiquement
             if (B.rideK > 0.3) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = h * 0.004; for (let i = 0; i < 9; i++) { const f = (time * 1.6 + i * 0.37) % 1, x = -h * 0.5 + f * h, y = -h * (0.15 + ((i * 53) % 70) / 100 * 0.6); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + h * 0.14, y); ctx.stroke(); } ctx.restore(); }
             if (B.sym) { ctx.save(); ctx.translate(h * 0.2, -h * (0.9 + 0.012 * Math.sin(time * 4))); ctx.scale(h * 0.09, h * 0.09);
                 if (B.sym === 'excl') { ctx.fillStyle = '#ff4d4f'; ctx.beginPath(); ctx.roundRect(-0.1, -0.5, 0.2, 0.62, 0.1); ctx.fill(); ctx.beginPath(); ctx.arc(0, 0.3, 0.12, 0, Math.PI * 2); ctx.fill(); }
                 else if (B.sym === 'ques') { ctx.font = 'bold 1.2px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 0.08; ctx.strokeStyle = '#13324d'; ctx.fillStyle = '#7cc4ff'; ctx.strokeText('?', 0, 0); ctx.fillText('?', 0, 0); }
+                else if (B.sym === 'sweat') { ctx.fillStyle = '#8fd0ff'; ctx.beginPath(); ctx.moveTo(0, -0.45); ctx.bezierCurveTo(0.35, 0, 0.3, 0.35, 0, 0.38); ctx.bezierCurveTo(-0.3, 0.35, -0.35, 0, 0, -0.45); ctx.fill(); }
+                else if (B.sym === 'vein') { ctx.strokeStyle = '#e8343c'; ctx.lineWidth = 0.1; ctx.lineCap = 'round'; [[-1, -1, 0], [1, -1, 1], [1, 1, 2], [-1, 1, 3]].forEach(q => { ctx.beginPath(); ctx.arc(q[0] * 0.28, q[1] * 0.28, 0.22, q[2] * Math.PI / 2, (q[2] + 1) * Math.PI / 2); ctx.stroke(); }); }
+                else if (B.sym === 'spark') { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.moveTo(0, -0.5); ctx.quadraticCurveTo(0.08, -0.08, 0.5, 0); ctx.quadraticCurveTo(0.08, 0.08, 0, 0.5); ctx.quadraticCurveTo(-0.08, 0.08, -0.5, 0); ctx.quadraticCurveTo(-0.08, -0.08, 0, -0.5); ctx.fill(); }
+                else if (B.sym === 'zzz') { ctx.font = 'bold 0.7px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#bcd4ff'; ctx.fillText('z', -0.25, 0.25); ctx.fillText('Z', 0.1, -0.1); }
                 else if (B.sym === 'heart') { ctx.fillStyle = '#ff5d8f'; ctx.beginPath(); ctx.moveTo(0, 0.38); ctx.bezierCurveTo(-0.7, -0.1, -0.35, -0.55, 0, -0.2); ctx.bezierCurveTo(0.35, -0.55, 0.7, -0.1, 0, 0.38); ctx.fill(); }
                 ctx.restore(); }
             return true;
