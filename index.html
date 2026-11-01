@@ -4,25 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="videostory-build" content="3.3.4-speechify-empty-response-recovery">
-    <title>Vidéos Plus — VideoStory 3.3.4</title>
-    <meta name="description" content="Vidéos Plus 3.3.4 : PCM mobile, secours WAV unique et diagnostic détaillé des réponses Speechify incomplètes.">
-    <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
-    <meta name="author" content="Vidéos Plus">
-    <meta name="application-name" content="Vidéos Plus">
+    <title>Studio animé : créez des vidéos animées en ligne</title>
+    <meta name="description" content="Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.">
+    <meta name="keywords" content="Studio animé, création vidéo, vidéo animée, montage vidéo, narration, sous-titres, export HD">
+    <meta name="author" content="Studio animé">
+    <meta name="application-name" content="Studio animé">
     <meta name="theme-color" content="#faf7f5">
     <link rel="icon" href="./icon.svg" type="image/svg+xml">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="preload" as="image" href="./assets/mascotte-presentateur.webp">
     <link rel="canonical" href="https://videos-plus.vercel.app/">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.4">
-    <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
+    <meta property="og:site_name" content="Studio animé">
+    <meta property="og:title" content="Studio animé : créez des vidéos animées en ligne">
+    <meta property="og:description" content="Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.">
     <meta property="og:url" content="https://videos-plus.vercel.app/">
+    <meta property="og:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
+    <meta property="og:image:alt" content="Mascotte de Studio animé">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.4">
-    <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
-    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vidéos Plus","alternateName":["Video Plus","Vidéo Plus"],"url":"https://videos-plus.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Vidéos Plus","url":"https://videos-plus.vercel.app/","description":"Application web pour créer des vidéos animées expressives avec actions, narration et export vidéo.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
+    <meta name="twitter:title" content="Studio animé : créez des vidéos animées en ligne">
+    <meta name="twitter:description" content="Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.">
+    <meta name="twitter:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Studio animé","alternateName":["Studio Anime"],"url":"https://videos-plus.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Studio animé","url":"https://videos-plus.vercel.app/","description":"Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -272,7 +275,7 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
     <!-- HOME SCREEN -->
     <div id="homeScreen" class="screen active">
         <header class="header">
-            <div class="logo"><img class="logo-icon" src="./assets/clapperboard-clay.webp" alt=""><h1>VIDÉOS ANIMÉES</h1></div>
+            <div class="logo"><img class="logo-icon" src="./assets/clapperboard-clay.webp" alt=""><h1>STUDIO ANIMÉ</h1></div>
             <button class="header-btn" aria-label="Ouvrir les paramètres" onclick="showScreen('settingsScreen')">⚙️</button>
         </header>
         <main class="home-main">
@@ -309,7 +312,7 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
         <div class="create-container">
             <div class="form-group">
                 <label>💡 Idée en une phrase <span style="font-weight:400;opacity:.72">(facultative : le cerveau peut commencer seul)</span></label>
-                <input type="text" id="ideaInput" placeholder="Ex : pourquoi Nokia a perdu face à l'iPhone" style="width:100%;padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;">
+                <input type="text" id="ideaInput" placeholder="Avec Studio animé, décrivez votre idée (ex. : pourquoi Nokia a perdu face à l'iPhone)" style="width:100%;padding:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;">
             </div>
             <div class="form-group">
                 <label>Votre script <span style="font-weight:400;opacity:.72">(facultatif)</span></label>
@@ -617,7 +620,7 @@ const ASSETS = {
         { id: 'gradient_night', name: 'Nuit', from: '#0f2027', to: '#203a43' },
         { id: 'african_day', name: 'Jour africain luxueux', from: '#f5b942', to: '#7a2e12', scenery: true },
         { id: 'city_night', name: 'Ville de luxe (nuit)', from: '#0b1030', to: '#3a2a6b', scenery: true },
-        { id: 'maquis', name: 'Vidéo Plus Maquis', from: '#c46a1a', to: '#3b1a0a', scenery: true },
+        { id: 'maquis', name: 'Le Maquis', from: '#c46a1a', to: '#3b1a0a', scenery: true },
         { id: 'mosquee', name: 'Mosquée au crépuscule', from: '#150f3a', to: '#e0603f', scenery: true },
         { id: 'savane', name: 'Savane au coucher du soleil', from: '#2b1b4f', to: '#ff7a3d', scenery: true },
         { id: 'village', name: 'Village africain', from: '#3fa9ee', to: '#fff0c0', scenery: true },
@@ -883,7 +886,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.4', channel: 'web', publicBuildId: 'videos-plus-3.3.4-speechify-empty-response-recovery' });
+const BUILD_INFO = Object.freeze({ app: 'Studio animé', version: '3.3.4', channel: 'web', publicBuildId: 'studio-anime-3.3.4-brand-refresh' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -6868,7 +6871,7 @@ class CanvasRenderer {
         ctx.restore();
     }
 
-    // ---------- Décors de lieu : Afrique luxe (jour), ville de luxe (nuit), Vidéo Plus Maquis ----------
+    // ---------- Décors de lieu : Afrique luxe (jour), ville de luxe (nuit), Le Maquis ----------
     // ===== LOOK CINÉMA : étalonnage chaud/froid, lumière douce, vignette, grain de film (calques mis en cache : 4 remplissages par image) =====
     cinemaOn() { const p = typeof state !== 'undefined' && state.project; return !!(p && p.cinema !== false); }   // « Rendu ciné IA » activé par défaut : étalonnage, lumière, halo, rayons, grain, caméra vivante (project.cinema = false pour le couper)
     // ===== RENDU CINÉ IA : halo lumineux (bloom) sur les hautes lumières + rayons de lumière volumétriques =====
@@ -9415,7 +9418,7 @@ async function llmBrain({ idea, script, options, cfg }) {
     const prompt = 'You are the creative director of a short vertical video studio and a universal story analyst. Narration language: ' + langName + '. Visual style: ' + options.style + '. Understand any domain (personal story, education, health, business, science, travel, history, comedy or fiction) without assuming a fixed template. First build a private semantic model of each sentence: subject, literal action, object, time, cause, consequence, uncertainty, negation, metaphor, contrast and emotional intensity. Then choose visuals that make the meaning obvious in the first second.\n' + task +
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
-        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression. Backgrounds african_day (luxurious African daytime setting), city_night (luxury city at night) and maquis (the open-air restaurant called Vidéo Plus Maquis) must be chosen only when the story itself takes place there; never pick them at random.';
+        'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression. Backgrounds african_day (luxurious African daytime setting), city_night (luxury city at night) and maquis (an open-air restaurant) must be chosen only when the story itself takes place there; never pick them at random.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);

@@ -1,7 +1,7 @@
 {
-  "name": "Vidéos Plus — Dessins animés",
-  "short_name": "Vidéos Plus",
-  "description": "Crée des dessins animés à partir de texte dans un studio pastel.",
+  "name": "Studio animé — Vidéos animées",
+  "short_name": "Studio animé",
+  "description": "Transformez vos idées en vidéos animées avec narration, sous-titres et export HD.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "/?source=pwa",
