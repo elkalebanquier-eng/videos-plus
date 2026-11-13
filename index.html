@@ -501,7 +501,8 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
             <button class="btn-primary" type="button" onclick="applyProPreset()" style="width:100%;justify-content:center;margin:4px 0 16px">✨ Appliquer le style Présentateur Pro</button>
 <div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
                         <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
-            <div class="form-group"><label>Voix Speechify</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="adeline" value="adeline" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Charge les voix disponibles avec le proxy sécurisé, choisis une voix française ou saisis son identifiant.</p></div>
+            <div class="form-group"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="settingSpeechifyAutoVoice" checked onchange="saveSpeechifyFields()" style="width:auto">Voix automatique selon le personnage principal</label><p class="speechify-note">La voix suit le profil principal de l’histoire (français : Adeline ou Alexandre; anglais : Alicia ou Alec; espagnol : Aitana ou Alejandro). Si le profil est indéterminé, la voix masculine de présentation est utilisée.</p></div>
+            <div class="form-group"><label>Voix Speechify manuelle</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="alexandre" value="alexandre" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Désactive le choix automatique pour imposer une voix à toutes les vidéos.</p></div>
             <div class="form-group"><button type="button" class="btn-secondary" onclick="testSpeechifyVoice()">▶ Tester la voix Speechify</button><p class="speechify-note" id="settingVoiceStatus"></p></div>
 
             <button class="btn-primary" onclick="saveSettings()" style="width: 100%; justify-content: center;">Enregistrer</button>
@@ -886,7 +887,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.4', channel: 'web', publicBuildId: 'videos-plus-3.3.4-speechify-empty-response-recovery' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.5', channel: 'web', publicBuildId: 'videos-plus-3.3.5-auto-character-voice' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -5829,11 +5830,24 @@ const VoiceStudio = (() => {
     let exportSources = [];
     let queue = Promise.resolve();
     const cfg = () => Settings.get();
-    const voiceFor = () => String(cfg().speechifyVoice || 'adeline').trim() || 'adeline';
+    const AUTO_VOICES = { fr: { female: 'adeline', male: 'alexandre' }, en: { female: 'alicia', male: 'alec' }, es: { female: 'aitana', male: 'alejandro' } };
+    function voiceFor(project) {
+        const settings = cfg();
+        if (settings.speechifyAutoVoice !== false && project) {
+            const lang = String(project.language || 'fr').slice(0, 2).toLowerCase();
+            const profile = ['female', 'male', 'neutral'].includes(norm(project.mainCharacterGender))
+                ? norm(project.mainCharacterGender)
+                : inferMainCharacterGender(project.script || (project.scenes || []).map(s => s.narration || '').join(' '));
+            const gender = profile === 'female' ? 'female' : 'male';
+            const selected = AUTO_VOICES[lang] && AUTO_VOICES[lang][gender];
+            if (selected) return selected;
+        }
+        return String(settings.speechifyVoice || 'alexandre').trim() || 'alexandre';
+    }
     // Speechify ne propose plus que simba-3.0 (multilingue, français inclus) et simba-3.2 (anglais seulement)
     const modelFor = () => cfg().speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0';
     const LANGS = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', de: 'de-DE', it: 'it-IT', pt: 'pt-BR' };
-    const langFor = () => { const l = (typeof state !== 'undefined' && state.project && state.project.language) || 'fr'; return LANGS[String(l).slice(0, 2).toLowerCase()] || null; };
+    const langFor = project => { const l = (project && project.language) || ((typeof state !== 'undefined' && state.project && state.project.language) || 'fr'); return LANGS[String(l).slice(0, 2).toLowerCase()] || null; };
     async function apiError(res) {
         let code = '', msg = '';
         try { const j = await res.json(); const e = j && j.error && typeof j.error === 'object' ? j.error : (j || {}); code = String(e.code || ''); msg = (j && typeof j.error === 'string' ? j.error : (e.message || j.detail || j.message || '')); if (typeof msg !== 'string') msg = JSON.stringify(msg); } catch (_) {}
@@ -5944,17 +5958,17 @@ const VoiceStudio = (() => {
         }
         throw new Error('Speechify a renvoyé un format audio inattendu (' + (format || codec || 'inconnu') + ').');
     }
-    async function synth(text) {
-        const input = clean(text), key = modelFor() + '|' + voiceFor() + '|' + input;
+    async function synth(text, project) {
+        const input = clean(text), voice = voiceFor(project), key = modelFor() + '|' + voice + '|' + input;
         if (!input) return null;
         if (cache.has(key)) return cache.get(key);
         const job = queue.then(async () => {
             if (cache.has(key)) return cache.get(key);
-            const lang = langFor();
+            const lang = langFor(project);
             const requestSpeech = async (useWav = false) => {
                 // PCM brut évite tout décodeur MP3/WAV natif; WAV est un unique secours si la réponse PCM est vide.
                 const format = useWav ? { audio_format: 'wav' } : { output_format: 'pcm_24000' };
-                const res = await api('/v1/audio/speech', { method: 'POST', body: JSON.stringify(Object.assign({ input, voice_id: voiceFor(), model: modelFor() }, format, lang ? { language: lang } : {})) });
+                const res = await api('/v1/audio/speech', { method: 'POST', body: JSON.stringify(Object.assign({ input, voice_id: voice, model: modelFor() }, format, lang ? { language: lang } : {})) });
                 let payload = null;
                 try { payload = await res.json(); } catch (_) {}
                 return { res, payload: payload && typeof payload === 'object' ? payload : {} };
@@ -6009,9 +6023,9 @@ const VoiceStudio = (() => {
     }
     function speakScene(scene, offset, project, stillCurrent) {
         if (!engineOn()) { chip('🎙️ Speechify est momentanément indisponible'); return true; }
-        const key=modelFor()+'|'+voiceFor()+'|'+clean(scene.narration), hit=cache.get(key);
+        const key=modelFor()+'|'+voiceFor(project)+'|'+clean(scene.narration), hit=cache.get(key);
         if(hit){playBuffer(scene,hit,offset);return true;}
-        chip('🎙️ Création de la voix Speechify…'); synth(scene.narration).then(b=>{chip(null);const off=stillCurrent();if(b&&off!==null)playBuffer(scene,b,off);}).catch(e=>{chip(null);showToast(e.message,'error');});
+        chip('🎙️ Création de la voix Speechify…'); synth(scene.narration,project).then(b=>{chip(null);const off=stillCurrent();if(b&&off!==null)playBuffer(scene,b,off);}).catch(e=>{chip(null);showToast(e.message,'error');});
         return true;
     }
     function narrationCount(project) { return (project && project.scenes || []).filter(s => clean(s.narration)).length; }
@@ -6025,7 +6039,7 @@ const VoiceStudio = (() => {
             // silencieux lors d’un réveil mobile ou d’une réponse PCM incomplète.
             // Retenter ici évite de perdre tout le rendu pour une seule scène.
             for(let attempt=0; attempt<3 && !b; attempt++){
-                try { b=await synth(sc.narration); }
+                try { b=await synth(sc.narration,project); }
                 catch(e){ lastError=e; if(attempt<2) await new Promise(r=>setTimeout(r,700*(attempt+1))); }
             }
             if(!b) throw lastError || voiceExportError('Une narration n’a pas pu être préparée.');
@@ -6034,11 +6048,11 @@ const VoiceStudio = (() => {
         return {done,total:scenes.length,changed};
     }
     async function prefetch(project,onChanged){ if(!project||!engineOn())return; try{await prepareProject(project,(i,n)=>chip('🎙️ Speechify '+i+'/'+n));chip(null);if(onChanged)onChanged();}catch(e){chip(null);console.warn(e);} }
-    function scheduleExport(project,actx,dest,t0){let start=0,n=0;const expected=narrationCount(project);(project.scenes||[]).forEach(sc=>{const text=clean(sc.narration);if(text){const key=modelFor()+'|'+voiceFor()+'|'+text,b=cache.get(key);if(b){const peak=bufferPeak(b);if(peak<0.001)throw voiceExportError('La voix préparée est silencieuse; l’export a été arrêté.');const src=actx.createBufferSource(),gain=actx.createGain();src.buffer=b;src.playbackRate.value=rateFor(sc,b);gain.gain.value=Math.min(6,Math.max(1,0.7/peak));src.connect(gain);gain.connect(dest);src.start(t0+start+.15);exportSources.push(src);n++;}}start+=sc.duration;});if(n!==expected)throw voiceExportError('Narration manquante dans la piste audio ('+n+'/'+expected+' scènes). L’export silencieux a été bloqué.');return n;}
+    function scheduleExport(project,actx,dest,t0){let start=0,n=0;const expected=narrationCount(project),voice=voiceFor(project);(project.scenes||[]).forEach(sc=>{const text=clean(sc.narration);if(text){const key=modelFor()+'|'+voice+'|'+text,b=cache.get(key);if(b){const peak=bufferPeak(b);if(peak<0.001)throw voiceExportError('La voix préparée est silencieuse; l’export a été arrêté.');const src=actx.createBufferSource(),gain=actx.createGain();src.buffer=b;src.playbackRate.value=rateFor(sc,b);gain.gain.value=Math.min(6,Math.max(1,0.7/peak));src.connect(gain);gain.connect(dest);src.start(t0+start+.15);exportSources.push(src);n++;}}start+=sc.duration;});if(n!==expected)throw voiceExportError('Narration manquante dans la piste audio ('+n+'/'+expected+' scènes). L’export silencieux a été bloqué.');return n;}
     function stopExport(){exportSources.forEach(s=>{try{s.stop();}catch(_){}});exportSources=[];}
     function chip(text,action){const el=document.getElementById('voiceChip');if(!el)return;if(!text){el.style.display='none';el.onclick=null;return;}el.textContent=text;el.style.display='block';el.style.cursor=action?'pointer':'default';el.onclick=action||null;}
     function offerChip(project){if(!engineOn())chip('🎙️ Configure Speechify dans Paramètres',()=>showScreen('settingsScreen'));else chip(null);}
-    async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Speechify est momentanément indisponible côté serveur. Réessaie plus tard.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
+    async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Speechify est momentanément indisponible côté serveur. Réessaie plus tard.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt,project);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
     return {listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,narrationCount,LABEL};
 })();
 
@@ -9562,8 +9576,11 @@ function loadSettingsUI() {
     setVal('settingCharSfx', c.charSfx === 'off' ? 'off' : 'on');
     setVal('settingCharWardrobe', c.charWardrobe === 'off' ? 'off' : 'auto');
     refreshVoiceStatus();
-    setVal('settingSpeechifyVoice', c.speechifyVoice || 'adeline');
+    setVal('settingSpeechifyVoice', c.speechifyVoice || 'alexandre');
     setVal('settingSpeechifyModel', c.speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0');
+    const autoVoice = document.getElementById('settingSpeechifyAutoVoice');
+    if (autoVoice) autoVoice.checked = c.speechifyAutoVoice !== false;
+    syncSpeechifyVoiceModeUI();
 }
 
 function applyProPreset() {
@@ -9610,8 +9627,17 @@ function saveSettings() {
 }
 
 function saveSpeechifyFields() {
-    Settings.save({ speechifyKey: '', speechifyProxy: '', speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'adeline', speechifyModel: getVal('settingSpeechifyModel') });
+    const auto = document.getElementById('settingSpeechifyAutoVoice');
+    Settings.save({ speechifyKey: '', speechifyProxy: '', speechifyAutoVoice: !auto || auto.checked, speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'alexandre', speechifyModel: getVal('settingSpeechifyModel') });
+    syncSpeechifyVoiceModeUI();
     refreshVoiceStatus();
+}
+function syncSpeechifyVoiceModeUI() {
+    const auto = document.getElementById('settingSpeechifyAutoVoice');
+    const disabled = !!(auto && auto.checked);
+    ['settingSpeechifyVoice', 'settingSpeechifyPick'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = disabled; });
+    const load = document.querySelector('button[onclick="loadSpeechifyVoices()"]');
+    if (load) load.disabled = disabled;
 }
 async function settingsVoiceTest() { saveSpeechifyFields(); await VoiceStudio.sample(settingsProject()); }
 function testSpeechifyVoice() { return settingsVoiceTest(); }
@@ -9633,8 +9659,8 @@ async function loadSpeechifyVoices() {
 }
 function pickSpeechifyVoice(id) { document.getElementById('settingSpeechifyVoice').value = id; saveSpeechifyFields(); }
 
-function settingsProject() { return state.project || { language: 'fr', voice: 'female' }; }
-function refreshVoiceStatus() { const el = document.getElementById('speechifyProxyStatus'); if (el) el.textContent = 'Speechify utilise le proxy sécurisé du serveur. Appuie sur « Charger mes voix » pour vérifier la connexion.'; }
+function settingsProject() { return state.project || { language: 'fr', mainCharacterGender: 'male' }; }
+function refreshVoiceStatus() { const el = document.getElementById('speechifyProxyStatus'); if (el) el.textContent = Settings.get().speechifyAutoVoice === false ? 'Speechify utilise le proxy sécurisé et la voix manuelle choisie ci-dessous.' : 'Speechify utilise le proxy sécurisé et adapte automatiquement la voix au personnage principal.'; }
 
 // ===== MUSIQUE GÉNÉRÉE (WebAudio, aucun fichier, aucune licence) =====
 const MUSIC_MOODS = {
@@ -9916,6 +9942,29 @@ function writeLocalScript(idea, lang) {
     return [L.hook(clean), ...body.slice(0, -1), bridge, body[body.length - 1]].join(' ');
 }
 
+function inferMainCharacterGender(source) {
+    const text = norm(String(source || '')).replace(/\bil\s+(?:y a|faut|suffit|est important|est utile|est necessaire|convient|semble|s'agit|importe)\b/g, ' ');
+    if (!text.trim()) return 'neutral';
+    const terms = {
+        female: /\b(?:femmes?|filles?|meres?|mamans?|soeurs?|epouses?|fillettes?|feminin\w*|directrices?|fondatrices?|patronnes?|vendeuses?|etudiantes?|enseignantes?|infirmieres?|cheffes?|reines?|actrices?|avocates?|entrepreneuses?|princesses?|veuve|elle|elles)\b/g,
+        male: /\b(?:hommes?|garcons?|peres?|papas?|freres?|maris?|epoux|fiances?|masculin\w*|directeurs?|fondateurs?|patrons?|vendeurs?|etudiants?|enseignants?|infirmiers?|chefs?|rois?|acteurs?|avocats?|entrepreneurs?|princes?|veufs?|il|ils)\b/g,
+    };
+    const scores = { female: 0, male: 0 }, hits = [];
+    for (const gender of ['female', 'male']) {
+        const re = new RegExp(terms[gender].source, 'g'); let m;
+        while ((m = re.exec(text))) {
+            const pronoun = /^(?:elle|elles|il|ils)$/.test(m[0]);
+            const weight = (pronoun ? 0.9 : 1.8) / (1 + m.index / 500);
+            scores[gender] += weight; hits.push({ gender, index: m.index });
+        }
+    }
+    hits.sort((a, b) => a.index - b.index);
+    if (hits.length) scores[hits[0].gender] += 1.25;
+    if (scores.female >= 1.5 && scores.female > scores.male + 0.7) return 'female';
+    if (scores.male >= 1.5 && scores.male > scores.female + 0.7) return 'male';
+    return 'neutral';
+}
+
 async function llmBrain({ idea, script, options, cfg }) {
     const langName = { fr: 'French', en: 'English', es: 'Spanish' }[options.language] || 'French';
     const objs = ASSETS.objects.map(o => o.id).join(', ');
@@ -9928,6 +9977,8 @@ async function llmBrain({ idea, script, options, cfg }) {
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
         'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression. Backgrounds african_day (luxurious African daytime setting), city_night (luxury city at night) and maquis (the open-air restaurant called Vidéo Plus Maquis) must be chosen only when the story itself takes place there; never pick them at random.';
+    const voicePrompt = prompt.replace('{"title": string, "music":', '{"title": string, "main_character_gender": one of ["female", "male", "neutral"], "music":') +
+        '\nAlso identify the principal person whose story or actions drive this video, not an incidental guest or the generic presenter. Set main_character_gender to female or male only when the story gives clear evidence; use neutral when there is no identifiable human protagonist or the evidence is ambiguous. Do not infer gender from occupation alone.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -9935,7 +9986,7 @@ async function llmBrain({ idea, script, options, cfg }) {
         const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.key },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.8 } }),
+            body: JSON.stringify({ contents: [{ parts: [{ text: voicePrompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.8 } }),
             signal: ctrl.signal,
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -9945,7 +9996,9 @@ async function llmBrain({ idea, script, options, cfg }) {
         const scenes = (out.scenes || []).filter(s => s && typeof s.narration === 'string' && s.narration.trim()).slice(0, 30);
         if (!scenes.length) throw new Error('Aucune scène');
         scenes.forEach(s => { s.narration = s.narration.trim(); });
-        return { title: typeof out.title === 'string' ? out.title.slice(0, 60) : null, music: out.music, scenes, script: scenes.map(s => s.narration).join(' ') };
+        const rawGender = norm(out.main_character_gender);
+        const mainCharacterGender = ['female', 'male', 'neutral'].includes(rawGender) ? rawGender : inferMainCharacterGender(scenes.map(s => s.narration).join(' ') || script);
+        return { title: typeof out.title === 'string' ? out.title.slice(0, 60) : null, music: out.music, scenes, script: scenes.map(s => s.narration).join(' '), mainCharacterGender };
     } finally {
         clearTimeout(timer);
     }
@@ -10142,12 +10195,13 @@ async function runBrain(auto) {
     const useLLM = cfg.ai === 'gemini' && !!cfg.key;
     showLoading(useLLM ? '🧠 Le cerveau réfléchit (en ligne)...' : '🧠 Le cerveau analyse...');
     const planner = new ScenePlanner();
-    let plan = null, note = null;
+    let plan = null, note = null, mainCharacterGender = null;
     try {
         if (useLLM) {
             try {
                 const res = await llmBrain({ idea, script, options, cfg });
                 if (!script) script = res.script;
+                mainCharacterGender = res.mainCharacterGender;
                 plan = planner.analyzeScript(script, { ...options, title: res.title || (idea ? idea.slice(0, 50) : undefined) }, res.scenes);
                 forceUniqueRiveCharacter(plan);
                 if (MUSIC_MOODS[res.music]) plan.music = res.music;
@@ -10173,6 +10227,7 @@ async function runBrain(auto) {
             script,
             ...options,
             style: 'explainer', explainerMode: true, socialMode: true,
+            mainCharacterGender: ['female', 'male', 'neutral'].includes(norm(mainCharacterGender)) ? norm(mainCharacterGender) : inferMainCharacterGender(script),
             language: plan.language || options.language,
             music: options.music === 'auto' ? plan.music : options.music,
             scenes: plan.scenes,

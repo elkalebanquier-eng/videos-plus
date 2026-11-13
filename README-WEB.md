@@ -1,4 +1,4 @@
-# Studio animé — version web 3.3.4
+# Studio animé — version web 3.3.5
 
 `index.html` contient VideoStory 3.3.4 et charge `pastel-theme.css` : interface pastel tactile sur tous les écrans, accueil mobile avec mascotte 3D, cartes de projets assorties et icône PWA coordonnée. Les illustrations transparentes sont optimisées en WebP. Le mix audio est normalisé; chaque narration est vérifiée avant planification. Speechify est demandé en PCM brut signé 16 bits à 24 kHz; le client convertit directement les échantillons en `AudioBuffer` sans décodeur de conteneur du navigateur. Si une réponse HTTP réussie ne contient pas d’audio, l’application essaie une seule fois le WAV et accepte plusieurs enveloppes; si l’audio manque encore, elle affiche le motif/identifiant Speechify pour faciliter le diagnostic. L’export reste bloqué si une voix manque ou est silencieuse. Le domaine canonique de production est `https://videos-plus.vercel.app/`; `https://elka-jobnet.vercel.app/` reste actif comme alias.
 
@@ -10,7 +10,9 @@ Les sous-titres sont incrustés dans les vidéos exportées. Depuis l’éditeur
 
 Les changements poussés sur `main` sont déployés automatiquement par Vercel. La narration utilise `/api/speechify`; la clé est conservée uniquement côté serveur dans `SPEECHIFY_API_KEY`. Dans **Vercel → projet → Settings → Environment Variables**, vérifie que cette variable est configurée pour Production (et Preview si nécessaire), puis relance un déploiement après toute modification. Ne mets jamais la clé dans le HTML, le navigateur ou GitHub.
 
-Dans l’app, ouvre **Paramètres → Charger mes voix** pour vérifier l’accès, puis **Tester la voix Speechify** pour valider la synthèse. `simba-3.0` est utilisé par défaut pour le français; `simba-3.2` est réservé à l’anglais. La route serverless limite le texte à 2 000 caractères et efface les anciennes clés locales pendant la migration.
+Dans l’app, ouvre **Paramètres → Tester la voix Speechify** pour valider la synthèse. `simba-3.0` est utilisé par défaut pour le français; `simba-3.2` est réservé à l’anglais. La route serverless limite le texte à 2 000 caractères et efface les anciennes clés locales pendant la migration.
+
+Par défaut, chaque projet sélectionne une voix cohérente avec le profil féminin ou masculin de son personnage principal (français : Adeline/Alexandre; anglais : Alicia/Alec; espagnol : Aitana/Alejandro). Le genre du protagoniste est demandé au générateur IA et, si l’analyse en ligne n’est pas utilisée, estimé à partir du script; si aucun profil clair n’est disponible, l’app utilise la voix masculine de présentation. Pour imposer une voix à toutes les vidéos, désactive **Voix automatique selon le personnage principal** dans les paramètres et choisis un identifiant manuel. Toutes les scènes d’un même projet gardent la même voix en aperçu et à l’export.
 
 ## Rendu serveur Modal CPU
 
