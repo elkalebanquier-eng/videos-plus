@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.3.4-speechify-empty-response-recovery">
-    <title>Vidéos Plus — VideoStory 3.3.4</title>
-    <meta name="description" content="Vidéos Plus 3.3.4 : PCM mobile, secours WAV unique et diagnostic détaillé des réponses Speechify incomplètes.">
+    <meta name="videostory-build" content="3.4.0-multispeaker-profile-merge">
+    <title>Vidéos Plus — VideoStory 3.4.0</title>
+    <meta name="description" content="Vidéos Plus 3.4.0 : studio vidéo mobile, dialogues multi-voix par personnage et profils Speechify personnalisables.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,13 +16,13 @@
     <link rel="canonical" href="https://videos-plus.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.3.4">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.4.0">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://videos-plus.vercel.app/">
     <meta property="og:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
     <meta property="og:image:alt" content="Mascotte de Studio animé">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.3.4">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.4.0">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <meta name="twitter:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Studio animé","alternateName":["Studio Anime"],"url":"https://videos-plus.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Studio animé","url":"https://videos-plus.vercel.app/","description":"Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
@@ -200,7 +200,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.3.4">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.4.0">
 <style id="vp-modern-dl">
 /* ===== Génération + téléchargement : style moderne (carte floue qui se précise, feuille « vidéo prête ») ===== */
 .loading-overlay{background:rgba(6,9,22,.74)!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
@@ -501,10 +501,11 @@ body[data-theme="light"] .dls-grab{background:rgba(32,45,75,.2)}
             <button class="btn-primary" type="button" onclick="applyProPreset()" style="width:100%;justify-content:center;margin:4px 0 16px">✨ Appliquer le style Présentateur Pro</button>
 <div class="form-group"><label>Voix Speechify</label><p class="speechify-note" id="speechifyProxyStatus">Speechify passe par le proxy serveur sécurisé. La clé API n’est jamais exposée dans le navigateur.</p></div>
                         <div class="form-group"><label>Modèle</label><select id="settingSpeechifyModel" onchange="saveSpeechifyFields()"><option value="simba-3.0">simba-3.0 · français et multilingue</option><option value="simba-3.2">simba-3.2 · anglais seulement</option></select></div>
-            <div class="form-group"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="settingSpeechifyAutoVoice" checked onchange="saveSpeechifyFields()" style="width:auto">Voix automatique selon le personnage principal</label><p class="speechify-note">La voix suit le profil principal de l’histoire. Personnalise ci-dessous la voix associée à chaque profil et à chaque langue.</p></div>
-            <div class="form-group"><label for="settingSpeechifyProfileLanguage">Langue des associations</label><select id="settingSpeechifyProfileLanguage" onchange="changeSpeechifyProfileLanguage()"><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option></select><label for="settingSpeechifyFemaleVoice" style="margin-top:8px">Profil féminin</label><select id="settingSpeechifyFemaleVoice" onchange="saveSpeechifyProfileMapping()"></select><label for="settingSpeechifyMaleVoice" style="margin-top:8px">Profil masculin</label><select id="settingSpeechifyMaleVoice" onchange="saveSpeechifyProfileMapping()"></select><button type="button" class="btn-secondary" onclick="loadSpeechifyProfileVoices()" style="margin-top:8px">🎙️ Charger les voix Speechify de cette langue</button><p class="speechify-note" id="speechifyProfileStatus">Choisis une voix différente par profil; ces associations s’appliquent à l’aperçu et aux prochains exports.</p></div>
-            <div class="form-group"><label for="settingSpeechifyNeutralVoice">Profil neutre / narrateur</label><select id="settingSpeechifyNeutralVoice" onchange="saveSpeechifyProfileMapping()"></select><p class="speechify-note">Utilisé lorsqu’aucun genre de protagoniste n’est clairement détecté. Choisis ici une voix distincte si tu le souhaites.</p></div>
-            <div class="form-group"><label>Voix Speechify manuelle</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="alexandre" value="alexandre" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Désactive le choix automatique pour imposer une voix à toutes les vidéos.</p></div>
+            <div class="form-group"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="settingSpeechifyAutoVoice" checked onchange="saveSpeechifyFields()" style="width:auto">Voix automatique selon le personnage principal</label><p class="speechify-note">Le héros suit son profil de langue; le narrateur utilise le profil neutre. Personnalise les voix ci-dessous.</p></div>
+            <div class="form-group"><label for="settingSpeechifyProfileLanguage">Langue des associations</label><select id="settingSpeechifyProfileLanguage" onchange="changeSpeechifyProfileLanguage()"><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option></select><label for="settingSpeechifyFemaleVoice" style="margin-top:8px">Profil féminin</label><select id="settingSpeechifyFemaleVoice" onchange="saveSpeechifyProfileMapping()"></select><label for="settingSpeechifyMaleVoice" style="margin-top:8px">Profil masculin</label><select id="settingSpeechifyMaleVoice" onchange="saveSpeechifyProfileMapping()"></select><button type="button" class="btn-secondary" onclick="loadSpeechifyProfileVoices()" style="margin-top:8px">🎙️ Charger les voix Speechify de cette langue</button><p class="speechify-note" id="speechifyProfileStatus">Choisis une voix différente par profil; ces associations s’appliquent aux dialogues et aux prochains exports.</p></div>
+            <div class="form-group"><label for="settingSpeechifyNeutralVoice">Profil neutre / narrateur</label><select id="settingSpeechifyNeutralVoice" onchange="saveSpeechifyProfileMapping()"></select><p class="speechify-note">Utilisé par le narrateur ou lorsqu’aucun genre de protagoniste n’est clairement détecté.</p></div>
+            <div class="form-group"><label>Voix Speechify manuelle</label><button type="button" class="btn-secondary" onclick="loadSpeechifyVoices()">🎙️ Charger mes voix</button><select id="settingSpeechifyPick" style="display:none; margin-top:8px" onchange="pickSpeechifyVoice(this.value)"></select><input type="text" id="settingSpeechifyVoice" placeholder="adeline" value="adeline" autocomplete="off" style="margin-top:8px" onchange="saveSpeechifyFields()"><p class="speechify-note">Désactive le choix automatique pour imposer cette voix partout.</p></div>
+            <div class="form-group"><label>Voix du héros (optionnel)</label><input type="text" id="settingVoiceHero" list="spVoices" placeholder="Choix automatique si vide" autocomplete="off" onchange="saveSpeechifyFields()"><datalist id="spVoices"></datalist><p class="speechify-note">Un identifiant explicite remplace le profil automatique du héros. Les autres personnages gardent leurs voix distinctes. <a href="#" onclick="resetCharVoices();return false;">Réattribuer les voix des autres personnages</a></p></div>
             <div class="form-group"><button type="button" class="btn-secondary" onclick="testSpeechifyVoice()">▶ Tester la voix Speechify</button><p class="speechify-note" id="settingVoiceStatus"></p></div>
 
             <button class="btn-primary" onclick="saveSettings()" style="width: 100%; justify-content: center;">Enregistrer</button>
@@ -889,7 +890,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.3.6', channel: 'web', publicBuildId: 'videos-plus-3.3.6-custom-speechify-profiles' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.4.0', channel: 'web', publicBuildId: 'videos-plus-3.4.0-multispeaker-profile-merge' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -938,13 +939,22 @@ const LipSync = (() => {
         return VOWEL[v[Math.floor(frac * v.length)]] || 'aa';
     }
     // 0 = bouche fermée, 1 = grande ouverture (vraie voix si Speechify a répondu, sinon estimation)
-    function open(scene, time, pose) {
+    function openRaw(scene, time, pose) {
         const sync = scene ? SyncBrain.frame(scene, time, pose) : null;
         if (sync && sync.src === 'audio') return clamp(sync.open, 0, 1);
         const speaking = !!(scene && time > 0.25 && time < scene.duration - 0.2);
         return speaking ? 0.35 + 0.45 * Math.abs(Math.sin(time * 9)) : 0;
     }
-    return { vowel, open, info };
+    const who = (scene, time) => { try { return VoiceStudio.speakerAt(scene, time); } catch (_) { return null; } };
+    // le héros se tait pendant la réplique d'un autre personnage
+    function open(scene, time, pose) { const w = who(scene, time); return (w && w.slot !== 'narr' && w.slot !== 'hero') ? 0 : openRaw(scene, time, pose); }
+    // un invité (rôle « role:mere »…) ne bouge que pendant SA réplique
+    function openGuest(scene, time, pose, roleId, sex) {
+        const w = who(scene, time); if (!w) return 0;
+        const mine = w.slot === 'role:' + roleId || (/^name:/.test(w.slot) && w.sex === sex);
+        return mine ? openRaw(scene, time, pose) : 0;
+    }
+    return { vowel, open, openGuest, info };
 })();
 
 // ===== STORYMIND : compréhension fine de l'histoire (négation, hypothèse, ironie, idiomes, sujet) + auto-réparation =====
@@ -4357,7 +4367,9 @@ const FemaleCast = (() => {
         try { if (Settings.get().charGuest === 'off') return []; } catch (_) {}
         let key = narr + '|' + scene.duration; try { key += '|' + SyncBrain.stamp(narr); } catch (_) {}
         const hit = memo.get(scene); if (hit && hit.key === key) return hit.cast;
-        const t = norm(narr), best = {}, bi = { f: 1e9, m: 1e9 };
+        // « mon fils », « ma fille », « mon petit »… dits au héros dans une réplique : ce n'est pas un nouvel invité
+        let t = norm(narr); const best = {}, bi = { f: 1e9, m: 1e9 };
+        if (/[«»“”":]/.test(narr)) t = t.replace(/\b(?:mon|ma|mes) (?:petit |petite |cher |chere )?(?:fils|fille|enfants?|petits?|petites?|cheri|cherie)\b/g, ' ');
         for (const r of ROLES) { const m = r.re.exec(t); if (m && m.index < bi[r.sex]) { best[r.sex] = r; bi[r.sex] = m.index; } }
         const cast = ['f', 'm'].filter(x => best[x]).sort((a, b) => bi[a] - bi[b]).map(x => Object.assign({}, best[x], timing(scene, best[x])));
         try { const P = TravelBrain.plan(scene); if (P && P.kind === 'meet' && cast.length) { cast[0].tIn = P.tG; cast[0].tOut = Math.max(cast[0].tOut, P.tM + 3.5); } } catch (_) {}   // l'ami arrive en marchant juste avant le mot « croise »
@@ -4365,7 +4377,8 @@ const FemaleCast = (() => {
         return cast;
     }
     const forScene = scene => forCast(scene)[0] || null;
-    return { forScene, forCast, ROLES };
+    const roleOf = t => { const x = norm(t); for (const r of ROLES) if (r.re.test(x)) return r; return null; };
+    return { forScene, forCast, ROLES, roleOf };
 })();
 
 // ===== MARCHE ET RENCONTRES : « Toto va au champ et croise son ami » -> Toto traverse l'écran en marchant, son ami arrive de l'autre côté, ils se croisent, se regardent et se saluent, calés sur les mots de la narration =====
@@ -5122,7 +5135,7 @@ const AIGuests = (() => {
         return D[sex][k] ? k : 'base';
     }
     function bodyImg(sex, k) { return imgs[k === 'base' ? sex + '_base' : sex + '_p_' + k]; }
-    function draw(ctx, w, h, time, scene, pose, slot, sex) {
+    function draw(ctx, w, h, time, scene, pose, slot, sex, roleId) {
         sex = sex === 'm' ? 'm' : 'w';
         if (!okAll) { load(); return true; }
         let a = {}; try { a = ActingBrain.at(scene, time, pose) || {}; } catch (e) { }
@@ -5133,16 +5146,18 @@ const AIGuests = (() => {
         st.last = time;
         const f = st.prev ? sm((time - st.t) / 0.28) : 1; if (f >= 1) st.prev = null;
         const e = a.e || {};
+        const talk = (() => { try { return LipSync.openGuest(scene, time, pose, roleId, sex === 'm' ? 'm' : 'f'); } catch (_) { return 0; } })();
         let face = null;
         if (st.cur === 'base') {
             if ((e.surprise || 0) > 0.6 || (e.fear || 0) > 0.7) face = 'surp';
+            else if (talk > 0.5) face = 'smile';
             else if ((e.joy || 0) + (e.excited || 0) > 1.0) face = 'smile';
             else if (((time + (sex === 'm' ? 0.6 : 1.7)) % 4.1) > 3.96) face = 'blink';
         }
         const H = h * 0.86 * GK[sex], s = H / BH, bw = D[sex].base.w, Wd = bw * s;
         const walking = st.cur === 'walk', step = Math.floor(time / 0.3) % 2;
-        const br = Math.sin(time * 1.7 + (slot || 0)), bob = walking ? Math.abs(Math.sin(time * Math.PI / 0.3)) * h * 0.012 : br * h * 0.003;
-        const sway = walking ? (step ? 0.018 : -0.018) : Math.sin(time * 0.7 + 1) * 0.01;
+        const br = Math.sin(time * 1.7 + (slot || 0)), bob = (walking ? Math.abs(Math.sin(time * Math.PI / 0.3)) * h * 0.012 : br * h * 0.003) + talk * h * 0.005;
+        const sway = (walking ? (step ? 0.018 : -0.018) : Math.sin(time * 0.7 + 1) * 0.01) + Math.sin(time * 8.5) * 0.009 * talk;
         ctx.save();
         ctx.save(); ctx.translate(0, h * 0.012); ctx.scale(1, 0.14); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, Wd * 0.7); g.addColorStop(0, 'rgba(0,0,0,0.34)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.7, 0, Math.PI * 2); ctx.fill(); ctx.restore();
         ctx.translate(0, -bob); ctx.rotate(sway);
@@ -5833,25 +5848,29 @@ const VoiceStudio = (() => {
     let exportSources = [];
     let queue = Promise.resolve();
     const cfg = () => Settings.get();
-    function voiceFor(project) {
+    function voiceFor(project, profile = 'neutral') {
         const settings = cfg();
-        if (settings.speechifyAutoVoice !== false && project) {
-            const lang = String(project.language || 'fr').slice(0, 2).toLowerCase();
-            const profile = ['female', 'male', 'neutral'].includes(norm(project.mainCharacterGender))
-                ? norm(project.mainCharacterGender)
-                : inferMainCharacterGender(project.script || (project.scenes || []).map(s => s.narration || '').join(' '));
-            const gender = profile === 'female' || profile === 'male' ? profile : 'neutral';
+        const activeProject = project || ((typeof state !== 'undefined' && state.project) || null);
+        if (settings.speechifyAutoVoice !== false) {
+            const lang = String((activeProject && activeProject.language) || settings.speechifyProfileLanguage || 'fr').slice(0, 2).toLowerCase();
+            let gender = profile === 'hero' ? '' : (['female', 'male', 'neutral'].includes(profile) ? profile : 'neutral');
+            if (profile === 'hero') {
+                const detected = activeProject && ['female', 'male', 'neutral'].includes(norm(activeProject.mainCharacterGender))
+                    ? norm(activeProject.mainCharacterGender)
+                    : inferMainCharacterGender((activeProject && (activeProject.script || (activeProject.scenes || []).map(s => s.narration || '').join(' '))) || '');
+                gender = detected === 'female' || detected === 'male' ? detected : 'neutral';
+            }
             const configured = settings.speechifyVoiceProfiles && settings.speechifyVoiceProfiles[lang];
             const defaults = SPEECHIFY_VOICE_DEFAULTS[lang] || {};
-            const selected = (configured && configured[gender]) || defaults[gender] || defaults.male;
+            const selected = (configured && configured[gender]) || defaults[gender] || defaults.neutral || defaults.male;
             if (selected) return selected;
         }
-        return String(settings.speechifyVoice || 'alexandre').trim() || 'alexandre';
+        return String(settings.speechifyVoice || 'adeline').trim() || 'adeline';
     }
     // Speechify ne propose plus que simba-3.0 (multilingue, français inclus) et simba-3.2 (anglais seulement)
     const modelFor = () => cfg().speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0';
     const LANGS = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', de: 'de-DE', it: 'it-IT', pt: 'pt-BR' };
-    const langFor = project => { const l = (project && project.language) || ((typeof state !== 'undefined' && state.project && state.project.language) || 'fr'); return LANGS[String(l).slice(0, 2).toLowerCase()] || null; };
+    const langFor = project => { const l = (project && project.language) || ((typeof state !== 'undefined' && state.project && state.project.language) || cfg().speechifyProfileLanguage || 'fr'); return LANGS[String(l).slice(0, 2).toLowerCase()] || null; };
     async function apiError(res) {
         let code = '', msg = '';
         try { const j = await res.json(); const e = j && j.error && typeof j.error === 'object' ? j.error : (j || {}); code = String(e.code || ''); msg = (j && typeof j.error === 'string' ? j.error : (e.message || j.detail || j.message || '')); if (typeof msg !== 'string') msg = JSON.stringify(msg); } catch (_) {}
@@ -5963,17 +5982,17 @@ const VoiceStudio = (() => {
         }
         throw new Error('Speechify a renvoyé un format audio inattendu (' + (format || codec || 'inconnu') + ').');
     }
-    async function synth(text, project) {
-        const input = clean(text), voice = voiceFor(project), key = modelFor() + '|' + voice + '|' + input;
+    async function synth(text, voice) {
+        const vId = String(voice || voiceFor()), input = clean(text), key = modelFor() + '|' + vId + '|' + input;
         if (!input) return null;
         if (cache.has(key)) return cache.get(key);
         const job = queue.then(async () => {
             if (cache.has(key)) return cache.get(key);
-            const lang = langFor(project);
+            const lang = langFor();
             const requestSpeech = async (useWav = false) => {
                 // PCM brut évite tout décodeur MP3/WAV natif; WAV est un unique secours si la réponse PCM est vide.
                 const format = useWav ? { audio_format: 'wav' } : { output_format: 'pcm_24000' };
-                const res = await api('/v1/audio/speech', { method: 'POST', body: JSON.stringify(Object.assign({ input, voice_id: voice, model: modelFor() }, format, lang ? { language: lang } : {})) });
+                const res = await api('/v1/audio/speech', { method: 'POST', body: JSON.stringify(Object.assign({ input, voice_id: vId, model: modelFor() }, format, lang ? { language: lang } : {})) });
                 let payload = null;
                 try { payload = await res.json(); } catch (_) {}
                 return { res, payload: payload && typeof payload === 'object' ? payload : {} };
@@ -6018,6 +6037,181 @@ const VoiceStudio = (() => {
         return job;
     }
     const rateFor = (scene, buf) => clamp(buf.duration / Math.max(.5, scene.duration - .45), 1, 1.12);
+
+    // ===== UNE VOIX SPEECHIFY PAR PERSONNAGE =====
+    // Narrateur = voix choisie dans les réglages. Héros, chaque invité (la mère, le docteur, le patron…) et chaque personnage nommé
+    // reçoivent leur propre voix, tirée de la liste Speechify du compte, et la gardent d'une vidéo à l'autre.
+    const nw = w => String(w || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’`]/g, "'").replace(/[^a-z0-9']/g, '');
+    const SAYV = /^(?:dit|dis|disent|disait|repond\w*|demand\w*|cri\w*|murmur\w*|lanc\w*|ajout\w*|expliqu\w*|souffl\w*|annonc\w*|declar\w*|repliqu\w*|chuchot\w*|retort\w*|suppli\w*|hurl\w*|repet\w*|ordonn\w*|propos\w*|racont\w*|exclam\w*|appell\w*|confi\w*|avou\w*|conseill\w*|rassur\w*|previen\w*|promet\w*)$/;
+    const STOP = new Set('le la les un une des il elle ils elles on nous vous je tu sa son ses ma mon mes au aux du dans mais puis alors quand apres avant ce cet cette ces et ou donc car ni pour par sur sous avec sans chez vers depuis pendant comme si que qui quoi voici voila ensuite enfin soudain bientot demain hier maintenant tout toute tous chaque plus moins tres bien mal oui non merci bonjour salut bravo ton ta tes'.split(' '));
+    const fixedHero = () => String(cfg().speechifyVoiceHero || '').trim();
+    const autoV = {};
+    const stored = () => { const c = cfg().charVoices; return c && typeof c === 'object' ? c : {}; };
+    const hashK = k => { let h = 7; for (const c of String(k)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+    function voiceOfKey(key) {
+        const project = typeof state !== 'undefined' ? state.project : null;
+        if (key === 'narr') return voiceFor(project, 'neutral');
+        if (key === 'hero') {
+            if (fixedHero()) return fixedHero();
+            if (cfg().speechifyAutoVoice !== false) return voiceFor(project, 'hero');
+        }
+        return autoV[key] || stored()[key] || voiceFor(project, 'neutral');
+    }
+    let poolP = null;
+    const loadPool = () => poolP || (poolP = listVoices().catch(e => { poolP = null; throw e; }));
+    // reqs : [{ key, sex:'f'|'m' }] -> garantit une voix distincte (si le compte en propose assez) pour chaque personnage
+    async function assignVoices(reqs) {
+        reqs.forEach(r => { const sv = stored()[r.key]; if (sv && !autoV[r.key]) autoV[r.key] = sv; });
+        const profileHero = cfg().speechifyAutoVoice !== false;
+        const need = reqs.filter((r, i) => r.key !== 'narr' && !(r.key === 'hero' && (fixedHero() || profileHero)) && !autoV[r.key] && reqs.findIndex(x => x.key === r.key) === i);
+        if (!need.length) return;
+        let list = []; try { list = await loadPool(); } catch (_) { return; }
+        if (!list.length) return;
+        const used = new Set([voiceFor(null, 'neutral'), voiceFor(null, 'hero'), fixedHero(), ...Object.values(autoV), ...Object.values(stored())].filter(Boolean));
+        const gOf = v => /female|femme|f[ée]minin/i.test(v.gender) ? 'f' : /male|homme|masculin/i.test(v.gender) ? 'm' : '';
+        const save = {};
+        need.forEach(r => {
+            const same = list.filter(v => gOf(v) === r.sex), neutral = list.filter(v => !gOf(v));
+            let v = same.find(x => !used.has(x.id)) || neutral.find(x => !used.has(x.id)) || list.find(x => !used.has(x.id));
+            if (!v) { const pool = same.length ? same : list; v = pool[hashK(r.key) % pool.length]; }
+            autoV[r.key] = v.id; used.add(v.id); save[r.key] = v.id;
+        });
+        Settings.save({ charVoices: Object.assign({}, stored(), save) });
+    }
+    function resetCharVoices() { Object.keys(autoV).forEach(k => delete autoV[k]); Settings.save({ charVoices: {} }); }
+
+    // ----- qui dit quoi : « guillemets », « X répond : … », « Nom : … » ; le locuteur est deviné d'après le texte autour -----
+    function heroNameOf(words) {
+        const cnt = {};
+        words.forEach(w => { const m = /^[A-ZÀ-Ý][a-zà-ÿ]{2,}/.exec(w); if (!m) return; const k = nw(m[0]); if (STOP.has(k)) return; try { if (FemaleCast.roleOf(m[0])) return; } catch (_) {} cnt[k] = (cnt[k] || 0) + 1; });
+        let best = '', bc = 0; for (const k in cnt) if (cnt[k] > bc) { best = k; bc = cnt[k]; } return best;
+    }
+    function planSpeech(project) {
+        const scenes = (project && project.scenes) || [];
+        const texts = scenes.map(sc => clean(sc.narration));
+        const key = texts.join('\u0001');
+        if (project._speechKey === key && scenes.every((sc, i) => sc.speechKey === texts[i])) return;
+        const W = []; scenes.forEach((sc, si) => splitWords(texts[si]).forEach(w => W.push({ w, si })));
+        const hero = heroNameOf(W.map(x => x.w)), slot = new Array(W.length).fill('narr'), SEX = { hero: 'm' };
+        const castOf = si => { try { return FemaleCast.forCast(scenes[si]) || []; } catch (_) { return []; } };
+        const resolve = (sw, si) => {
+            const t = sw.map(nw).filter(Boolean), joined = ' ' + t.join(' ') + ' ';
+            if (/ (je|moi) /.test(joined) || (hero && t.includes(hero))) return 'hero';
+            let r = null; try { r = FemaleCast.roleOf(sw.join(' ')); } catch (_) {}
+            if (r) { const k = 'role:' + r.id; SEX[k] = r.sex; return k; }
+            if (t.includes('elle')) { SEX['role:f'] = 'f'; return 'role:f'; }
+            if (t.includes('il')) { const g = castOf(si).find(x => x.sex === 'm'); if (g) { const k = 'role:' + g.id; SEX[k] = 'm'; return k; } return 'hero'; }
+            const nm = sw.find(w => /^[A-ZÀ-Ý]/.test(w) && !STOP.has(nw(w)));
+            if (nm) { const k = 'name:' + nw(nm), c = castOf(si); SEX[k] = SEX[k] || (c.length ? c[0].sex : (/a$/.test(nw(nm)) ? 'f' : 'm')); return k; }
+            return null;
+        };
+        const sentEnd = w => /[.!?]$/.test(String(w).replace(/[»”"\s\u00a0]+$/, ''));
+        const attribute = (a, b) => {
+            for (let j = b + 1; j < Math.min(W.length, b + 6); j++) {      // « … », dit la mère / dit-il
+                const raw = W[j].w, pm = /^([A-Za-zÀ-ÿ]+)-(il|elle|ils|elles)\b/.exec(raw);
+                if (pm && SAYV.test(nw(pm[1]))) return resolve([pm[2]], W[j].si);
+                if (SAYV.test(nw(raw))) { const sw = []; for (let q = j + 1; q < W.length && sw.length < 3; q++) { sw.push(W[q].w); if (sentEnd(W[q].w)) break; } return resolve(sw, W[j].si); }
+            }
+            for (let j = a - 1; j >= Math.max(0, a - 5); j--) {              // Sa mère dit : « … »
+                if (SAYV.test(nw(W[j].w))) { const sw = []; for (let q = j - 1; q >= Math.max(0, j - 4); q--) { if (sentEnd(W[q].w)) break; sw.unshift(W[q].w); } return resolve(sw, W[j].si); }
+            }
+            return null;
+        };
+        const guestOf = si => { const g = castOf(si)[0]; if (!g) return null; SEX['role:' + g.id] = g.sex; return 'role:' + g.id; };
+        let last = 'narr';
+        const mark = (a, b, who) => { for (let k = a; k <= b; k++) slot[k] = who; last = who; };
+        // 1) citations
+        const OPEN_P = /^[«“"]/, OPEN_S = /[«“"]$/, CLOSE = /[»”"][^\wÀ-ÿ]*$/, spans = []; let open = -1;
+        for (let k = 0; k < W.length; k++) {
+            const w = W[k].w; let started = false;
+            if (open < 0 && (OPEN_P.test(w) || OPEN_S.test(w))) { open = OPEN_P.test(w) ? k : k + 1; started = true; }
+            if (open >= 0 && CLOSE.test(w) && !(started && !OPEN_P.test(w))) { if (k >= open) spans.push([open, k]); open = -1; }
+        }
+        if (open >= 0 && open < W.length) spans.push([open, W.length - 1]);
+        spans.forEach(([a, b]) => { let who = attribute(a, b); if (!who) who = last === 'hero' ? (guestOf(W[a].si) || 'hero') : 'hero'; mark(a, b, who); });
+        // 2) « X répond : texte » / « Nom : texte » (jusqu'à la fin de la scène)
+        for (let k = 0; k < W.length; k++) {
+            if (slot[k] !== 'narr' || !/:$/.test(W[k].w.replace(/[\u00a0\s]+/g, ''))) continue;
+            const si = W[k].si; let e = k; while (e + 1 < W.length && W[e + 1].si === si) e++;
+            if (e - k < 2) continue;
+            const before = []; for (let q = k - 1; q >= Math.max(0, k - 4) && W[q].si === si; q--) { if (sentEnd(W[q].w)) break; before.unshift(W[q].w); }
+            let who = null;
+            if (SAYV.test(nw(W[k].w))) who = resolve(before, si);
+            else if (before.length <= 2 && /^[A-ZÀ-Ý]/.test(W[k - before.length] ? W[k - before.length].w : '') && (k - before.length === 0 || W[k - before.length - 1].si !== si)) { who = resolve(before.concat([W[k].w.replace(/[:\u00a0\s]+$/, '')]), si); if (who) for (let q = k - before.length; q <= k; q++) slot[q] = 'skip'; }   // « Nom : texte » : l'étiquette n'est pas lue
+            if (!who) continue;
+            let a = k + 1; while (a <= e && slot[a] !== 'narr') a++;
+            if (a <= e) {
+                // la réplique s'arrête quand la narration reprend (« Moussa sourit. », « Il se lève. », « Le patron regarde… »)
+                const startsNarr = q => { const n0 = nw(W[q].w); if (hero && n0 === hero) return true; if (n0 === 'il' || n0 === 'elle') return true; try { return !!(/^(le|la|l'|les|sa|son|ma|mon)$/.test(n0) && W[q + 1] && FemaleCast.roleOf(W[q].w + ' ' + W[q + 1].w)); } catch (_) { return false; } };
+                const lim = []; for (let q = a; q <= e && slot[q] === 'narr'; q++) { if (q > a && sentEnd(W[q - 1].w) && startsNarr(q)) break; lim.push(q); }
+                mark(lim[0], lim[lim.length - 1], who);
+            }
+        }
+        // 3) découpage de chaque scène en répliques
+        scenes.forEach((sc, si) => {
+            const idx = []; W.forEach((x, k) => { if (x.si === si) idx.push(k); });
+            const segs = [];
+            idx.forEach((k, n) => {
+                const sl = slot[k], word = W[k].w.replace(/[«»“”"]/g, '').replace(/\u00a0/g, ' '), lastSeg = segs[segs.length - 1];
+                if (lastSeg && lastSeg.slot === sl) { lastSeg.ws.push(word); lastSeg.w1 = n + 1; } else segs.push({ slot: sl, ws: [word], w0: n, w1: n + 1 });
+            });
+            const out = segs.map(g => ({ slot: g.slot, sex: SEX[g.slot] || 'm', text: g.ws.join(' ').replace(/\s+/g, ' ').trim(), w0: g.w0, w1: g.w1 })).filter(g => g.slot !== 'skip' && /[A-Za-zÀ-ÿ0-9]/.test(g.text));
+            sc.speech = out.some(g => g.slot !== 'narr') ? out : null; sc.speechKey = texts[si];
+        });
+        project._speechKey = key;
+    }
+    const speechOf = sc => {
+        if (!sc || !sc.speech || sc.speechKey !== clean(sc.narration)) return null;
+        return sc.speech.every(g => voiceOfKey(g.slot) === voiceFor()) ? null : sc.speech;
+    };
+    const multiKey = segs => 'multi|' + modelFor() + '|' + segs.map(g => voiceOfKey(g.slot) + '~' + g.text).join('¦');
+    const bufFor = sc => { const segs = speechOf(sc); return segs ? cache.get(multiKey(segs)) : cache.get(modelFor() + '|' + voiceFor() + '|' + clean(sc.narration)); };
+    function applyTimeline(sc, buf) { if (buf && buf.segTimes) sc._vt = { segs: buf.segTimes, dur: buf.duration }; else sc._vt = null; }
+    // qui parle à l'instant « time » de la scène ? -> { slot, sex } ou null (narration seule / silence)
+    function speakerAt(sc, time) {
+        const vt = sc && sc._vt; if (!vt || !vt.segs) return null;
+        const tb = (time - 0.15) * rateFor(sc, { duration: vt.dur });
+        for (const g of vt.segs) if (tb >= g.t0 - 0.05 && tb < g.t1 + 0.08) return { slot: g.slot, sex: g.sex };
+        return null;
+    }
+    // une scène = des briques (répliques) collées : chaque brique est lue par la voix de son personnage
+    async function synthScene(sc) {
+        const segs = speechOf(sc);
+        if (!segs) { sc._vt = null; return synth(sc.narration); }
+        const key = multiKey(segs);
+        if (cache.has(key)) { const b = cache.get(key); applyTimeline(sc, b); return b; }
+        const parts = [];
+        for (const g of segs) parts.push({ g, buf: await synth(g.text, voiceOfKey(g.slot)) });
+        const ctx = getAudioCtx(); if (!ctx) throw new Error('Le moteur audio du navigateur n’est pas disponible.');
+        const sr = parts[0].buf.sampleRate, gap = Math.round(0.14 * sr); let total = 0;
+        parts.forEach((p, i) => { if (i && p.g.slot !== parts[i - 1].g.slot) total += gap; p.n0 = total; total += p.buf.length; });
+        const out = ctx.createBuffer(1, total, sr), ch = out.getChannelData(0);
+        parts.forEach(p => ch.set(p.buf.getChannelData(0), p.n0));
+        out.segTimes = parts.map(p => ({ slot: p.g.slot, sex: p.g.sex, t0: p.n0 / sr, t1: (p.n0 + p.buf.length) / sr }));
+        const full = clean(sc.narration), nW = splitWords(full).length, starts = new Array(nW).fill(null);
+        parts.forEach(p => {
+            const mk = SyncBrain.marksOf(p.g.text), wc = p.g.w1 - p.g.w0, base = p.n0 / sr, sd = p.buf.length / sr;
+            for (let q = 0; q < wc && p.g.w0 + q < nW; q++) starts[p.g.w0 + q] = base + (mk && mk.starts.length === wc ? mk.starts[q] : sd * q / Math.max(1, wc));
+        });
+        let nx = out.duration; for (let i = nW - 1; i >= 0; i--) { if (starts[i] == null) starts[i] = nx; else nx = starts[i]; }
+        for (let i = 1; i < nW; i++) if (starts[i] < starts[i - 1]) starts[i] = starts[i - 1];
+        cache.set(key, out); applyTimeline(sc, out);
+        try { SyncBrain.register(full, out); SyncBrain.setStarts(full, starts, out.duration); } catch (_) {}
+        return out;
+    }
+    const speechReqs = project => { const r = []; ((project && project.scenes) || []).forEach(sc => (sc.speech || []).forEach(g => { if (g.slot !== 'narr') r.push({ key: g.slot, sex: g.sex }); })); return r; };
+    // ----- lecture d'une réplique isolée (mode dialogue) -----
+    async function speakLine(text, key, sex, onEnd, alive) {
+        const k = key === 'narr' ? 'narr' : 'dc:' + key;
+        await assignVoices([{ key: k, sex: sex === 'f' ? 'f' : 'm' }]);
+        const buf = await synth(text, voiceOfKey(k));
+        if (alive && !alive()) return;
+        const ctx = getAudioCtx(); if (!ctx || !buf) { if (onEnd) onEnd(); return; }
+        stopNarration(); const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
+        src.onended = () => { if (current === src) current = null; if (onEnd) onEnd(); };
+        src.start(ctx.currentTime + 0.05); current = src;
+    }
+    function warmLine(text, key, sex) { const k = key === 'narr' ? 'narr' : 'dc:' + key; return assignVoices([{ key: k, sex: sex === 'f' ? 'f' : 'm' }]).then(() => synth(text, voiceOfKey(k))).catch(() => {}); }
     function stopNarration() { if (current) { try { current.stop(); } catch(_){} current=null; } }
     function playBuffer(scene, buf, offset) {
         stopNarration(); const ctx=getAudioCtx(); if(!ctx||!buf) return;
@@ -6028,15 +6222,17 @@ const VoiceStudio = (() => {
     }
     function speakScene(scene, offset, project, stillCurrent) {
         if (!engineOn()) { chip('🎙️ Speechify est momentanément indisponible'); return true; }
-        const key=modelFor()+'|'+voiceFor(project)+'|'+clean(scene.narration), hit=cache.get(key);
-        if(hit){playBuffer(scene,hit,offset);return true;}
-        chip('🎙️ Création de la voix Speechify…'); synth(scene.narration,project).then(b=>{chip(null);const off=stillCurrent();if(b&&off!==null)playBuffer(scene,b,off);}).catch(e=>{chip(null);showToast(e.message,'error');});
+        if (project) planSpeech(project);
+        const hit=bufFor(scene);
+        if(hit){applyTimeline(scene,hit);playBuffer(scene,hit,offset);return true;}
+        chip('🎙️ Création de la voix Speechify…'); (project ? assignVoices(speechReqs(project)) : Promise.resolve()).then(()=>synthScene(scene)).then(b=>{chip(null);const off=stillCurrent();if(b&&off!==null)playBuffer(scene,b,off);}).catch(e=>{chip(null);showToast(e.message,'error');});
         return true;
     }
     function narrationCount(project) { return (project && project.scenes || []).filter(s => clean(s.narration)).length; }
     async function prepareProject(project,onProgress) {
         const scenes = (project && project.scenes || []).filter(s => clean(s.narration));
         if(!engineOn()) return {done:0,total:scenes.length,changed:false};
+        planSpeech(project); try { await assignVoices(speechReqs(project)); } catch (_) {}
         let done=0,changed=false;
         for(const sc of scenes){
             let b=null, lastError=null;
@@ -6044,7 +6240,7 @@ const VoiceStudio = (() => {
             // silencieux lors d’un réveil mobile ou d’une réponse PCM incomplète.
             // Retenter ici évite de perdre tout le rendu pour une seule scène.
             for(let attempt=0; attempt<3 && !b; attempt++){
-                try { b=await synth(sc.narration,project); }
+                try { b=await synthScene(sc); }
                 catch(e){ lastError=e; if(attempt<2) await new Promise(r=>setTimeout(r,700*(attempt+1))); }
             }
             if(!b) throw lastError || voiceExportError('Une narration n’a pas pu être préparée.');
@@ -6053,12 +6249,12 @@ const VoiceStudio = (() => {
         return {done,total:scenes.length,changed};
     }
     async function prefetch(project,onChanged){ if(!project||!engineOn())return; try{await prepareProject(project,(i,n)=>chip('🎙️ Speechify '+i+'/'+n));chip(null);if(onChanged)onChanged();}catch(e){chip(null);console.warn(e);} }
-    function scheduleExport(project,actx,dest,t0){let start=0,n=0;const expected=narrationCount(project),voice=voiceFor(project);(project.scenes||[]).forEach(sc=>{const text=clean(sc.narration);if(text){const key=modelFor()+'|'+voice+'|'+text,b=cache.get(key);if(b){const peak=bufferPeak(b);if(peak<0.001)throw voiceExportError('La voix préparée est silencieuse; l’export a été arrêté.');const src=actx.createBufferSource(),gain=actx.createGain();src.buffer=b;src.playbackRate.value=rateFor(sc,b);gain.gain.value=Math.min(6,Math.max(1,0.7/peak));src.connect(gain);gain.connect(dest);src.start(t0+start+.15);exportSources.push(src);n++;}}start+=sc.duration;});if(n!==expected)throw voiceExportError('Narration manquante dans la piste audio ('+n+'/'+expected+' scènes). L’export silencieux a été bloqué.');return n;}
+    function scheduleExport(project,actx,dest,t0){let start=0,n=0;const expected=narrationCount(project);planSpeech(project);(project.scenes||[]).forEach(sc=>{const text=clean(sc.narration);if(text){const b=bufFor(sc);if(b){const peak=bufferPeak(b);if(peak<0.001)throw voiceExportError('La voix préparée est silencieuse; l’export a été arrêté.');const src=actx.createBufferSource(),gain=actx.createGain();src.buffer=b;src.playbackRate.value=rateFor(sc,b);gain.gain.value=Math.min(6,Math.max(1,0.7/peak));src.connect(gain);gain.connect(dest);src.start(t0+start+.15);exportSources.push(src);n++;}}start+=sc.duration;});if(n!==expected)throw voiceExportError('Narration manquante dans la piste audio ('+n+'/'+expected+' scènes). L’export silencieux a été bloqué.');return n;}
     function stopExport(){exportSources.forEach(s=>{try{s.stop();}catch(_){}});exportSources=[];}
     function chip(text,action){const el=document.getElementById('voiceChip');if(!el)return;if(!text){el.style.display='none';el.onclick=null;return;}el.textContent=text;el.style.display='block';el.style.cursor=action?'pointer':'default';el.onclick=action||null;}
     function offerChip(project){if(!engineOn())chip('🎙️ Configure Speechify dans Paramètres',()=>showScreen('settingsScreen'));else chip(null);}
-    async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Speechify est momentanément indisponible côté serveur. Réessaie plus tard.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt,project);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
-    return {listVoices,voiceFor,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,narrationCount,LABEL};
+    async function sample(project){if(!engineOn()){showScreen('settingsScreen');showToast('Speechify est momentanément indisponible côté serveur. Réessaie plus tard.','error');return;}const txt='Bonjour, ceci est la voix Speechify de tes vidéos.';chip('🎙️ Test Speechify…');try{const b=await synth(txt);chip(null);playBuffer({duration:99},b,0);}catch(e){chip(null);showToast(e.message,'error');}}
+    return {listVoices,voiceFor,speakerAt,planSpeech,assignVoices,resetCharVoices,voiceOfKey,synthScene,speakLine,warmLine,isReady:()=>engineOn(),engineOn,supported,offerChip,speakScene,stopNarration,prepareProject,prefetch,scheduleExport,stopExport,sample,chip,narrationCount,LABEL};
 })();
 
 // ===== CERVEAU DE SYNCHRO : regarde l'histoire et l'audio pour caler sous-titres, bouche et bras =====
@@ -6380,7 +6576,9 @@ const SyncBrain = (() => {
         return out;
     }
 
-    return { register, setMarks, starts, stamp, frame, textInfo, rateFor, LEAD, _analyses: analyses };
+    const marksOf = t => marksMap.get(splitWords(t).join(' ')) || null;
+    const setStarts = (t, st, dur) => { const ws = splitWords(t); if (ws.length && st.length === ws.length) marksMap.set(ws.join(' '), { starts: st, dur }); };
+    return { register, setMarks, marksOf, setStarts, starts, stamp, frame, textInfo, rateFor, LEAD, _analyses: analyses };
 })();
 
 const TRANS_BY_ROLE = { hook: 'fade', context: 'push', conflict: 'zoom', turn: 'flash', result: 'iris', cta: 'reveal' };
@@ -8594,7 +8792,7 @@ class CanvasRenderer {
             ctx.save(); ctx.globalAlpha *= pr; ctx.translate(L.gx[i], 0);
             const sc = L.gsc[i]; ctx.scale(L.gface[i] * sc, sc);   // tourné vers le héros (à gauche) ; il se retourne pour repartir
             TRAVEL_FORCE = gt ? { walk: gw, wave: tv.guestWave.w, gp: tv.guestWave.p, gdur: 1.8 } : (gw > 0.01 ? { walk: gw, wave: 0, gp: 0, gdur: 1.8 } : null);
-            try { AIGuests.draw(ctx, w, h, time, scene, pose, i, g.sex); } catch (e) { console.warn('Invité', e); }
+            try { AIGuests.draw(ctx, w, h, time, scene, pose, i, g.sex, g.id); } catch (e) { console.warn('Invité', e); }
             finally { TRAVEL_FORCE = null; }
             ctx.restore();
         });
@@ -9346,11 +9544,17 @@ const DF = (() => {
     let P = null, step = -1, t0 = 0, T = 0, run = false, sound = true, A = {}, IA = {}, raf = 0, cur = null, advance = null;
     const SLOTS = { 1: [180], 2: [105, 255], 3: [68, 190, 298], 4: [48, 138, 228, 314], 5: [40, 108, 180, 252, 320] };
     const EMOJ = { shock: '😳', angry: '💢', joy: '😂', sad: '😢' };
+    let spkTok = 0;
+    // Chaque personnage a SA voix Speechify (stable d'une histoire à l'autre) ; le narrateur a la voix des réglages.
     function speak(d, text, cb) {
         let done = false; const fin = () => { if (!done) { done = true; cb(); } };
-        if (!sound || !window.speechSynthesis) return null;
-        try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'fr-FR'; const v = speechSynthesis.getVoices().filter(x => /^fr/i.test(x.lang)); if (v.length) u.voice = v[hash(d ? d.key : 'n') % v.length]; u.pitch = clamp(d ? d.pitch : 1, .1, 2); u.rate = 1.05; u.onend = fin; u.onerror = fin; speechSynthesis.speak(u); return fin; } catch (e) { return null; }
+        if (!sound) return null;
+        const tok = ++spkTok;
+        VoiceStudio.speakLine(text, d ? d.key : 'narr', d && d.type === 'f' ? 'f' : 'm', () => { if (tok === spkTok) fin(); }, () => tok === spkTok)
+            .catch(e => { try { showToast(e.message, 'error'); } catch (_) { } if (tok === spkTok) fin(); });
+        return fin;
     }
+    function warmNext(i) { for (let j = 1; j <= 2; j++) { const n = P.steps[i + j]; if (n && n.text) { const dd = n.kind === 'say' ? P.chars[n.who] : null; VoiceStudio.warmLine(n.text, dd ? dd.key : 'narr', dd && dd.type === 'f' ? 'f' : 'm'); } } }
     function enter(i) {
         step = i; const s = P.steps[i]; if (!s) { end(); return; }
         cur = s; t0 = T; s.typed = 0; bg(s.tone);
@@ -9364,9 +9568,9 @@ const DF = (() => {
         if (s.inset) { const k = s.inset; const g = el('g', { transform: 'translate(214,40)' }, ins); el('rect', { width: 132, height: 150, rx: 14, fill: '#f6b26b', stroke: '#fff', 'stroke-width': 4 }, g); el('rect', { y: 108, width: 132, height: 42, rx: 12, fill: '#8e5a2b' }, g); const lb = el('text', { x: 66, y: -6, 'text-anchor': 'middle', 'font-family': 'Bangers,Impact', 'font-size': 16, fill: '#ffd23f' }, g); lb.textContent = 'AU TÉLÉPHONE'; const c = el('g', { transform: 'translate(66,128) scale(.62)' }, g); IA = { k, a: mk(P.chars[k], c) }; IA.a.x = IA.a.tx = 0; IA.a.vis = 1; IA.a.arm[1].setAttribute('transform', 'translate(27,-120) rotate(150)'); IA.a.arm[1].ph.setAttribute('opacity', 1); ins.setAttribute('opacity', 1); } else { IA = {}; ins.setAttribute('opacity', 0); }
         const words = s.text.split(/\s+/).length; s.d = Math.max(1.8, words / (s.kind === 'say' ? 2.5 : 3) + .7);
         let fin = null; const go = () => { if (cur !== s || !run) return; const wait = Math.max(350, (s.d * 0.85 - (T - t0)) * 1000 + 350); setTimeout(() => { if (cur === s && run) enter(step + 1); }, wait); };
-        fin = speak(s.kind === 'say' ? P.chars[s.who] : null, s.text, go); s.viaVoice = !!fin; s.timeout = s.d * (fin ? 2.2 : 1);
+        fin = speak(s.kind === 'say' ? P.chars[s.who] : null, s.text, go); s.viaVoice = !!fin; s.timeout = s.d * (fin ? 2.2 : 1) + (fin ? 12 : 0); if (fin) warmNext(i);
     }
-    function end() { run = false; cur = null; speechSynthesis && speechSynthesis.cancel(); $('dfEnd').style.display = 'flex'; $('dfSub').style.display = 'none'; }
+    function end() { run = false; cur = null; spkTok++; try { VoiceStudio.stopNarration(); } catch (_) { } $('dfEnd').style.display = 'flex'; $('dfSub').style.display = 'none'; }
     const MOUTH = (k, o) => `M-9 14 Q0 ${14 + k} 9 14 Q0 ${14 + k + o} -9 14Z`, REACT = { angry: 'shock', shock: 'shock', smug: 'ask', ask: 'calm', joy: 'joy', sad: 'sad', calm: 'calm', proud: 'calm' };
     function anim(a, key, ins) {
         const d = a.d, s = cur, spk = s && s.kind === 'say' && s.who === key && !ins ? true : (ins && s && s.kind === 'say' && s.who === key);
@@ -9395,8 +9599,8 @@ const DF = (() => {
         const parsed = parse(text); if (parsed.said < 2) { showToast('Je ne trouve pas de dialogue. Écris par exemple : Toto répond : Bonjour !', 'error'); return false; }
         stop(); P = parsed; A = {}; IA = {}; $('dfCast').innerHTML = ''; $('dfEnd').style.display = 'none'; $('dfSub').style.display = ''; showScreen('playScreen'); run = true; if (!raf) raf = requestAnimationFrame(frame); T = performance.now() / 1000; enter(0); return true;
     }
-    function stop() { run = false; cur = null; try { speechSynthesis.cancel(); } catch (e) { } }
-    return { play, stop, parse, toggleSound() { sound = !sound; if (!sound) { try { speechSynthesis.cancel(); } catch (e) { } } return sound; } };
+    function stop() { run = false; cur = null; spkTok++; try { VoiceStudio.stopNarration(); } catch (e) { } }
+    return { play, stop, parse, toggleSound() { sound = !sound; if (!sound) { spkTok++; try { VoiceStudio.stopNarration(); } catch (e) { } } return sound; } };
 })();
 let dfLast = '';
 function dfPlay(text) { const t = (typeof text === 'string' && text.trim()) ? text : document.getElementById('scriptInput').value; dfLast = t; if (!t.trim()) { showToast('Écris ou colle d’abord l’histoire', 'error'); return; } DF.play(t); }
@@ -9606,6 +9810,7 @@ async function loadSpeechifyProfileVoices() {
         showToast(e.message, 'error');
     }
 }
+
 function loadSettingsUI() {
     try { Brand.loadUI(); } catch (_) {}
     const c = Settings.get();
@@ -9629,13 +9834,15 @@ function loadSettingsUI() {
     setVal('settingCharSfx', c.charSfx === 'off' ? 'off' : 'on');
     setVal('settingCharWardrobe', c.charWardrobe === 'off' ? 'off' : 'auto');
     refreshVoiceStatus();
-    setVal('settingSpeechifyVoice', c.speechifyVoice || 'alexandre');
+    setVal('settingSpeechifyVoice', c.speechifyVoice || 'adeline');
+    setVal('settingVoiceHero', c.speechifyVoiceHero || '');
     setVal('settingSpeechifyModel', c.speechifyModel === 'simba-3.2' ? 'simba-3.2' : 'simba-3.0');
     setVal('settingSpeechifyProfileLanguage', c.speechifyProfileLanguage || 'fr');
     renderSpeechifyProfileSelectors();
     const autoVoice = document.getElementById('settingSpeechifyAutoVoice');
     if (autoVoice) autoVoice.checked = c.speechifyAutoVoice !== false;
     syncSpeechifyVoiceModeUI();
+    refreshVoiceStatus();
 }
 
 function applyProPreset() {
@@ -9683,7 +9890,7 @@ function saveSettings() {
 
 function saveSpeechifyFields() {
     const auto = document.getElementById('settingSpeechifyAutoVoice');
-    Settings.save({ speechifyKey: '', speechifyProxy: '', speechifyAutoVoice: !auto || auto.checked, speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'alexandre', speechifyModel: getVal('settingSpeechifyModel') });
+    Settings.save({ speechifyKey: '', speechifyProxy: '', speechifyAutoVoice: !auto || auto.checked, speechifyVoice: getVal('settingSpeechifyVoice').trim() || 'adeline', speechifyVoiceHero: (getVal('settingVoiceHero') || '').trim(), speechifyModel: getVal('settingSpeechifyModel') });
     syncSpeechifyVoiceModeUI();
     refreshVoiceStatus();
 }
@@ -9705,6 +9912,7 @@ async function loadSpeechifyVoices() {
         if (!list.length) throw new Error('Aucune voix trouvée pour ce compte.');
         pick.innerHTML = list.map(v => '<option value="' + v.id.replace(/"/g, '') + '">' + v.label.replace(/</g, '') + '</option>').join('');
         pick.style.display = 'block';
+        const dl = document.getElementById('spVoices'); if (dl) dl.innerHTML = list.map(v => '<option value="' + v.id.replace(/"/g, '') + '">' + v.label.replace(/</g, '') + '</option>').join('');
         const cur = document.getElementById('settingSpeechifyVoice').value.trim();
         pick.value = list.some(v => v.id === cur) ? cur : list[0].id;
         document.getElementById('settingSpeechifyVoice').value = pick.value;
@@ -9712,10 +9920,11 @@ async function loadSpeechifyVoices() {
         if (st) st.textContent = '✅ ' + list.length + ' voix chargées : choisis-en une puis teste';
     } catch (e) { if (st) st.textContent = ''; showToast(e.message, 'error'); }
 }
+function resetCharVoices() { VoiceStudio.resetCharVoices(); showToast('Les voix des personnages seront réattribuées'); }
 function pickSpeechifyVoice(id) { document.getElementById('settingSpeechifyVoice').value = id; saveSpeechifyFields(); }
 
-function settingsProject() { return state.project || { language: 'fr', mainCharacterGender: 'male' }; }
-function refreshVoiceStatus() { const el = document.getElementById('speechifyProxyStatus'); if (el) el.textContent = Settings.get().speechifyAutoVoice === false ? 'Speechify utilise le proxy sécurisé et la voix manuelle choisie ci-dessous.' : 'Speechify utilise le proxy sécurisé et adapte automatiquement la voix au personnage principal.'; }
+function settingsProject() { return state.project || { language: 'fr', mainCharacterGender: 'neutral', voice: 'female' }; }
+function refreshVoiceStatus() { const el = document.getElementById('speechifyProxyStatus'); if (el) el.textContent = Settings.get().speechifyAutoVoice === false ? 'Speechify utilise la voix manuelle choisie ci-dessous pour le narrateur et les personnages sans voix dédiée.' : 'Speechify choisit la voix du héros selon son profil et utilise le profil neutre pour le narrateur.'; }
 
 // ===== MUSIQUE GÉNÉRÉE (WebAudio, aucun fichier, aucune licence) =====
 const MUSIC_MOODS = {
@@ -10032,8 +10241,7 @@ async function llmBrain({ idea, script, options, cfg }) {
         '\nFor each scene pick the visuals. Return ONLY valid JSON, no markdown, with this shape:\n' +
         '{"title": string, "music": one of [motivation, business, emotional, suspense, documentary], "scenes": [{"narration": string, "keyText": string (max 3 words or a number, optional, "" for none), "role": one of [' + ROLES.join(', ') + '], "mood": one of [' + MOODS.join(', ') + '], "character": one of [' + ASSETS.characters.map(c => c.id).join(', ') + '] or null, "pose": a pose valid for that character, "objects": up to 2 of [' + objs + '], "background": one of [' + bgs + '], "animation": one of [' + anims + ']}]}\n' +
         'Character: one animated presenter (id rive-character, poses: ' + ALL_POSES.join('/') + '), or null only when the scene is genuinely abstract (companies, markets, numbers, objects). Preserve the narration exactly. Vary poses with the story: thinking for planning or realizing, happy for helping and growth, walking only for real travel, and pointing to the audience for a lesson; avoid defaulting to standing when a specific pose fits. Resolve pronouns and the subject of each action from the whole story. Choose the pose from meaning, not isolated keywords: pointing to address the audience, thinking for questions or uncertainty, sad for loss or empathy, happy for success or relief, money for earnings, walking for travel or progress, sitting for work or study. When the narration names a real destination such as a church, mosque, market or well, show that destination as a concrete visual and let the character walk toward it before stopping; for drawing water, show the well and the drawing motion. Prefer one clear hero action over many decorative gestures. Do not show an action that is negated, hypothetical, metaphorical or performed by another subject. After drafting every scene, silently audit each choice against the exact narration and remove any gesture that fails that audit. Keep continuity: the final emotion of a scene becomes the starting emotion of the next, and make contrast words such as "mais", "pourtant" and "cependant" visible through a deliberate change of expression. Backgrounds african_day (luxurious African daytime setting), city_night (luxury city at night) and maquis (the open-air restaurant called Vidéo Plus Maquis) must be chosen only when the story itself takes place there; never pick them at random.';
-    const voicePrompt = prompt.replace('{"title": string, "music":', '{"title": string, "main_character_gender": one of ["female", "male", "neutral"], "music":') +
-        '\nAlso identify the principal person whose story or actions drive this video, not an incidental guest or the generic presenter. Set main_character_gender to female or male only when the story gives clear evidence; use neutral when there is no identifiable human protagonist or the evidence is ambiguous. Do not infer gender from occupation alone.';
+    const voicePrompt = prompt.replace('{"title": string, "music":', '{"title": string, "main_character_gender": one of ["female", "male", "neutral"], "music":') + '\nIdentify the main character whose story or actions drive the video, not an incidental guest or generic presenter. Choose female or male only with clear evidence; otherwise choose neutral.';
     const model = (cfg.model || 'gemini-3.6-flash').trim();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -10281,8 +10489,8 @@ async function runBrain(auto) {
             title: plan.title,
             script,
             ...options,
-            style: 'explainer', explainerMode: true, socialMode: true,
             mainCharacterGender: ['female', 'male', 'neutral'].includes(norm(mainCharacterGender)) ? norm(mainCharacterGender) : inferMainCharacterGender(script),
+            style: 'explainer', explainerMode: true, socialMode: true,
             language: plan.language || options.language,
             music: options.music === 'auto' ? plan.music : options.music,
             scenes: plan.scenes,
