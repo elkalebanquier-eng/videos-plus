@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.4.0-multispeaker-profile-merge">
-    <title>Vidéos Plus — VideoStory 3.4.0</title>
-    <meta name="description" content="Vidéos Plus 3.4.0 : studio vidéo mobile, dialogues multi-voix par personnage et profils Speechify personnalisables.">
+    <meta name="videostory-build" content="3.4.1-render-callback-fix">
+    <title>Vidéos Plus — VideoStory 3.4.1</title>
+    <meta name="description" content="Vidéos Plus 3.4.1 : studio vidéo mobile, dialogues multi-voix par personnage et profils Speechify personnalisables.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,13 +16,13 @@
     <link rel="canonical" href="https://videos-plus.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.4.0">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.4.1">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://videos-plus.vercel.app/">
     <meta property="og:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
     <meta property="og:image:alt" content="Mascotte de Studio animé">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.4.0">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.4.1">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <meta name="twitter:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Studio animé","alternateName":["Studio Anime"],"url":"https://videos-plus.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Studio animé","url":"https://videos-plus.vercel.app/","description":"Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
@@ -200,7 +200,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.4.0">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.4.1">
 <style id="vp-modern-dl">
 /* ===== Génération + téléchargement : style moderne (carte floue qui se précise, feuille « vidéo prête ») ===== */
 .loading-overlay{background:rgba(6,9,22,.74)!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
@@ -680,7 +680,7 @@ async function saveBlobToDevice(blob, filename) {
     const renderParams = new URLSearchParams(location.search);
     if (renderParams.get('serverRender') === '1') {
         const callback = renderParams.get('serverCallback') || '';
-        if (!/^https:\/\/elkalebanquier--videos-plus-renderer\.us-east\.modal\.run\/render\/render_[\w-]+\/result$/.test(callback)) throw new Error('Adresse de retour du rendu Modal invalide');
+        if (!/^https:\/\/(?:elkalebanquier--videos-plus-renderer\.us-east\.modal\.run|videos-plus-converter\.onrender\.com)\/render\/render_[\w-]+\/result$/.test(callback)) throw new Error('Adresse de retour du rendu serveur invalide');
         const response = await fetch(callback, { method: 'POST', headers: { 'Content-Type': blob.type || 'video/mp4' }, body: blob });
         if (!response.ok) { const detail = await response.text().catch(() => ''); throw new Error('Le serveur n’a pas reçu la vidéo (' + response.status + ')' + (detail ? ' : ' + detail.slice(0, 240) : '')); }
         return true;
@@ -890,7 +890,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.4.0', channel: 'web', publicBuildId: 'videos-plus-3.4.0-multispeaker-profile-merge' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.4.1', channel: 'web', publicBuildId: 'videos-plus-3.4.1-render-callback-fix' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
