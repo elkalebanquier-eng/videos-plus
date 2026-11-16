@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="videostory-build" content="3.4.1-render-callback-fix">
-    <title>Vidéos Plus — VideoStory 3.4.1</title>
-    <meta name="description" content="Vidéos Plus 3.4.1 : studio vidéo mobile, dialogues multi-voix par personnage et profils Speechify personnalisables.">
+    <meta name="videostory-build" content="3.4.2-visual-motion-polish">
+    <title>Vidéos Plus — VideoStory 3.4.2</title>
+    <meta name="description" content="Vidéos Plus 3.4.2 : dialogues multi-voix, profils Speechify et personnages mieux intégrés aux décors grâce à la lumière et aux mouvements de marche naturels.">
     <meta name="keywords" content="Vidéos Plus, VideoStory 3, vidéo animée, course, chute, rire, création vidéo, Speechify">
     <meta name="author" content="Vidéos Plus">
     <meta name="application-name" content="Vidéos Plus">
@@ -16,13 +16,13 @@
     <link rel="canonical" href="https://videos-plus.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vidéos Plus">
-    <meta property="og:title" content="Vidéos Plus — VideoStory 3.4.1">
+    <meta property="og:title" content="Vidéos Plus — VideoStory 3.4.2">
     <meta property="og:description" content="Crée des dessins animés à partir de texte dans un studio pastel et tactile, avec narration et export mobile.">
     <meta property="og:url" content="https://videos-plus.vercel.app/">
     <meta property="og:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
     <meta property="og:image:alt" content="Mascotte de Studio animé">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.4.1">
+    <meta name="twitter:title" content="Vidéos Plus — VideoStory 3.4.2">
     <meta name="twitter:description" content="Un studio pastel pour créer des dessins animés à partir de texte, avec un personnage expressif et des gestes professionnels.">
     <meta name="twitter:image" content="https://videos-plus.vercel.app/assets/mascotte-presentateur.webp">
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Studio animé","alternateName":["Studio Anime"],"url":"https://videos-plus.vercel.app/","inLanguage":"fr"},{"@type":"WebApplication","name":"Studio animé","url":"https://videos-plus.vercel.app/","description":"Studio animé transforme vos idées en vidéos animées avec narration, sous-titres, personnalisation et export HD.","applicationCategory":"MultimediaApplication","operatingSystem":"Web","inLanguage":"fr"}]}</script>
@@ -200,7 +200,7 @@
             .timeline-track:nth-child(n+2) { display: none; }
         }
     </style>
-    <link rel="stylesheet" href="./pastel-theme.css?v=3.4.1">
+    <link rel="stylesheet" href="./pastel-theme.css?v=3.4.2">
 <style id="vp-modern-dl">
 /* ===== Génération + téléchargement : style moderne (carte floue qui se précise, feuille « vidéo prête ») ===== */
 .loading-overlay{background:rgba(6,9,22,.74)!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
@@ -890,7 +890,7 @@ const stemMatch = (t, s) => s.length < 4 ? t === s : t.startsWith(s);
 const hit = (tokens, stem) => tokens.some(t => stemMatch(t, stem));
 const countHits = (tokens, stems) => stems.reduce((n, s) => n + (hit(tokens, s) ? 1 : 0), 0);
 
-const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.4.1', channel: 'web', publicBuildId: 'videos-plus-3.4.1-render-callback-fix' });
+const BUILD_INFO = Object.freeze({ app: 'Vidéos Plus', version: '3.4.2', channel: 'web', publicBuildId: 'videos-plus-3.4.2-visual-motion-polish' });
 
 const Settings = {
     get() { try { return JSON.parse(localStorage.getItem('vs_settings') || '{}'); } catch (e) { return {}; } },
@@ -4933,7 +4933,7 @@ const AIChar = (() => {
     const imgs = {}; let okAll = false, loading = null;
     function load() {
         if (loading) return loading;
-        loading = Promise.all(Object.keys(A).map(k => new Promise(res => { const im = new Image(); im.onload = () => { imgs[k] = im; res(); }; im.onerror = () => res(); im.src = A[k]; }))).then(() => { okAll = !!imgs.base; });
+        loading = Promise.all(Object.keys(A).map(k => new Promise(res => { const im = new Image(); im.onload = () => { imgs[k] = defringe(im); res(); }; im.onerror = () => res(); im.src = A[k]; }))).then(() => { okAll = !!imgs.base; });
         return loading;
     }
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -5090,11 +5090,12 @@ const AIChar = (() => {
         // marche : cycle de 8 images de profil (grand pas, pas intermédiaire, passage, ...) ; le rebond du corps vient déjà du déplacement
         const walking = st.cur === 'walk', trav = (typeof TRAVEL_FORCE !== 'undefined' && TRAVEL_FORCE) ? 1 : 0;
         const cyc = a.gesture === 'run' ? 0.6 : 0.9, wph = (((time / cyc) % 1) + 1) % 1, wf = [0, 1, 2, 1, 3, 1, 2, 1][Math.floor(wph * 8)], rk = k => k === 'walk' ? ((a.gesture === 'run' && POSES.run0 ? 'run' : 'walk') + wf) : k;
-        const br = Math.sin(time * 1.9), bob = walking ? (trav ? 0 : Math.abs(Math.sin(time * Math.PI / (cyc / 2))) * h * 0.008) : br * h * 0.003 + (a.beat || 0) * h * 0.006;
-        const sway = walking ? 0 : Math.sin(time * 0.8) * 0.012 + (a.sway || 0) * 0.004;
-        const sq = 1 + br * 0.004 - (a.beat || 0) * 0.006;
+        const wup = walking ? 0.5 - 0.5 * Math.cos(wph * Math.PI * 4) : 0;   // 0 = pied au sol (grand pas), 1 = la jambe passe : le corps monte et descend avec les pas
+        const br = Math.sin(time * 1.9), bob = walking ? wup * h * (trav ? 0.005 : 0.012) : br * h * 0.003 + (a.beat || 0) * h * 0.006;
+        const sway = walking ? Math.sin(wph * Math.PI * 2) * 0.012 + 0.035 : Math.sin(time * 0.8) * 0.012 + (a.sway || 0) * 0.004;   // balancement + buste penché vers l'avant
+        const sq = walking ? 1 - 0.022 * (1 - wup) : 1 + br * 0.004 - (a.beat || 0) * 0.006;   // s'écrase légèrement à chaque appui
         ctx.save();
-        ctx.save(); ctx.translate(0, h * 0.012); ctx.scale(1, 0.14); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, Wd * 0.7); g.addColorStop(0, 'rgba(0,0,0,0.38)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.7, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.save(); ctx.globalAlpha *= 1 - 0.3 * wup; ctx.translate(0, h * 0.012); ctx.scale(1 - 0.1 * wup, 0.14); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, Wd * 0.7); g.addColorStop(0, 'rgba(0,0,0,0.38)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.7, 0, Math.PI * 2); ctx.fill(); ctx.restore();
         ctx.translate(0, -bob); ctx.rotate(sway); ctx.scale(1 / Math.sqrt(sq), sq);
         ctx.imageSmoothingEnabled = true; try { ctx.imageSmoothingQuality = 'high'; } catch (e) { }
         const dr = (kx, al, fc, bl) => kx === 'ride' ? drawRide(ctx, w, h, time, scene, a, op, vw, al) : kx === 'drive' ? drawDrive(ctx, w, h, time, scene, a, al) : drawBody(ctx, rk(kx), al, s, Wd, H, a, op, vw, fc, bl, time);
@@ -5115,7 +5116,7 @@ const AIGuests = (() => {
     const imgs = {}; let okAll = false, loading = null;
     function load() {
         if (loading) return loading;
-        loading = Promise.all(Object.keys(A).map(k => new Promise(res => { const im = new Image(); im.onload = () => { imgs[k] = im; res(); }; im.onerror = () => res(); im.src = A[k]; }))).then(() => { okAll = !!(imgs.w_base && imgs.m_base); });
+        loading = Promise.all(Object.keys(A).map(k => new Promise(res => { const im = new Image(); im.onload = () => { imgs[k] = defringe(im); res(); }; im.onerror = () => res(); im.src = A[k]; }))).then(() => { okAll = !!(imgs.w_base && imgs.m_base); });
         return loading;
     }
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -5156,11 +5157,13 @@ const AIGuests = (() => {
         }
         const H = h * 0.86 * GK[sex], s = H / BH, bw = D[sex].base.w, Wd = bw * s;
         const walking = st.cur === 'walk', step = Math.floor(time / 0.3) % 2;
-        const br = Math.sin(time * 1.7 + (slot || 0)), bob = (walking ? Math.abs(Math.sin(time * Math.PI / 0.3)) * h * 0.012 : br * h * 0.003) + talk * h * 0.005;
-        const sway = (walking ? (step ? 0.018 : -0.018) : Math.sin(time * 0.7 + 1) * 0.01) + Math.sin(time * 8.5) * 0.009 * talk;
+        const wk0 = walking ? Math.abs(Math.sin(time * Math.PI / 0.3)) : 0;   // 0 = pied au sol (changement de pas), 1 = à mi-pas
+        const br = Math.sin(time * 1.7 + (slot || 0)), bob = (walking ? wk0 * h * 0.013 : br * h * 0.003) + talk * h * 0.005;
+        const sway = (walking ? Math.sin(time * Math.PI / 0.3) * 0.022 + 0.035 : Math.sin(time * 0.7 + 1) * 0.01) + Math.sin(time * 8.5) * 0.009 * talk;   // balancement continu + penché en avant
+        const sqz = walking ? 1 - 0.022 * (1 - wk0) : 1;
         ctx.save();
-        ctx.save(); ctx.translate(0, h * 0.012); ctx.scale(1, 0.14); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, Wd * 0.7); g.addColorStop(0, 'rgba(0,0,0,0.34)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.7, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-        ctx.translate(0, -bob); ctx.rotate(sway);
+        ctx.save(); ctx.globalAlpha *= 1 - 0.3 * wk0; ctx.translate(0, h * 0.012); ctx.scale(1, 0.14); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, Wd * 0.7); g.addColorStop(0, 'rgba(0,0,0,0.34)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.7, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.translate(0, -bob); ctx.rotate(sway); if (sqz !== 1) ctx.scale(1 / Math.sqrt(sqz), sqz);
         if (walking && step) ctx.scale(-1, 1);
         ctx.imageSmoothingEnabled = true; try { ctx.imageSmoothingQuality = 'high'; } catch (er) { }
         const one = (k, alpha, withFace) => {
@@ -5231,7 +5234,7 @@ const IMGBG = (() => {
     const FG = {"fgl": {"x": 1, "y": 1368, "w": 321, "h": 303}, "fgr": {"x": 638, "y": 1353, "w": 302, "h": 318}};
     const DW = 941, DH = 1672;
     const im = {}; let ready = false;
-    const loadP = Promise.all(Object.keys(SRC).map(k => new Promise(res => { const i = new Image(); i.onload = () => { im[k] = i; res(); }; i.onerror = () => res(); i.src = SRC[k]; }))).then(() => { ready = !!(im.scene && im.sky); });
+    const loadP = Promise.all(Object.keys(SRC).map(k => new Promise(res => { const i = new Image(); i.onload = () => { im[k] = defringe(i); res(); }; i.onerror = () => res(); i.src = SRC[k]; }))).then(() => { ready = !!(im.scene && im.sky); });
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
     const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -5792,6 +5795,30 @@ const POSE_ORDER = ['pointing', 'thinking', 'money', 'walking', 'sitting', 'sad'
 const POSE_FR = { standing: 'debout', happy: 'joyeux', sad: 'triste', thinking: 'réfléchit', pointing: 'montre', walking: 'marche', money: 'argent', sitting: 'assis' };
 
 // ===== Mots et temps (partagé avec les sous-titres) =====
+// Retire le liseré CLAIR des découpes : les pixels de bord des personnages gardaient la couleur du fond blanc d'origine (halo « autocollant »).
+// Le bord reprend la couleur du personnage (propagation vers l'extérieur sur ~4 px) ; la transparence ne change pas.
+function defringe(im) {
+    try {
+        const w = im.naturalWidth || im.width, h = im.naturalHeight || im.height; if (!w || !h) return im;
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0);
+        const id = x.getImageData(0, 0, w, h), d = id.data, N = w * h, fix = new Uint8Array(N); let edge = 0;
+        for (let i = 0; i < N; i++) { const a = d[i * 4 + 3]; if (a >= 250) fix[i] = 1; else if (a > 0) edge++; }
+        if (!edge) return im;
+        for (let pass = 0; pass < 4; pass++) {
+            const add = [];
+            for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
+                const i = y * w + xx; if (fix[i] || !d[i * 4 + 3]) continue;
+                let r = 0, g = 0, b = 0, n = 0;
+                for (let dy = -1; dy <= 1; dy++) { const yy = y + dy; if (yy < 0 || yy >= h) continue; for (let dx = -1; dx <= 1; dx++) { const x2 = xx + dx; if (x2 < 0 || x2 >= w) continue; const j = yy * w + x2; if (fix[j]) { r += d[j * 4]; g += d[j * 4 + 1]; b += d[j * 4 + 2]; n++; } } }
+                if (n) add.push(i, (r / n) | 0, (g / n) | 0, (b / n) | 0);
+            }
+            if (!add.length) break;
+            for (let q = 0; q < add.length; q += 4) { const i = add[q]; d[i * 4] = add[q + 1]; d[i * 4 + 1] = add[q + 2]; d[i * 4 + 2] = add[q + 3]; fix[i] = 1; }
+        }
+        x.putImageData(id, 0, 0); return c;
+    } catch (e) { return im; }
+}
 function splitWords(text) {
     const ws = [];
     String(text).trim().split(/\s+/).filter(Boolean).forEach(w => {
@@ -8675,11 +8702,61 @@ class CanvasRenderer {
         ctx.rotate(((element.rotation || 0) + animState.rotation) * Math.PI / 180);
         ctx.scale(animState.scale, animState.scale);
         switch (element.type) {
-            case 'character': this.renderCharacter(element, Math.min(w, h * 0.56), h, time, scene); break;
+            case 'character': this.renderCharacterLit(element, Math.min(w, h * 0.56), h, time, scene); break;
             case 'object': this.renderObject(element, w, h, time, scene); break;
             case 'text': this.renderText(element, w, h, time); break;
         }
         ctx.restore();
+    }
+
+    // ---------- Intégration lumineuse : les personnages reçoivent la lumière du décor ----------
+    // Un personnage « collé » sur un fond a toujours des couleurs plus vives que lui. Ici le groupe est dessiné sur un calque, puis reçoit
+    // (1) une légère teinte de l'ambiance du décor (mesurée une seule fois par scène) et (2) une lumière venue d'en haut : un peu plus clair en
+    // haut, plus sombre vers le sol (les pieds s'ancrent dans le décor). Désactivable : project.charLight = false.
+    renderCharacterLit(element, w, h, time, scene) {
+        const main = this.ctx;
+        if (!this.cinemaOn() || (state.project && state.project.charLight === false)) return this.renderCharacter(element, w, h, time, scene);
+        let lc;
+        try {
+            if (!this.litC || this.litC.width !== this.width || this.litC.height !== this.height) { this.litC = this.aux(); this.litX = this.litC.getContext('2d'); }
+            lc = this.litX;
+            if (!this._amb || this._amb.scene !== scene) {   // ambiance : couleur moyenne du décor déjà dessiné (calque 6×6, une fois par scène)
+                if (!this.ambC) { this.ambC = document.createElement('canvas'); this.ambC.width = 6; this.ambC.height = 6; this.ambX = this.ambC.getContext('2d', { willReadFrequently: true }); }
+                this.ambX.clearRect(0, 0, 6, 6); this.ambX.drawImage(main.canvas, 0, 0, main.canvas.width, main.canvas.height, 0, 0, 6, 6);
+                const d = this.ambX.getImageData(0, 0, 6, 6).data; let r = 0, g = 0, b = 0, n = 0;
+                for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 200) continue; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+                this._amb = { scene, r: n ? r / n : 128, g: n ? g / n : 128, b: n ? b / n : 128 };
+            }
+        } catch (_) { return this.renderCharacter(element, w, h, time, scene); }
+        const W = this.width, H = this.height, A = this._amb;
+        lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = 'source-over'; lc.globalAlpha = 1; lc.clearRect(0, 0, W, H);
+        lc.setTransform(main.getTransform());
+        this.ctx = lc;
+        try { this.renderCharacter(element, w, h, time, scene); } finally { this.ctx = main; }
+        lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = 'source-atop';
+        lc.globalAlpha = 0.12; lc.fillStyle = 'rgb(' + (A.r | 0) + ',' + (A.g | 0) + ',' + (A.b | 0) + ')'; lc.fillRect(0, 0, W, H);
+        const gr = lc.createLinearGradient(0, H * 0.22, 0, H);
+        gr.addColorStop(0, 'rgba(255,246,228,0.07)'); gr.addColorStop(0.55, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(18,10,6,0.24)');
+        lc.globalAlpha = 1; lc.fillStyle = gr; lc.fillRect(0, 0, W, H);
+        lc.globalCompositeOperation = 'source-over';
+        // VOLUME : lumière du haut-gauche (comme les rayons du décor). Liseré clair côté lumière + ombre douce côté opposé, prélevés sur la
+        // silhouette (silhouette moins silhouette décalée) : le personnage se détache du fond et prend du relief au lieu d'un aplat.
+        try {
+            if (!this.rimC || this.rimC.width !== W || this.rimC.height !== H) { this.rimC = this.aux(); this.rimX = this.rimC.getContext('2d'); }
+            const T = this.rimC, tx = this.rimX, rw = Math.max(2, Math.round(H * 0.0065));
+            const strip = (dx, dy, color, a) => {
+                tx.setTransform(1, 0, 0, 1, 0, 0); tx.globalAlpha = 1; tx.globalCompositeOperation = 'source-over'; tx.clearRect(0, 0, W, H);
+                tx.drawImage(this.litC, 0, 0);
+                tx.globalCompositeOperation = 'destination-out'; tx.drawImage(this.litC, dx, dy);
+                tx.globalCompositeOperation = 'source-in'; tx.globalAlpha = a; tx.fillStyle = color; tx.fillRect(0, 0, W, H);
+                lc.globalCompositeOperation = 'source-atop'; lc.globalAlpha = 1; lc.drawImage(T, 0, 0);
+            };
+            strip(-rw * 1.2, -rw * 0.8, 'rgba(18,10,28,1)', 0.20);   // ombre : bord bas-droite, en deux passes (bord adouci)
+            strip(-rw * 2.6, -rw * 1.7, 'rgba(18,10,28,1)', 0.16);
+            strip(rw * 0.55, rw * 0.4, 'rgba(255,236,200,1)', 0.34);   // liseré de lumière : bord haut-gauche
+            lc.globalCompositeOperation = 'source-over'; lc.globalAlpha = 1;
+        } catch (_) { }
+        main.save(); main.setTransform(1, 0, 0, 1, 0, 0); main.drawImage(this.litC, 0, 0); main.restore();
     }
 
     // ---------- Personnage : bibliothèque Rive (un seul personnage) ----------
@@ -8734,16 +8811,16 @@ class CanvasRenderer {
         // calendrier de chaque invité : marche d'entrée depuis hors-champ (à droite), puis marche de sortie
         const Wd = this.width, ox = (element.position ? element.position.x : 0.5) * Wd, dur = (scene && scene.duration) || 5;
         const seated = (element.pose || 'standing') === 'sitting', SPEED = 9 * u;   // ~1,5 m/s : marche normale
-        const gx = [], ps = [], gwalk = [], gface = []; let hlook = 0;
+        const gx = [], ps = [], gwalk = [], gface = [], gturn = []; let hlook = 0;
         // sortie : un invité ne traverse jamais un autre invité encore présent ; il part après celui qui est plus à droite
         const tOutE = cast.map(g => g.tOut);
         for (let i = cast.length - 2; i >= 0; i--) if (!meet) tOutE[i] = tOutE[i + 1] >= 1e8 ? 1e9 : Math.max(tOutE[i], tOutE[i + 1] + 0.5);
         cast.forEach((g, i) => {
-            if (meet && i > 0) { gx.push(0); ps.push(0); gwalk.push(0); gface.push(-1); return; }
+            if (meet && i > 0) { gx.push(0); ps.push(0); gwalk.push(0); gface.push(-1); gturn.push(0); return; }
             const sx = slot[i], sc = gsc[i], tOut = tOutE[i];
             const xOff = (1.05 * Wd - ox) / (k * mag) + 2.2 * u * sc + i * SP;   // hors champ, à droite du cadre (les suivants un peu plus loin : ils entrent à la file)
             const T0 = cl((xOff - sx) / SPEED, 0.9, 3.0);
-            let x = sx, pr = 1, wk = 0, fc = -1, arr0 = g.tIn;
+            let x = sx, pr = 1, wk = 0, fc = -1, arr0 = g.tIn, tu = 0;
             if (seated) {   // héros assis : pas de marche, apparition douce sur place
                 pr = sm((time - g.tIn) / 0.35) * (1 - sm((time - g.tOut) / 0.3));
             } else {
@@ -8760,15 +8837,16 @@ class CanvasRenderer {
                 }
                 if (tOut < 1e8) {   // sortie : il se retourne sur place (0,3 s), puis repart par le bord droit
                     const ep = cl((time - tOut - 0.3) / T0, 0, 1);
-                    fc = -1 + 2 * sm((time - tOut) / 0.3);
+                    tu = cl((time - tOut) / 0.3, 0, 1); fc = (tu < 0.5 ? -1 : 1) * Math.max(0.42, Math.abs(Math.cos(Math.PI * sm(tu))));   // pivot : ne se réduit jamais à un trait (le corps de face est quasi symétrique : le miroir ne se voit pas)
+                    if (time >= tOut && ep <= 0) wk = 1;   // l'image de profil prend le relais PENDANT le pivot (pas un simple retournement de carte)
                     if (ep > 0) { x = sx + (xOff - sx) * zout(ep); wk = ep < 1 ? 1 : 0; }
                     if (ep >= 1) pr = 0;
                 }
             }
             if (!meet) hlook = Math.max(hlook, 0.5 * sm((time - arr0) / 0.6) * (tOut < 1e8 ? 1 - sm((time - tOut) / 0.3) : 1));   // regard posé sur l'autre personnage tant qu'il est là
-            gx.push(x); ps.push(pr); gwalk.push(wk); gface.push(fc);
+            gx.push(x); ps.push(pr); gwalk.push(wk); gface.push(fc); gturn.push(tu);
         });
-        return { u, tv, meet, cast, ps, n: N, q, k, mainX, gx, gsc, gwalk, gface, hlook, mag, capF, l: minX * k * mag, r: maxX * k * mag, top };
+        return { u, tv, meet, cast, ps, n: N, q, k, mainX, gx, gsc, gwalk, gface, gturn, hlook, mag, capF, l: minX * k * mag, r: maxX * k * mag, top };
     }
     renderCharacter0(element, w, h, time, scene) {
         const pose = element.pose || 'standing';
@@ -8790,6 +8868,7 @@ class CanvasRenderer {
             const pr = ps[i]; if (pr <= 0.001) return;
             const gt = meet && i === 0, gw = L.gwalk[i];
             ctx.save(); ctx.globalAlpha *= pr; ctx.translate(L.gx[i], 0);
+            { const tu = L.gturn[i] || 0, tk = Math.sin(Math.PI * tu); if (tk > 0) { ctx.translate(0, -h * 0.006 * tk); ctx.rotate(0.05 * tk); } }   // petit élan du corps pendant le pivot
             const sc = L.gsc[i]; ctx.scale(L.gface[i] * sc, sc);   // tourné vers le héros (à gauche) ; il se retourne pour repartir
             TRAVEL_FORCE = gt ? { walk: gw, wave: tv.guestWave.w, gp: tv.guestWave.p, gdur: 1.8 } : (gw > 0.01 ? { walk: gw, wave: 0, gp: 0, gdur: 1.8 } : null);
             try { AIGuests.draw(ctx, w, h, time, scene, pose, i, g.sex, g.id); } catch (e) { console.warn('Invité', e); }
