@@ -56,7 +56,7 @@ function validateProject(project) {
   return null;
 }
 function freeRenderProject(project) {
-  return JSON.parse(JSON.stringify({ ...project, format: ['9:16', '1:1', '16:9'].includes(project.format) ? project.format : '9:16', renderProfile: 'render-free-720p', quality: '720', scenes: project.scenes.map((scene, index) => ({ ...scene, index })) }));
+  return JSON.parse(JSON.stringify({ ...project, format: ['9:16', '1:1', '16:9'].includes(project.format) ? project.format : '9:16', renderProfile: 'modal-cpu-720p', quality: '720', scenes: project.scenes.map((scene, index) => ({ ...scene, index })) }));
 }
 
 app.post('/render', (req, res) => {
@@ -91,6 +91,7 @@ app.post('/render/:id/result', express.raw({ type: () => true, limit: '220mb' })
     const output = path.join(os.tmpdir(), `videos-plus-render-${job.id}.mp4`);
     const input = path.join(os.tmpdir(), `videos-plus-render-${job.id}.input`);
     const isMp4 = req.body.length > 12 && req.body.subarray(4, 8).toString() === 'ftyp';
+    console.log(`[render ${job.id}] callback type=${req.get('content-type') || 'unknown'} bytes=${req.body.length} mp4=${isMp4}`);
     if (isMp4) {
       await fs.writeFile(output, req.body);
     } else {
@@ -98,7 +99,9 @@ app.post('/render/:id/result', express.raw({ type: () => true, limit: '220mb' })
       await fs.writeFile(input, req.body);
       await new Promise((resolve, reject) => {
         const duration = projectDuration(job.project).toFixed(3);
-        const args = ['-y', '-i', input, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'tpad=stop_mode=clone:stop_duration=60', '-fps_mode', 'cfr', '-r', '30', '-t', duration, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output];
+        // Keep the browser's 720p visual quality when Chromium can only emit WebM.
+        // The old CRF 23 setting produced a much smaller, noticeably softer MP4 than Modal.
+        const args = ['-y', '-i', input, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'tpad=stop_mode=clone:stop_duration=60', '-fps_mode', 'cfr', '-r', '30', '-t', duration, '-c:v', 'libx264', '-preset', 'ultrafast', '-b:v', '2600k', '-maxrate', '3000k', '-bufsize', '5200k', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output];
         const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
         let stderr = '';
         child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-4000); });
@@ -108,6 +111,8 @@ app.post('/render/:id/result', express.raw({ type: () => true, limit: '220mb' })
       await fs.unlink(input).catch(() => {});
     }
     await fs.access(output);
+    const outputStat = await fs.stat(output);
+    console.log(`[render ${job.id}] completed bytes=${outputStat.size} elapsedMs=${Date.now() - Date.parse(job.createdAt)}`);
     job.output = output; job.status = 'completed'; job.stage = 'completed'; job.progress = 1;
     res.json({ ok: true });
   } catch (error) {
@@ -145,10 +150,14 @@ async function runRenderJob(job, baseUrl) {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.waitForFunction(() => typeof window.loadProject === 'function' && typeof window.exportVideo === 'function', null, { timeout: 60000 });
     await page.evaluate(id => window.loadProject(id), job.project.id);
-    await page.waitForTimeout(700);
+    await page.evaluate(async () => {
+      if (document.fonts?.ready) await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 5000))]);
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    await page.waitForTimeout(1200);
     job.stage = 'rendering-canvas'; job.progress = 0.1;
     const exportPromise = page.evaluate(() => window.exportVideo());
-    const deadline = Date.now() + 240000;
+    const deadline = Date.now() + 600000;
     while (job.status === 'rendering' && Date.now() < deadline) {
       const event = await Promise.race([exportPromise.then(() => 'export-finished'), new Promise(resolve => setTimeout(() => resolve('wait'), 500))]);
       if (event === 'export-finished' && job.status !== 'completed') {
