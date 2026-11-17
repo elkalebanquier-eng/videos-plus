@@ -1,13 +1,15 @@
-# Studio animé — VideoStory 3.4.2
+# Studio animé — VideoStory 3.4.3
 
-VideoStory 3.4.2 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Son interface adopte désormais un style pastel tactile, inspiré du claymorphism, avec une mascotte 3D et des raccourcis adaptés au mobile. Le site de production est [videos-plus.vercel.app](https://videos-plus.vercel.app/). L’ancienne adresse [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/) reste active comme alias.
+VideoStory 3.4.3 transforme des histoires en vidéos animées avec plusieurs rendus de personnage, un réalisateur narratif, la narration Speechify et l’export vidéo. Son interface adopte désormais un style pastel tactile, inspiré du claymorphism, avec une mascotte 3D et des raccourcis adaptés au mobile. Le site de production est [videos-plus.vercel.app](https://videos-plus.vercel.app/). L’ancienne adresse [elka-jobnet.vercel.app](https://elka-jobnet.vercel.app/) reste active comme alias.
 
 Les brouillons hors ligne suivent désormais une progression claire — accroche, contexte, tension, déclic et conclusion — avec des modèles adaptés notamment aux sujets personnels, professionnels, technologiques, de santé, d’apprentissage et de voyage, en français, anglais et espagnol. Les récits complexes ou très spécifiques gagnent à être générés avec Gemini configuré : le mode local reste volontairement un brouillon et ne prétend pas connaître les faits propres à chaque histoire.
 
 ## Fonctionnalités
 
 - Intégration visuelle des personnages : lumière et ombre harmonisées avec le décor, nettoyage des liserés clairs des découpes, rebond et écrasement plus naturels à la marche, pivot plus fluide des invités.
-- Les traitements d’image utilisent les ressources intégrées et le Canvas; ils ne remplacent ni les profils Speechify par langue, ni l’inférence du genre principal, ni les callbacks sécurisés Modal/Render.
+- Plans photo cinématiques et sprites 3D pré-rendus intégrés au HTML pour certaines scènes compatibles; les images se déplacent et se fondent sans ressource distante.
+- Les sprites 3D ne s’activent que pour les scènes compatibles : les réglages d’apparence, le protagoniste féminin, les tenues narratives et les préférences de mouvement réduit conservent le moteur de personnage habituel.
+- Les ajouts visuels préservent les profils Speechify par langue, l’inférence du genre principal et les callbacks sécurisés Modal/Render.
 
 - Interface repensée de bout en bout : fonds pastel crème/pêche/bleu/lilas, cartes en relief, navigation basse translucide, formulaires et éditeur harmonisés; mascotte et icône 3D optimisées en WebP.
 - Création locale d’histoires et découpage en scènes.
@@ -39,6 +41,6 @@ Les brouillons hors ligne suivent désormais une progression claire — accroche
 - Pour les vidéos sonores de 2 minutes ou plus, sélection automatique du chemin d’export compatible afin de préserver la piste audio sur les appareils concernés.
 - Proxy Vercel sécurisé `/api/speechify` : la clé reste côté serveur et n’est pas stockée dans le navigateur ou le dépôt.
 
-Les styles s’appuient sur le dessin Canvas et le cache de rendu existants : aucun fichier image distant ni moteur d’encodage serveur supplémentaire. En aperçu, le personnage reste optimisé pour les téléphones; l’export utilise des calques plus fins à 30 i/s. Les bras sont articulés par calcul procédural et les poses suivent le récit, mais ce personnage reste une animation vectorielle 2D — pas encore un rig professionnel image par image ni un personnage 3D.
+Les images photo et sprites 3D sont intégrés au HTML (25 ressources WebP, sans chargement distant). Les sprites sont pré-rendus, pas un nouveau rig 3D temps réel : ils s’appliquent à quelques compositions et poses compatibles; le moteur de personnage habituel reprend la main pour préserver personnalisation, costumes narratifs et accessibilité. L’export, le mix audio et les traitements d’image continuent d’utiliser les moteurs existants.
 
 Les pushes sur `main` déclenchent le déploiement Vercel. La configuration Speechify et les étapes pour modifier le domaine sont dans [README-WEB.md](README-WEB.md).
